@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="Soil (Land Surface)">
+	<quantity sid="SOTYP" fid="Soil_type" number="0" unit="" description="Soil type as in Zobler" />
+	<quantity sid="UPLST" fid="Upper_layer_soil_temperature" number="1" unit="K" description="Upper layer soil temperature" />
+	<quantity sid="UPLSM" fid="Upper_layer_soil_moisture" number="2" unit="kg m-3" description="Upper layer soil moisture" />
+	<quantity sid="LOWLSM" fid="Lower_layer_soil_moisture" number="3" unit="kg m-3" description="Lower layer soil moisture" />
+	<quantity sid="BOTLST" fid="Bottom_layer_soil_temperature" number="4" unit="K" description="Bottom layer soil temperature" />
+	<quantity sid="SOILL" fid="Liquid_Volumetric_Soil_Moisture" number="5" unit="" description="Liquid Volumetric Soil Moisture" />
+	<quantity sid="RLYRS" fid="Number_of_Soil_Layers_in_Root_Zone" number="6" unit="" description="Number of Soil Layers in Root Zone" />
+	<quantity sid="SMREF" fid="Transpiration_Stress-onset" number="7" unit="" description="Transpiration Stress-onset" />
+	<quantity sid="SMDRY" fid="Direct_Evaporation_Cease" number="8" unit="" description="Direct Evaporation Cease" />
+	<quantity sid="POROS" fid="Soil_Porosity" number="9" unit="" description="Soil Porosity" />
+	<quantity sid="LIQVSM" fid="Liquid_volumetric_soil_moisture" number="10" unit="m3 m-3" description="Liquid Volumetric Soil Moisture (Non-Frozen)" />
+	<quantity sid="VOLTSO" fid="Volumetric_transpiration_stree_onset" number="11" unit="m3 m-3" description="Volumetric Transpiration Stree-Onset(Soil Moisture)" />
+	<quantity sid="TRANSO" fid="Transpiration_stree_onset" number="12" unit="kg m-3" description="Transpiration Stree-Onset(Soil Moisture)" />
+	<quantity sid="VOLDEC" fid="Volumetric_direct_evaporation_cease" number="13" unit="m3 m-3" description="Volumetric Direct Evaporation Cease(Soil Moisture)" />
+	<quantity sid="DIREC" fid="Direct_evaporation_cease" number="14" unit="kg m-3" description="Direct Evaporation Cease(Soil Moisture)" />
+	<quantity sid="SOILP" fid="Soil_porosity" number="15" unit="m3 m-3" description="Soil Porosity" />
+	<quantity sid="VSOSM" fid="Volumetric_saturation_of_soil_moisture" number="16" unit="m3 m-3" description="Volumetric Saturation Of Soil Moisture" />
+	<quantity sid="SATOSM" fid="Saturation_of_soil_moisture" number="17" unit="kg m-3" description="Saturation Of Soil Moisture" />
+	<quantity sid="SOILL" fid="Liquid_Volumetric_Soil_Moisture" number="192" unit="" description="Liquid Volumetric Soil Moisture non frozen" />
+	<quantity sid="RLYRS" fid="Number_of_Soil_Layers_in_Root_Zone" number="193" unit="" description="Number of Soil Layers in Root Zone" />
+	<quantity sid="SLTYP" fid="Surface_Slope_Type" number="194" unit="" description="Surface Slope Type" />
+	<quantity sid="SMREF" fid="Transpiration_Stress-onset" number="195" unit="" description="Transpiration Stress-onset soil moisture" />
+	<quantity sid="SMDRY" fid="Direct_Evaporation_Cease" number="196" unit="" description="Direct Evaporation Cease soil moisture" />
+	<quantity sid="POROS" fid="Soil_Porosity" number="197" unit="" description="Soil Porosity" />
+	<quantity sid="EVBS" fid="Direct_evaporation_from_bare_soil" number="198" unit="W m-2" description="Direct evaporation from bare soil" />
+	<quantity sid="LSPA" fid="Land_surface_precipitation_accumulation" number="199" unit="kg m-2" description="Land Surface Precipitation Accumulation" />
+	<quantity sid="BARET" fid="Bare_soil_surface_skin_temperature" number="200" unit="K" description="Bare soil surface skin temperature" />
+	<quantity sid="AVSFT" fid="Average_surface_skin_temperature" number="201" unit="K" description="Average surface skin temperature" />
+	<quantity sid="RADT" fid="Effective_radiative_skin_temperature" number="202" unit="K" description="Effective radiative skin temperature" />
+	<quantity sid="FLDCP" fid="Field_capacity" number="203" unit="fraction" description="Field Capacity" />
+</quantities>

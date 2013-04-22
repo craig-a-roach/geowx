@@ -1,0 +1,13 @@
+( Analysis [20110715 12Z]
+. Geography [65.0,-21.0 35.0,45.0] [81.0,-53.0 24.0,51.0]
+. Resolution [0.25:0.25deg]
+.{Parameter*Prognosis*Surface}
+  ( Parameter [ACPCP;kg/m^2]
+  . Prognosis [6hACC+6h] [6hACC+12h]
+  . Surface [Ground]
+  )+
+  ( Parameter [R;%]
+  . Prognosis 6h 12h
+  . Surface [Isobaric:250.0hPa]
+  )
+)

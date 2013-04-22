@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="melbourne_128.tab">
+	<quantity sid="seaice" number="31" unit="0-1" fid="seaice" description="sea ice cover"/>
+	<quantity sid="wndgust10m" number="49" unit="m s-1" fid="wndgust10m" description="10m wind gust"/>
+	<quantity sid="pressure" number="54" unit="Pa" fid="pressure" description="pressure (T/q or theta surface)"/>
+	<quantity sid="p_half" number="55" unit="Pa" fid="p_half" description="pressure (U/V or rho surface)"/>
+	<quantity sid="qsair_scrn" number="81" unit="kg kg-1" fid="qsair_scrn" description="screen level specific humidity"/>
+	<quantity sid="area_cld_frac" number="82" unit="0-1" fid="area_cld_frac" description="cloud area fraction"/>
+	<quantity sid="lqd_cld_frac" number="83" unit="0-1" fid="lqd_cld_frac" description="liquid cloud fraction"/>
+	<quantity sid="ice_cld_frac" number="84" unit="0-1" fid="ice_cld_frac" description="ice cloud fraction"/>
+	<quantity sid="soil_mois_cont" number="86" unit="kg m-2" fid="soil_mois_cont" description="soil moisture available for transpiration"/>
+	<quantity sid="canopy_wtr_cont" number="87" unit="kg m-2" fid="canopy_wtr_cont" description="canopy water content"/>
+	<quantity sid="conv_cld_water" number="88" unit="kg m-3" fid="conv_cld_water" description="convective cloud condensed water"/>
+	<quantity sid="conv_cldbse_pres" number="89" unit="Pa" fid="conv_cldbse_pres" description="convective cloud-base pressure"/>
+	<quantity sid="conv_cldtop_pres" number="90" unit="Pa" fid="conv_cldtop_pres" description="convective cloud-top pressure"/>
+	<quantity sid="rh2m" number="101" unit="%" fid="rh2m" description="screen level relative humidity"/>
+	<quantity sid="z0" number="109" unit="m" fid="z0" description="roughness length"/>
+	<quantity sid="sfc_temp" number="125" unit="K" fid="sfc_temp" description="surface temperature"/>
+	<quantity sid="air_temp" number="130" unit="K" fid="air_temp" description="temperature"/>
+	<quantity sid="zonal_wnd" number="131" unit="m s-1" fid="zonal_wnd" description="zonal wind"/>
+	<quantity sid="merid_wnd" number="132" unit="m s-1" fid="merid_wnd" description="meridional wind"/>
+	<quantity sid="sfc_pres" number="134" unit="Pa" fid="sfc_pres" description="surface pressure"/>
+	<quantity sid="omega" number="135" unit="Pa s-1" fid="omega" description="vertical velocity in pressure co-ordinates"/>
+	<quantity sid="precwtr" number="137" unit="kg m-2" fid="precwtr" description="precipitable water"/>
+	<quantity sid="soil_temp layer" number="139" unit="K" fid="soil_temp layer" description="soil temperature"/>
+	<quantity sid="soil_mois layer" number="140" unit="kg m-2" fid="soil_mois layer" description="soil moisture content"/>
+	<quantity sid="sens_hflx" number="146" unit="W m-2" fid="sens_hflx" description="surface sensible heat flux"/>
+	<quantity sid="lat_hflx" number="147" unit="W m-2" fid="lat_hflx" description="surface latent heat flux"/>
+	<quantity sid="mslp" number="151" unit="Pa" fid="mslp" description="mean sea level pressure"/>
+	<quantity sid="geop_ht" number="156" unit="m" fid="geop_ht" description="geopotential height"/>
+	<quantity sid="relhum" number="157" unit="%" fid="relhum" description="relative humidity"/>
+	<quantity sid="abl_ht" number="159" unit="m" fid="abl_ht" description="planetary boundary layer height"/>
+	<quantity sid="ttl_cld" number="164" unit="0-1" fid="ttl_cld" description="total cloud cover"/>
+	<quantity sid="u10" number="165" unit="m s-1" fid="u10" description="10m wind u component"/>
+	<quantity sid="v10" number="166" unit="m s-1" fid="v10" description="10m wind v component"/>
+	<quantity sid="temp_scrn" number="167" unit="K" fid="temp_scrn" description="screen level temperature"/>
+	<quantity sid="dewpt_scrn" number="168" unit="K" fid="dewpt_scrn" description="screen level dewpoint temperature"/>
+	<quantity sid="soil_temp" number="170" unit="K" fid="soil_temp" description="soil temperature layer 2"/>
+	<quantity sid="soil_mois" number="171" unit="kg m-2" fid="soil_mois" description="soil moisture content layer 2"/>
+	<quantity sid="uwnd_strs" number="180" unit="N m-2" fid="uwnd_strs" description="surface zonal wind stress"/>
+	<quantity sid="vwnd_strs" number="181" unit="N m-2" fid="vwnd_strs" description="surface meridional wind stress"/>
+	<quantity sid="soil_temp" number="183" unit="K" fid="soil_temp" description="soil temperature layer 3"/>
+	<quantity sid="soil_mois" number="184" unit="kg m-2" fid="soil_mois" description="soil moisture content layer 3"/>
+	<quantity sid="conv_cld" number="185" unit="0-1" fid="conv_cld" description="convective cloud cover"/>
+	<quantity sid="low_cld" number="186" unit="0-1" fid="low_cld" description="low cloud cover"/>
+	<quantity sid="mid_cld" number="187" unit="0-1" fid="mid_cld" description="middle cloud cover"/>
+	<quantity sid="hi_cld" number="188" unit="0-1" fid="hi_cld" description="high cloud cover"/>
+	<quantity sid="tmax_scrn" number="201" unit="K" fid="tmax_scrn" description="screen level max temperature"/>
+	<quantity sid="tmin_scrn" number="202" unit="K" fid="tmin_scrn" description="screen level min temparature"/>
+	<quantity sid="soil_temp" number="236" unit="K" fid="soil_temp" description="soil temperature layer 4"/>
+	<quantity sid="soil_mois" number="237" unit="kg m-2" fid="soil_mois" description="soil moisture content layer 4"/>
+	<quantity sid="clwc" number="246" unit="kg kg-1" fid="clwc" description="cloud specific liquid water content"/>
+	<quantity sid="ciwc" number="247" unit="kg kg-1" fid="ciwc" description="cloud specific ice water content"/>
+</quantities>

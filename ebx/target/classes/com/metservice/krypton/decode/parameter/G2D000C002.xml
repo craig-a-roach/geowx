@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="Momentum (Meteorology)">
+  <quantity sid="WDIR" fid="Wind_direction" number="0" unit="degrees" description="Wind direction from which blowing" />
+  <quantity sid="WIND" fid="Wind_speed" number="1" unit="m s-1" description="Wind speed" />
+  <quantity sid="UGRD" fid="U-component_of_wind" number="2" unit="m s-1" description="U-component of wind" />
+  <quantity sid="VGRD" fid="V-component_of_wind" number="3" unit="m s-1" description="V-component of wind" />
+  <quantity sid="STRM" fid="Stream_function" number="4" unit="m2 s-1" description="Stream function" />
+  <quantity sid="VPOT" fid="Velocity_potential" number="5" unit="m2 s-1" description="Velocity potential" />
+  <quantity sid="MNTSF" fid="Montgomery_stream_function" number="6" unit="m2 s-2" description="Montgomery stream function" />
+  <quantity sid="SGCVV" fid="Sigma_coordinate_vertical_velocity" number="7" unit="s-1" description="Sigma coordinate vertical velocity" />
+  <quantity sid="VVEL" fid="Vertical_velocity" number="8" unit="Pa s-1" description="Vertical velocity pressure" />
+  <quantity sid="DZDT" fid="Vertical_velocity" number="9" unit="m s-1" description="Vertical velocity geometric" />
+  <quantity sid="ABSV" fid="Absolute_vorticity" number="10" unit="s-1" description="Absolute vorticity" />
+  <quantity sid="ABSD" fid="Absolute_divergence" number="11" unit="s-1" description="Absolute divergence" />
+  <quantity sid="RELV" fid="Relative_vorticity" number="12" unit="s-1" description="Relative vorticity" />
+  <quantity sid="RELD" fid="Relative_divergence" number="13" unit="s-1" description="Relative divergence" />
+  <quantity sid="PVORT" fid="Potential_vorticity" number="14" unit="K m2 kg-1 s-1" description="Potential vorticity" />
+  <quantity sid="VUCSH" fid="Vertical_u-component_shear" number="15" unit="s-1" description="Vertical u-component shear" />
+  <quantity sid="VVCSH" fid="Vertical_v-component_shear" number="16" unit="s-1" description="Vertical v-component shear" />
+  <quantity sid="UFLX" fid="Momentum_flux_u_component" number="17" unit="N m-2" description="Momentum flux, u component" />
+  <quantity sid="VFLX" fid="Momentum_flux_v_component" number="18" unit="N m-2" description="Momentum flux, v component" />
+  <quantity sid="WMIXE" fid="Wind_mixing_energy" number="19" unit="J" description="Wind mixing energy" />
+  <quantity sid="BLYDP" fid="Boundary_layer_dissipation" number="20" unit="W m-2" description="Boundary layer dissipation" />
+  <quantity sid="MAXGUST" fid="Maximum_wind_speed" number="21" unit="m s-1" description="Maximum wind speed" />
+  <quantity sid="GUST" fid="Wind_speed" number="22" unit="m s-1" description="Wind speed gust" />
+  <quantity sid="UGUST" fid="U-component_of_wind" number="23" unit="m s-1" description="U-component of wind gust" />
+  <quantity sid="VGUST" fid="V-component_of_wind" number="24" unit="m s-1" description="V-component of wind gust" />
+  <quantity sid="VWSH" fid="Vertical_speed_sheer" number="25" unit="s-1" description="Vertical speed sheer" />
+  <quantity sid="MFLX" fid="Horizontal_Momentum_Flux" number="26" unit="N m-2" description="Horizontal Momentum Flux" />
+  <quantity sid="USTM" fid="U-Component_Storm_Motion" number="27" unit="m s-1" description="U-Component Storm Motion" />
+  <quantity sid="VSTM" fid="V-Component_Storm_Motion" number="28" unit="m s-1" description="V-Component Storm Motion" />
+  <quantity sid="CD" fid="Drag_Coefficient" number="29" unit="" description="Drag Coefficient" />
+  <quantity sid="FRICV" fid="Frictional_Velocity" number="30" unit="m s-1" description="Frictional Velocity" />
+  <quantity sid="ETACVV" fid="Eta_Coordinate_Vertical_Velocity" number="32" unit="s-1" description="Eta Coordinate Vertical Velocity" />
+  <quantity sid="VWSH" fid="Vertical_speed_sheer" number="192" unit="s-1" description="Vertical speed sheer" />
+  <quantity sid="MFLX" fid="Horizontal_Momentum_Flux" number="193" unit="N m-2" description="Horizontal Momentum Flux" />
+  <quantity sid="USTM" fid="U-Component_Storm_Motion" number="194" unit="m s-1" description="U-Component Storm Motion" />
+  <quantity sid="VSTM" fid="V-Component_Storm_Motion" number="195" unit="m s-1" description="V-Component Storm Motion" />
+  <quantity sid="CD" fid="Drag_Coefficient" number="196" unit="" description="Drag Coefficient" />
+  <quantity sid="FRICV" fid="Frictional_Velocity" number="197" unit="m s" description="Frictional Velocity" />
+  <quantity sid="LAUV" fid="Latitude_of_U_Wind_Component_of_Velocity" number="198" unit="degrees_north" description="Latitude of U Wind Component of Velocity" />
+  <quantity sid="LOUV" fid="Longitude_of_U_Wind_Component_of_Velocity" number="199" unit="degrees_east" description="Longitude of U Wind Component of Velocity" />
+  <quantity sid="LAVV" fid="Latitude_of_V_Wind_Component_of_Velocity" number="200" unit="degrees_north" description="Latitude of V Wind Component of Velocity" />
+  <quantity sid="LOVV" fid="Longitude_of_V_Wind_Component_of_Velocity" number="201" unit="degrees_east" description="Longitude of V Wind Component of Velocity" />
+  <quantity sid="LAPP" fid="Latitude_of_Pressure_Point" number="202" unit="degrees_north" description="Latitude of Pressure Point" />
+  <quantity sid="LOPP" fid="Longitude_of_Pressure_Point" number="203" unit="degrees_east" description="Longitude of Pressure Point" />
+  <quantity sid="VEDH" fid="Vertical_Eddy_Diffusivity_Heat_exchange" number="204" unit="m2 s-1" description="Vertical Eddy Diffusivity Heat exchange" />
+  <quantity sid="COVMZ" fid="Covariance_between_meridional_and_zonal_components_of_the_wind" number="205" unit="m2 s-2" description="Covariance between Meridional and Zonal Components of the wind." />
+  <quantity sid="COVTZ" fid="Covariance_between_temperature_and_zonal_components_of_the_wind" number="206" unit="K*m s-1" description="Covariance between Temperature and Zonal Components of the wind." />
+  <quantity sid="COVTM" fid="Covariance_between_temperature_and_meridional_components_of_the_wind" number="207" unit="K*m s-1" description="Covariance between Temperature and Meridional Components of the wind." />
+  <quantity sid="VDFUA" fid="Vertical_diffusion_zonal_acceleration" number="208" unit="m s-2" description="Vertical Diffusion Zonal Acceleration" />
+  <quantity sid="VDFVA" fid="Vertical_diffusion_meridional_acceleration" number="209" unit="m s-2" description="Vertical Diffusion Meridional Acceleration" />
+  <quantity sid="GWDU" fid="Gravity_wave_drag_zonal_acceleration" number="210" unit="m s-2" description="Gravity wave drag zonal acceleration" />
+  <quantity sid="GWDV" fid="Gravity_wave_drag_meridional_acceleration" number="211" unit="m s-2" description="Gravity wave drag meridional acceleration" />
+  <quantity sid="CNVU" fid="Convective_zonal_momentum_mixing_acceleration" number="212" unit="m s-2" description="Convective zonal momentum mixing acceleration" />
+  <quantity sid="CNVV" fid="Convective_meridional_momentum_mixing_acceleration" number="213" unit="m s-2" description="Convective meridional momentum mixing acceleration" />
+  <quantity sid="WTEND" fid="Tendency_of_vertical_velocity" number="214" unit="m/s2" description="Tendency of vertical velocity" />
+  <quantity sid="OMGALF" fid="Omega_divide_by_density" number="215" unit="K" description="Omega (Dp_or_Dt) divide by density" />
+  <quantity sid="CNGWDU" fid="Convective_gravity_wave_drag_zonal_acceleration" number="216" unit="m/s2" description="Convective Gravity wave drag zonal acceleration" />
+  <quantity sid="CNGWDV" fid="Convective_gravity_wave_drag_meridional_acceleration" number="217" unit="m/s2" description="Convective Gravity wave drag meridional acceleration" />
+  <quantity sid="LMV" fid="Velocity_point_model_surface" number="218" unit="" description="Velocity Point Model Surface" />
+  <quantity sid="PVMWW" fid="Potential_vorticity" number="219" unit="1/s/m" description="Potential Vorticity (Mass-Weighted)" />
+  <quantity sid="MAXUVV" fid="Hourly_Maximum_Upward_Vertical_Velocity_in_lowest_400hPa" number="220" unit="m/s" description="Hourly Maximum of Upward Vertical Velocity in the lowest 400hPa" />
+  <quantity sid="MAXDVV" fid="Hourly_Maximum_Downward_Vertical_Velocity_in_lowest_400hPa" number="221" unit="m/s" description="Hourly Maximum of Downward Vertical Velocity in the lowest 400hPa" />
+  <quantity sid="MAXUW" fid="U_Component_Hourly_Maximum_10m_Wind_Speed" number="222" unit="m/s" description="U Component of Hourly Maximum 10m Wind Speed" />
+  <quantity sid="MAXVW" fid="V_Component_Hourly_Maximum_10m_Wind_Speed" number="223" unit="m/s" description="V Component of Hourly Maximum 10m Wind Speed" />
+  <quantity sid="VRATE" fid="Ventilation_rate" number="224" unit="m2/s" description="Ventilation Rate" />
+</quantities>

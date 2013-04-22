@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="testdata">
+	<quantity sid="GP" number="6" unit="m^2/s^2" fid="Geopotential" description="Geopotential"/>
+	<quantity sid="ORO" number="13" unit="m" fid="Model_orography" description="Model orography"/>
+</quantities>

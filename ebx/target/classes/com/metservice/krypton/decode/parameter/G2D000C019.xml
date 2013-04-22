@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="Physical Atmospheric Properties (Meteorology)">
+  <quantity sid="VIS" fid="Visibility" number="0" unit="m" description="Visibility" />
+  <quantity sid="ALBDO" fid="Albedo" number="1" unit="percent" description="Albedo" />
+  <quantity sid="TSTM" fid="Thunderstorm_probability" number="2" unit="percent" description="Thunderstorm probability" />
+  <quantity sid="MIXHT" fid="Mixed_layer_depth" number="3" unit="m" description="mixed layer depth" />
+  <quantity sid="VOLASH" fid="Volcanic_ash" number="4" unit="" description="Volcanic ash" />
+  <quantity sid="ICIT" fid="Icing_top" number="5" unit="m" description="Icing top" />
+  <quantity sid="ICIB" fid="Icing_base" number="6" unit="m" description="Icing base" />
+  <quantity sid="ICI" fid="Icing" number="7" unit="" description="Icing" />
+  <quantity sid="TURBT" fid="Turbulence_top" number="8" unit="m" description="Turbulence top" />
+  <quantity sid="TURBB" fid="Turbulence_base" number="9" unit="m" description="Turbulence base" />
+  <quantity sid="TURB" fid="Turbulence" number="10" unit="" description="Turbulence" />
+  <quantity sid="TKE" fid="Turbulent_kinetic_energy" number="11" unit="J kg-1" description="Turbulent kinetic energy" />
+  <quantity sid="PBLREG" fid="Planetary_boundary_layer_regime" number="12" unit="" description="Planetary boundary layer regime" />
+  <quantity sid="CONTI" fid="Contrail_intensity" number="13" unit="" description="Contrail intensity" />
+  <quantity sid="CONTET" fid="Contrail_engine_type" number="14" unit="" description="Contrail engine type" />
+  <quantity sid="CONTT" fid="Contrail_top" number="15" unit="m" description="Contrail top" />
+  <quantity sid="CONTB" fid="Contrail_base" number="16" unit="m" description="Contrail base" />
+  <quantity sid="MXSALB" fid="Maximum_Snow_Albedo" number="17" unit="percent" description="Maximum Snow Albedo" />
+  <quantity sid="SNFALB" fid="Snow-Free_Albedo" number="18" unit="percent" description="Snow-Free Albedo" />
+  <quantity sid="SALBD" fid="Snow_albedo" number="19" unit="%" description="Snow Albedo" />
+  <quantity sid="ICIP" fid="Icing" number="20" unit="%" description="Icing" />
+  <quantity sid="CTP" fid="In_cloud_turbulence" number="21" unit="%" description="In Cloud Turbulence" />
+  <quantity sid="CAT" fid="Clear_air_turbulence" number="22" unit="%" description="Clear Air Turbulence" />
+  <quantity sid="SLDP" fid="Supercooled_large_droplet_probabilitys" number="23" unit="%" description="Supercooled Large Droplet Probabilitys" />
+  <quantity sid="MXSALB" fid="Maximum_Snow_Albedo" number="192" unit="percent" description="Maximum Snow Albedo" />
+  <quantity sid="SNFALB" fid="Snow-Free_Albedo" number="193" unit="percent" description="Snow-Free Albedo" />
+  <quantity sid="SRCONO" fid="Slight_risk_convective_outlook" number="194" unit="" description="Slight risk convective outlook" />
+  <quantity sid="MRCONO" fid="Moderate_risk_convective_outlook" number="195" unit="" description="Moderate risk convective outlook" />
+  <quantity sid="HRCONO" fid="High_risk_convective_outlook" number="196" unit="" description="High risk convective outlook" />
+  <quantity sid="TORPROB" fid="Tornado_probability" number="197" unit="%" description="Tornado probability" />
+  <quantity sid="HAILPROB" fid="Hail_probability" number="198" unit="%" description="Hail probability" />
+  <quantity sid="WINDPROB" fid="Wind_probability" number="199" unit="%" description="Wind probability" />
+  <quantity sid="STORPROB" fid="Significant_Tornado_probability" number="200" unit="%" description="Significant Tornado probability" />
+  <quantity sid="SHAILPRO" fid="Significant_Hail_probability" number="201" unit="%" description="Significant Hail probability" />
+  <quantity sid="SWINDPRO" fid="Significant_Wind_probability" number="202" unit="%" description="Significant Wind probability" />
+  <quantity sid="TSTMC" fid="Categorical_Thunderstorm_1_yes_0_no" number="203" unit="" description="Categorical Thunderstorm 1 yes 0 no)" />
+  <quantity sid="MIXLY" fid="Number_of_mixed_layers_next_to_surface" number="204" unit="" description="Number of mixed layers next to surface" />
+  <quantity sid="FLGHT" fid="Flight_category" number="205" unit="" description="Flight Category" />
+  <quantity sid="CICEL" fid="Confidence_ceiling" number="206" unit="" description="Confidence - Ceiling" />
+  <quantity sid="CIVIS" fid="Confidence_visibility" number="207" unit="" description="Confidence - Visibility" />
+  <quantity sid="CIFLT" fid="Confidence_flight_category" number="208" unit="" description="Confidence - Flight Category" />
+  <quantity sid="LAVNI" fid="Low_level_aviation_interest" number="209" unit="" description="Low-Level aviation interest" />
+  <quantity sid="HAVNI" fid="High_level_aviation_interest" number="210" unit="" description="High-Level aviation interest" />
+  <quantity sid="SBSALB" fid="Visible_black_sky_albedo" number="211" unit="%" description="Visible, Black Sky Albedo" />
+  <quantity sid="SWSALB" fid="Visible_white_sky_albedo" number="212" unit="%" description="Visible, White Sky Albedo" />
+  <quantity sid="NBSALB" fid="Near_IR_black_sky_albedo" number="213" unit="%" description="Near_IR, Black Sky Albedo" />
+  <quantity sid="NWSALB" fid="Near_IR_white_sky_albedo" number="214" unit="%" description="Near_IR, White Sky Albedo" />
+  <quantity sid="PRSVR" fid="Total_probability_of_severe_thunderstorms_days_2_3" number="215" unit="%" description="Total Probability of Severe Thunderstorms Days 2 3)" />
+  <quantity sid="PRSIGSVR" fid="Total_probability_of_extreme_severe_thunderstorms_days_2_3" number="216" unit="%" description="Total Probability of Extreme Severe Thunderstorms  Days 2 3  " />
+  <quantity sid="SIPD" fid="Supercooled_large_droplet_icing" number="217" unit="" description="Supercooled Large Droplet Icing" />
+  <quantity sid="EPSR" fid="Radiative_emissivity" number="218" unit="" description="Radiative emissivity" />
+  <quantity sid="TPFI" fid="Turbulence_potential_forecast_index" number="219" unit="" description="Turbulence Potential Forecast Index" />
+  <quantity sid="VAFTD" fid="Volcanic_ash_forecast_transport_and_dispersion" number="232" unit="log10(kg/m3)" description="Volcanic Ash Forecast Transport and Dispersion" />
+</quantities>

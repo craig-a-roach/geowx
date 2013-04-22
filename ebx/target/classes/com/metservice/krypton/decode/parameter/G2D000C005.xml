@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="Long Wave Radiation (Meteorology)">
+  <quantity sid="NLWRS" fid="Net_long_wave_radiation_flux" number="0" unit="W m-2" description="Net long wave radiation flux surface" />
+  <quantity sid="NLWRT" fid="Net_long_wave_radiation_flux" number="1" unit="W m-2" description="Net long wave radiation flux top of atmosphere" />
+  <quantity sid="LWAVR" fid="Long_wave_radiation_flux" number="2" unit="W m-2" description="Long wave radiation flux" />
+  <quantity sid="DLWRF" fid="Downward_Long-Wave_Rad_Flux" number="3" unit="W m-2" description="Downward Long-Wave Rad. Flux" />
+  <quantity sid="ULWRF" fid="Upward_Long-Wave_Rad_Flux" number="4" unit="W m-2" description="Upward Long-Wave Rad. Flux" />
+  <quantity sid="NLWRF" fid="Net_long_wave_radiation_flux" number="5" unit="W m-2" description="Net Long-Wave Radiation Flux (Surface)" />
+  <quantity sid="NLWRCS" fid="Net_long_wave_radiation_flux_clear_sky" number="6" unit="W m-2" description="Net Long-Wave Radiation Flux, Clear Sky" />
+  <quantity sid="DLWRF" fid="Downward_long_wave_rad_flux" number="192" unit="W m-2" description="Downward Long-Wave Rad Flux" />
+  <quantity sid="ULWRF" fid="Upward_long_wave_rad_flux" number="193" unit="W m-2" description="Upward Long-Wave Rad Flux" />
+  <quantity sid="LWHR" fid="Long_wave_radiative_heating_rate" number="194" unit="W m-2" description="Long-Wave Radiative Heating Rate" />
+  <quantity sid="CSULF" fid="Clear_sky_upward_long_wave_flux" number="195" unit="W m-2" description="Clear Sky Upward Long Wave Flux" />
+  <quantity sid="CSDLF" fid="Clear_sky_downward_long_wave_flux" number="196" unit="W m-2" description="Clear Sky Downward Long Wave Flux" />
+  <quantity sid="CFNLF" fid="Cloud_forcing_net_long_wave_flux" number="197" unit="W m-2" description="Cloud Forcing Net Long Wave Flux" />
+</quantities>
