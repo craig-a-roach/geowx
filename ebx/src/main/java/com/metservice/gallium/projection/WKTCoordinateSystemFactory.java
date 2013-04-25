@@ -5,6 +5,9 @@
  */
 package com.metservice.gallium.projection;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.CodedEnumTable;
 import com.metservice.argon.Ds;
@@ -18,6 +21,9 @@ class WKTCoordinateSystemFactory {
 	private static final CodedEnumTable<Keyword> KeywordTable = new CodedEnumTable<Keyword>(Keyword.class, true, Keyword.values());
 	private static final int SyntaxPreLen = 20;
 	private static final int SyntaxPostLen = 20;
+	private static final int SyntaxPreCount = 5;
+	private static final int SyntaxPostCount = 5;
+	private static final String SyntaxMarker = "^^^";
 
 	private static final char PuncQuote = '\"';
 	private static final char PuncPlus = '+';
@@ -31,6 +37,10 @@ class WKTCoordinateSystemFactory {
 			PuncSquareR, PuncComma };
 	private static final String PuncSymbols = new String(PuncSymbolArray);
 
+	private static final TokenListDelimiter TokenList_Open = new TokenListDelimiter(ListDelimiter.Open);
+	private static final TokenListDelimiter TokenList_Close = new TokenListDelimiter(ListDelimiter.Close);
+	private static final TokenListDelimiter TokenList_Separator = new TokenListDelimiter(ListDelimiter.Separator);
+
 	private static String diagnostic(String qtwSpec, int chIndex) {
 		final String zPre = qtwSpec.substring(0, chIndex);
 		final int preStart = Math.max(0, zPre.length() - SyntaxPreLen);
@@ -38,8 +48,21 @@ class WKTCoordinateSystemFactory {
 		final int postEnd = Math.max(0, zPost.length() - SyntaxPostLen);
 		final String zPreClamp = zPre.substring(preStart);
 		final String zPostClamp = zPost.substring(0, postEnd);
-		final String diag = zPreClamp + "^^^" + zPostClamp;
+		final String diag = zPreClamp + SyntaxMarker + zPostClamp;
 		return diag;
+	}
+
+	private static TokenListDelimiter findListDelimiterToken(char ch) {
+		switch (ch) {
+			case PuncSquareL:
+				return TokenList_Open;
+			case PuncComma:
+				return TokenList_Separator;
+			case PuncSquareR:
+				return TokenList_Close;
+			default:
+				return null;
+		}
 	}
 
 	private static boolean isPuncListDelimiter(char ch) {
@@ -54,9 +77,25 @@ class WKTCoordinateSystemFactory {
 		return ch == PuncQuote;
 	}
 
-	private static void newTokenStream(String qtwSpec)
+	private static IGalliumCoordinateSystem newCoordinateSystem(TokenReader tr)
 			throws GalliumSyntaxException {
-		final Controller ctl = new Controller();
+		assert tr != null;
+		try {
+			final Keyword keyword = tr.consumeKeyword().keyword;
+			System.out.println(tr);
+			System.out.println(keyword);
+		} catch (final SyntaxException ex) {
+			final String m = "Malformed WKT spec; " + ex.getMessage();
+			final String diag = tr.diagnostic();
+			throw new GalliumSyntaxException(m + "\n" + diag);
+		}
+		return null;
+	}
+
+	private static List<Token> newTokenStream(String qtwSpec)
+			throws GalliumSyntaxException {
+		final List<Token> zlTokens = new ArrayList<>(32);
+		final Controller ctl = new Controller(zlTokens);
 		State state = new StateInit();
 		final int len = qtwSpec.length();
 		int chIndex = 0;
@@ -97,6 +136,7 @@ class WKTCoordinateSystemFactory {
 			final String m = "Incomplete WKT spec; " + ex.getMessage();
 			throw new GalliumSyntaxException(m);
 		}
+		return zlTokens;
 	}
 
 	private static CharacterClass selectCharacterClass(char ch)
@@ -112,8 +152,9 @@ class WKTCoordinateSystemFactory {
 			throws GalliumSyntaxException {
 		final String oqtwSpec = ArgonText.oqtw(ozSpec);
 		if (oqtwSpec == null) throw new GalliumSyntaxException("Empty WKT Spec");
-		newTokenStream(oqtwSpec);
-		return null;
+		final List<Token> zlTokens = newTokenStream(oqtwSpec);
+		final TokenReader tr = new TokenReader(zlTokens);
+		return newCoordinateSystem(tr);
 	}
 
 	private WKTCoordinateSystemFactory() {
@@ -171,20 +212,9 @@ class WKTCoordinateSystemFactory {
 			return neo;
 		}
 
-		public void pushKeyword(Keyword k) {
-			System.out.println("KEYWORD=" + k);
-		}
-
-		public void pushListDelimiter(char ch) {
-			System.out.println("LISTDELIMITER=" + ch);
-		}
-
-		public void pushNumber(double numeric) {
-			System.out.println("NUMBER=" + numeric);
-		}
-
-		public void pushString(String qtw) {
-			System.out.println("STRING=" + qtw);
+		public void push(Token t) {
+			assert t != null;
+			m_tokenList.add(t);
 		}
 
 		@Override
@@ -195,9 +225,12 @@ class WKTCoordinateSystemFactory {
 			return ds.s();
 		}
 
-		public Controller() {
+		public Controller(List<Token> tokenList) {
+			assert tokenList != null;
+			m_tokenList = tokenList;
 			m_buffer = new StringBuilder();
 		}
+		private final List<Token> m_tokenList;
 		private final StringBuilder m_buffer;
 		private boolean m_advance;
 	}
@@ -215,6 +248,19 @@ class WKTCoordinateSystemFactory {
 			this.qCode = qCode;
 		}
 		public final String qCode;
+	}
+
+	private static enum ListDelimiter {
+		Open("["), Close("]"), Separator(",");
+
+		public String qCode() {
+			return m_qCode;
+		}
+
+		private ListDelimiter(String qCode) {
+			m_qCode = qCode;
+		}
+		private final String m_qCode;
 	}
 
 	private static abstract class State {
@@ -306,7 +352,7 @@ class WKTCoordinateSystemFactory {
 				final String m = "Unrecognised keyword '" + qtw + "'";
 				throw new SyntaxException(m);
 			}
-			ctl.pushKeyword(oKeyword);
+			ctl.push(new TokenKeyword(oKeyword));
 		}
 
 		@Override
@@ -357,9 +403,10 @@ class WKTCoordinateSystemFactory {
 		@Override
 		public State punctuation(Controller ctl, char ch)
 				throws SyntaxException {
-			if (isPuncListDelimiter(ch)) {
+			final TokenListDelimiter oToken = findListDelimiterToken(ch);
+			if (oToken != null) {
 				ctl.consume();
-				ctl.pushListDelimiter(ch);
+				ctl.push(oToken);
 				return new StateInit();
 			}
 			return super.punctuation(ctl, ch);
@@ -372,7 +419,7 @@ class WKTCoordinateSystemFactory {
 		private void push(Controller ctl)
 				throws SyntaxException {
 			final double n = ctl.popDouble();
-			ctl.pushNumber(n);
+			ctl.push(new TokenLiteralNumber(n));
 		}
 
 		@Override
@@ -424,7 +471,7 @@ class WKTCoordinateSystemFactory {
 		private void push(Controller ctl)
 				throws SyntaxException {
 			final String qtw = ctl.popQtw();
-			ctl.pushString(qtw);
+			ctl.push(new TokenLiteralString(qtw));
 		}
 
 		@Override
@@ -482,6 +529,134 @@ class WKTCoordinateSystemFactory {
 		}
 	}
 
-	private static abstract class Token {
+	private static interface Token {
+
+		public String echo();
+	}
+
+	private static class TokenKeyword implements Token {
+
+		@Override
+		public String echo() {
+			return keyword.qCode();
+		}
+
+		@Override
+		public String toString() {
+			return "Keyword:" + keyword;
+		}
+
+		public TokenKeyword(Keyword keyword) {
+			assert keyword != null;
+			this.keyword = keyword;
+		}
+		public final Keyword keyword;
+	}
+
+	private static class TokenListDelimiter implements Token {
+
+		@Override
+		public String echo() {
+			return listDelimiter.qCode();
+		}
+
+		@Override
+		public String toString() {
+			return "ListDelimiter:" + listDelimiter;
+		}
+
+		public TokenListDelimiter(ListDelimiter d) {
+			assert d != null;
+			this.listDelimiter = d;
+		}
+		public final ListDelimiter listDelimiter;
+	}
+
+	private static interface TokenLiteral extends Token {
+	}
+
+	private static class TokenLiteralNumber implements TokenLiteral {
+
+		@Override
+		public String echo() {
+			return Double.toString(value);
+		}
+
+		@Override
+		public String toString() {
+			return "LiteralNumber:" + value;
+		}
+
+		public TokenLiteralNumber(double value) {
+			this.value = value;
+		}
+		public final double value;
+	}
+
+	private static class TokenLiteralString implements TokenLiteral {
+
+		@Override
+		public String echo() {
+			return "\"" + qtwValue + "\"";
+		}
+
+		@Override
+		public String toString() {
+			return "LiteralString:" + qtwValue;
+		}
+
+		public TokenLiteralString(String qtwValue) {
+			assert qtwValue != null && qtwValue.length() > 0;
+			this.qtwValue = qtwValue;
+		}
+		public final String qtwValue;
+	}
+
+	private static class TokenReader {
+
+		private <T extends Token> T consumeToken(Class<T> tokenClass, String type)
+				throws SyntaxException {
+			if (m_index < m_count) {
+				final Token t = m_zlTokens.get(m_index);
+				if (tokenClass.isInstance(t)) {
+					m_index++;
+					return tokenClass.cast(t);
+				}
+			}
+			throw new SyntaxException("Expecting a " + type);
+		}
+
+		public TokenKeyword consumeKeyword()
+				throws SyntaxException {
+			return consumeToken(TokenKeyword.class, "keyword");
+		}
+
+		public String diagnostic() {
+			final int start = Math.max(0, m_index - SyntaxPreCount);
+			final int end = Math.min(m_count, m_index + SyntaxPostCount);
+			final StringBuilder sb = new StringBuilder();
+			for (int i = start; i < end; i++) {
+				final Token token = m_zlTokens.get(i);
+				if (i == m_index) {
+					sb.append(SyntaxMarker);
+				}
+				sb.append(token.echo());
+			}
+			return sb.toString();
+		}
+
+		@Override
+		public String toString() {
+			return diagnostic();
+		}
+
+		public TokenReader(List<Token> zlTokens) {
+			if (zlTokens == null) throw new IllegalArgumentException("object is null");
+			m_zlTokens = zlTokens;
+			m_count = zlTokens.size();
+		}
+		private final List<Token> m_zlTokens;
+		private final int m_count;
+		private int m_index;
 	}
 }
