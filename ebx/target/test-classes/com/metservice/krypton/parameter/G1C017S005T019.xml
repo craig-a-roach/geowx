@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<quantities description="testdata">
-	<quantity sid="ORO" number="13" unit="m" fid="Model_orography" description="Model orography"/>
-	<quantity sid="BOGUS" number="XY" unit="bogoids" fid="Bogography" description="Superfluous"/>
-</quantities>

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<quantities description="Fire Weather (Land Surface)">
-	<quantity sid="FIREOLK" fid="Fire_outlook" number="0" unit="" description="Fire Outlook" />
-	<quantity sid="FIREODT" fid="Fire_outlook_due_to_dry_thunderstorm" number="1" unit="" description="Fire Outlook Due to Dry Thunderstorm" />
-	<quantity sid="HINDEX" fid="Haines_index" number="2" unit="" description="Haines Index" />
-	<quantity sid="FIRE BURNED AREA" fid="Fire_burned_area" number="3" unit="%" description="Fire Burned Area" />
-</quantities>
