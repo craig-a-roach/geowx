@@ -41,6 +41,9 @@ class WKTCoordinateSystemFactory {
 	private static final TokenListDelimiter TokenList_Close = new TokenListDelimiter(ListDelimiter.Close);
 	private static final TokenListDelimiter TokenList_Separator = new TokenListDelimiter(ListDelimiter.Separator);
 
+	private static final String KA_CS = "<CS>";
+	private static final String KA_S = "<S>";
+
 	private static String diagnostic(String qtwSpec, int chIndex) {
 		final String zPre = qtwSpec.substring(0, chIndex);
 		final int preStart = Math.max(0, zPre.length() - SyntaxPreLen);
@@ -75,21 +78,6 @@ class WKTCoordinateSystemFactory {
 
 	private static boolean isPuncQuote(char ch) {
 		return ch == PuncQuote;
-	}
-
-	private static IGalliumCoordinateSystem newCoordinateSystem(TokenReader tr)
-			throws GalliumSyntaxException {
-		assert tr != null;
-		try {
-			final Keyword keyword = tr.consumeKeyword().keyword;
-			System.out.println(tr);
-			System.out.println(keyword);
-		} catch (final SyntaxException ex) {
-			final String m = "Malformed WKT spec; " + ex.getMessage();
-			final String diag = tr.diagnostic();
-			throw new GalliumSyntaxException(m + "\n" + diag);
-		}
-		return null;
 	}
 
 	private static List<Token> newTokenStream(String qtwSpec)
@@ -139,6 +127,113 @@ class WKTCoordinateSystemFactory {
 		return zlTokens;
 	}
 
+	private static Authority parseAuthority(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwNamespace = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterSeparator();
+		final String qtwCode = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterClose();
+		return Authority.newInstance(qtwNamespace, qtwCode);
+	}
+
+	private static IGalliumCoordinateSystem parseCS(TokenReader tr)
+			throws GalliumSyntaxException {
+		assert tr != null;
+		try {
+			final Keyword keyword = tr.consumeKeyword();
+			if (!keyword.isCoordinateSystem()) {
+				final String m = "'" + keyword.qCode() + "' is not a coordinate system";
+				throw new SyntaxException(m);
+			}
+			switch (keyword) {
+				case GEOGCS:
+					return parseGeographicCS(tr);
+				default:
+					throw new SyntaxException("Coordinate system '" + keyword.qCode() + "' is not supported");
+			}
+		} catch (final SyntaxException ex) {
+			final String m = "Malformed WKT spec; " + ex.getMessage();
+			final String diag = tr.diagnostic();
+			throw new GalliumSyntaxException(m + "\n" + diag);
+		}
+	}
+
+	private static Datum parseDatum(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwName = tr.consumeLiteralQtw();
+		if (!tr.consumeListDelimiterMore()) {
+			final Datum oDatum = DatumDictionary.findByName(qtwName);
+			if (oDatum != null) return oDatum;
+			final String m = "Datum '" + qtwName + "' is not in dictionary; require definition";
+			throw new SyntaxException(m);
+		}
+		tr.consumeKeyword(Keyword.SPHEROID);
+		final Ellipsoid ellipsoid = parseEllipsoid(tr);
+		ParameterArray oTransform = null;
+		Authority oAuthority = null;
+		while (tr.consumeListDelimiterMore()) {
+			final Keyword keyword = tr.consumeKeyword();
+			switch (keyword) {
+				case TOWGS84:
+					oTransform = parseParameterArray(tr, 7);
+				break;
+				case AUTHORITY:
+					oAuthority = parseAuthority(tr);
+				break;
+				default:
+					throw new SyntaxException("Unexpected datum attribute '" + keyword + "'");
+			}
+		}
+		return Datum.newInstance(qtwName, ellipsoid, oTransform, oAuthority);
+	}
+
+	private static Ellipsoid parseEllipsoid(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwName = tr.consumeLiteralQtw();
+		if (!tr.consumeListDelimiterMore()) {
+			final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(qtwName);
+			if (oEllipsoid != null) return oEllipsoid;
+			final String m = "Ellipsoid/spheroid '" + qtwName + "' is not in dictionary; require definition";
+			throw new SyntaxException(m);
+		}
+		final double semiMajorMetres = tr.consumeLiteralDouble();
+		tr.consumeListDelimiterSeparator();
+		final double inverseFlattening = tr.consumeLiteralDouble();
+		Authority oAuthority = null;
+		if (tr.consumeListDelimiterMore()) {
+			tr.consumeKeyword(Keyword.AUTHORITY);
+			oAuthority = parseAuthority(tr);
+			tr.consumeListDelimiterClose();
+		}
+
+		return Ellipsoid.newInverseFlattening(qtwName, semiMajorMetres, inverseFlattening, oAuthority);
+	}
+
+	private static IGalliumCoordinateSystem parseGeographicCS(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwName = tr.consumeLiteralQtw();
+		tr.consumeKeyword(Keyword.DATUM);
+		final Datum datum = parseDatum(tr);
+
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private static ParameterArray parseParameterArray(TokenReader tr, int max)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final ParameterArray pa = new ParameterArray(max);
+		pa.add(tr.consumeLiteralDouble());
+		while (tr.consumeListDelimiterMore()) {
+			pa.add(tr.consumeLiteralDouble());
+		}
+		return pa;
+	}
+
 	private static CharacterClass selectCharacterClass(char ch)
 			throws SyntaxException {
 		if (ArgonText.isDigit(ch)) return CharacterClass.Digit;
@@ -154,7 +249,7 @@ class WKTCoordinateSystemFactory {
 		if (oqtwSpec == null) throw new GalliumSyntaxException("Empty WKT Spec");
 		final List<Token> zlTokens = newTokenStream(oqtwSpec);
 		final TokenReader tr = new TokenReader(zlTokens);
-		return newCoordinateSystem(tr);
+		return parseCS(tr);
 	}
 
 	private WKTCoordinateSystemFactory() {
@@ -236,18 +331,32 @@ class WKTCoordinateSystemFactory {
 	}
 
 	private static enum Keyword implements ICodedEnum {
-		GEOGCS("GEOGCS"), PROJCS("PROJCS"), DATUM("DATUM"), SPHEROID("SPHEROID"), PRIMEM("PRIMEM"), UNIT("UNIT");
+		GEOGCS("GEOGCS", KA_CS + KA_S),
+		PROJCS("PROJCS", KA_CS + KA_S),
+		DATUM("DATUM", KA_S),
+		SPHEROID("SPHEROID", KA_S),
+		PRIMEM("PRIMEM", KA_S),
+		TOWGS84("TOWGS84", KA_S),
+		UNIT("UNIT", KA_S),
+		AUTHORITY("AUTHORITY", KA_S);
+
+		public boolean isCoordinateSystem() {
+			return zAttributes.contains(KA_CS);
+		}
 
 		@Override
 		public String qCode() {
 			return qCode;
 		}
 
-		Keyword(String qCode) {
+		Keyword(String qCode, String zAttributes) {
 			assert qCode != null && qCode.length() > 0;
+			assert zAttributes != null;
 			this.qCode = qCode;
+			this.zAttributes = zAttributes;
 		}
 		public final String qCode;
+		public final String zAttributes;
 	}
 
 	private static enum ListDelimiter {
@@ -626,9 +735,78 @@ class WKTCoordinateSystemFactory {
 			throw new SyntaxException("Expecting a " + type);
 		}
 
-		public TokenKeyword consumeKeyword()
+		// @TODO
+		// private <T extends Token> T peekToken(Class<T> tokenClass) {
+		// if (m_index < m_count) {
+		// final Token t = m_zlTokens.get(m_index);
+		// if (tokenClass.isInstance(t)) return tokenClass.cast(t);
+		// }
+		// return null;
+		// }
+		public Keyword consumeKeyword()
 				throws SyntaxException {
-			return consumeToken(TokenKeyword.class, "keyword");
+			return consumeToken(TokenKeyword.class, "keyword").keyword;
+		}
+
+		public void consumeKeyword(Keyword expected)
+				throws SyntaxException {
+			final Keyword actual = consumeKeyword();
+			if (actual != expected) {
+				final String m = "Expecting keyword '" + expected + "'";
+				throw new SyntaxException(m);
+			}
+		}
+
+		public ListDelimiter consumeListDelimiter()
+				throws SyntaxException {
+			return consumeToken(TokenListDelimiter.class, "list delimiter").listDelimiter;
+		}
+
+		public void consumeListDelimiter(ListDelimiter expected)
+				throws SyntaxException {
+			final ListDelimiter d = consumeListDelimiter();
+			if (d != expected) {
+				final String m = "Expecting a '" + expected.qCode() + "' list delimiter character";
+				throw new SyntaxException(m);
+			}
+		}
+
+		public void consumeListDelimiterClose()
+				throws SyntaxException {
+			consumeListDelimiter(ListDelimiter.Close);
+		}
+
+		public boolean consumeListDelimiterMore()
+				throws SyntaxException {
+			final ListDelimiter d = consumeListDelimiter();
+			switch (d) {
+				case Separator:
+					return true;
+				case Close:
+					return false;
+				default:
+					throw new SyntaxException("Expecting a comma or closing bracket");
+			}
+		}
+
+		public void consumeListDelimiterOpen()
+				throws SyntaxException {
+			consumeListDelimiter(ListDelimiter.Open);
+		}
+
+		public void consumeListDelimiterSeparator()
+				throws SyntaxException {
+			consumeListDelimiter(ListDelimiter.Separator);
+		}
+
+		public double consumeLiteralDouble()
+				throws SyntaxException {
+			return consumeToken(TokenLiteralNumber.class, "numeric literal").value;
+		}
+
+		public String consumeLiteralQtw()
+				throws SyntaxException {
+			return consumeToken(TokenLiteralString.class, "string literal").qtwValue;
 		}
 
 		public String diagnostic() {
@@ -644,6 +822,12 @@ class WKTCoordinateSystemFactory {
 			}
 			return sb.toString();
 		}
+
+		// @TODO
+		// public Keyword peekKeyword() {
+		// final TokenKeyword oToken = peekToken(TokenKeyword.class);
+		// return oToken == null ? null : oToken.keyword;
+		// }
 
 		@Override
 		public String toString() {
