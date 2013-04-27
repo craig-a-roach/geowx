@@ -282,7 +282,7 @@ abstract class AbstractProjection implements IGalliumProjection {
 	public void setEllipsoid(Ellipsoid ellipsoid) {
 		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
 		oEllipsoid = ellipsoid;
-		a = ellipsoid.equatorRadius;
+		a = ellipsoid.equatorialRadiusMetres;
 		e = ellipsoid.eccentricity;
 		es = ellipsoid.eccentricity2;
 	}
