@@ -5,36 +5,69 @@
  */
 package com.metservice.gallium.projection;
 
+import com.metservice.argon.Ds;
+
 /**
  * @author roach
  */
 class Datum {
 
-	public static final Datum[] Datums = { new Datum("Australian Geodetic 1966", Ellipsoid.AUSTRALIAN, -133, -48, 148),
-			new Datum("Australian Geodetic 984", Ellipsoid.AUSTRALIAN, -134, -48, 149),
-			new Datum("European Datum 1950", Ellipsoid.INTERNATIONAL_1967, -87, -98, -121),
-			new Datum("European Datum 1979", Ellipsoid.INTERNATIONAL_1967, -86, -98, -119),
-			new Datum("Geodetic Datum 1949", Ellipsoid.INTERNATIONAL_1967, 84, -22, 209),
-			new Datum("Hong Kong 1963", Ellipsoid.INTERNATIONAL_1967, -156, -271, -189),
-			new Datum("Hu Tzu Shan", Ellipsoid.INTERNATIONAL_1967, -634, -549, -201),
-			new Datum("NAD83", Ellipsoid.GRS_1980, 0, 0, 0),
-			new Datum("Ordnance Survey 1936", Ellipsoid.AIRY, 375, -111, 431),
-			new Datum("Pulkovo 1942", Ellipsoid.KRASOVSKY, 27, -135, -89),
-			new Datum("PROVISIONAL_S_AMERICAN_1956", Ellipsoid.INTERNATIONAL_1967, -288, 175, -376),
-			new Datum("Tokyo", Ellipsoid.BESSEL, -128, 481, 664), new Datum("WGS72", Ellipsoid.WGS_1972, 0, 0, -4.5),
-			new Datum("WGS84", Ellipsoid.WGS_1984, 0, 0, 0) };
+	public static final Datum SPHERE = newInstance("sphere", Ellipsoid.SPHERE);
+	public static final Datum WGS84 = newInstance("WGS84", Ellipsoid.WGS84);
 
-	public Datum(String name, Ellipsoid ellipsoid, double deltaX, double deltaY, double deltaZ) {
+	public static Datum createInstance(String fname, String ellipsoidName, double deltaX, double deltaY, double deltaZ) {
+		final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(ellipsoidName);
+		if (oEllipsoid == null) return null;
+		final DualName name = DualName.newInstance(fname);
+		return new Datum(name, oEllipsoid, deltaX, deltaY, deltaZ, null);
+	}
+
+	public static Datum newInstance(String fname, Ellipsoid ellipsoid) {
+		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
+		final DualName name = DualName.newInstance(fname);
+		return new Datum(name, ellipsoid, 0.0, 0.0, 0.0, null);
+	}
+
+	public static Datum newInstance(String fname, Ellipsoid ellipsoid, ParameterArray oTransform, Authority oAuthority) {
+		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
+		final DualName name = DualName.newInstance(fname);
+		double deltaX = 0.0;
+		double deltaY = 0.0;
+		double deltaZ = 0.0;
+		if (oTransform != null) {
+			deltaX = oTransform.select(0, 0.0);
+			deltaY = oTransform.select(1, 0.0);
+			deltaZ = oTransform.select(2, 0.0);
+		}
+		return new Datum(name, ellipsoid, deltaX, deltaY, deltaZ, oAuthority);
+	}
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		ds.a("name", name);
+		ds.a("ellipsoid", ellipsoid);
+		ds.a("deltaX", deltaX);
+		ds.a("deltaY", deltaY);
+		ds.a("deltaZ", deltaZ);
+		ds.a("authority", oAuthority);
+		return ds.s();
+	}
+
+	private Datum(DualName name, Ellipsoid ellipsoid, double deltaX, double deltaY, double deltaZ, Authority oAuthority) {
+		assert name != null;
+		assert ellipsoid != null;
 		this.name = name;
 		this.ellipsoid = ellipsoid;
 		this.deltaX = deltaX;
 		this.deltaY = deltaY;
 		this.deltaZ = deltaZ;
+		this.oAuthority = oAuthority;
 	}
-	public final String name;
+	public final DualName name;
 	public final Ellipsoid ellipsoid;
 	public final double deltaX;
 	public final double deltaY;
 	public final double deltaZ;
-
+	public final Authority oAuthority;
 }
