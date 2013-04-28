@@ -218,6 +218,9 @@ class WKTCoordinateSystemFactory {
 		final String qtwName = tr.consumeLiteralQtw();
 		tr.consumeKeyword(Keyword.DATUM);
 		final Datum datum = parseDatum(tr);
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.PRIMEM);
+		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
 
 		// TODO Auto-generated method stub
 		return null;
@@ -232,6 +235,27 @@ class WKTCoordinateSystemFactory {
 			pa.add(tr.consumeLiteralDouble());
 		}
 		return pa;
+	}
+
+	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwName = tr.consumeLiteralQtw();
+		if (!tr.consumeListDelimiterMore()) {
+			final PrimeMeridian oPM = PrimeMeridian.findByName(qtwName);
+			if (oPM != null) return oPM;
+			final String m = "Prime meridian '" + qtwName + "' is not in dictionary; require definition";
+			throw new SyntaxException(m);
+		}
+		final double longitude = tr.consumeLiteralDouble();
+		tr.consumeListDelimiterSeparator();
+		Authority oAuthority = null;
+		if (tr.consumeListDelimiterMore()) {
+			tr.consumeKeyword(Keyword.AUTHORITY);
+			oAuthority = parseAuthority(tr);
+			tr.consumeListDelimiterClose();
+		}
+		return PrimeMeridian.newInstance(qtwName, longitude, oAuthority);
 	}
 
 	private static CharacterClass selectCharacterClass(char ch)
