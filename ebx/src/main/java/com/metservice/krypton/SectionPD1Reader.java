@@ -83,8 +83,8 @@ class SectionPD1Reader extends Section1Reader {
 		return int2(22);
 	}
 
-	public int b2425_averageMissing() {
-		return int2(24);
+	public int b24_averageMissing() {
+		return intu1(24);
 	}
 
 	public short b26_subcentre() {
