@@ -453,7 +453,7 @@ class UGrib {
 	}
 
 	public static short shortu1hi(byte[] buffer, int pos) {
-		return (short) (buffer[pos] & 0xF0);
+		return (short) ((buffer[pos] & 0xF0) >> 4);
 	}
 
 	public static short shortu1lo(byte[] buffer, int pos) {
