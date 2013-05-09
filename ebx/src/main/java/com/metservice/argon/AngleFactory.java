@@ -23,10 +23,6 @@ public class AngleFactory {
 	private static final char IndSouth = 'S';
 	private static final char IndWest = 'W';
 
-	private static final double DivDeg = 1.0;
-	private static final double DivMin = 60.0;
-	private static final double DivSec = 3600.0;
-
 	public static double newDegrees(String qSpec)
 			throws ArgonFormatException {
 		if (qSpec == null || qSpec.length() == 0) throw new IllegalArgumentException("string is null or empty");
@@ -72,7 +68,7 @@ public class AngleFactory {
 				}
 			} catch (final ParseException ex) {
 				final String h = "Angle '" + ztwSpec + " is malformed";
-				final String p = " position " + i + "(" + ch + ")";
+				final String p = "character index " + i + "(" + ch + ")";
 				final String m = h + "..." + ex.getMessage() + " at " + p;
 				throw new ArgonFormatException(m);
 			}
@@ -87,6 +83,17 @@ public class AngleFactory {
 		return parser.result();
 	}
 
+	private static enum Fraction {
+		Degrees("Degrees", 1.0), Minutes("Minutes", 60.0), Seconds("Seconds", 3600.0);
+
+		private Fraction(String title, double divisor) {
+			this.title = title;
+			this.divisor = divisor;
+		}
+		public final String title;
+		public final double divisor;
+	}
+
 	private static class ParseException extends Exception {
 
 		public ParseException(String message) {
@@ -96,31 +103,43 @@ public class AngleFactory {
 
 	private static class Parser {
 
-		private void push(double divisor)
+		private void push(Fraction oFraction)
+				throws ParseException {
+			if (oFraction == null) throw new ParseException("no further fractional part allowed");
+			final String zValue = m_buffer.toString();
+			if (zValue.isEmpty()) throw new ParseException(oFraction.title + " value is missing");
+			m_buffer.setLength(0);
+			pushFraction(zValue, oFraction);
+		}
+
+		private void pushFraction(String qValue, Fraction fraction)
+				throws ParseException {
+			try {
+				final double q = Double.parseDouble(qValue);
+				m_uresult += (q / fraction.divisor);
+			} catch (final NumberFormatException ex) {
+				throw new ParseException(fraction.title + " numeric value '" + qValue + "' is malformed");
+			}
+		}
+
+		private void pushTerminal(Fraction oFraction)
 				throws ParseException {
 			final String zValue = m_buffer.toString();
-			m_buffer.setLength(0);
-			if (zValue.length() == 0) return;
-			try {
-				final double q = Double.parseDouble(zValue);
-				final double term = q / divisor;
-				final double sgnTerm = m_negated ? -term : term;
-				m_result = sgnTerm;
-			} catch (final NumberFormatException ex) {
-				throw new ParseException("malformed numeric component of angle");
-			}
+			if (zValue.isEmpty()) return;
+			if (oFraction == null) throw new ParseException("fractional part '" + zValue + "' not allowed");
+			pushFraction(zValue, oFraction);
 		}
 
 		public void degrees()
 				throws ParseException {
-			push(DivDeg);
-			m_divDefault = DivMin;
+			push(Fraction.Degrees);
+			m_oDefaultFraction = Fraction.Minutes;
 		}
 
 		public void minutes()
 				throws ParseException {
-			push(DivMin);
-			m_divDefault = DivSec;
+			push(Fraction.Minutes);
+			m_oDefaultFraction = Fraction.Seconds;
 		}
 
 		public void numeric(char ch) {
@@ -128,13 +147,13 @@ public class AngleFactory {
 		}
 
 		public double result() {
-			return m_result;
+			return m_negated ? -m_uresult : m_uresult;
 		}
 
 		public void seconds()
 				throws ParseException {
-			push(DivSec);
-			m_divDefault = DivSec;
+			push(Fraction.Seconds);
+			m_oDefaultFraction = null;
 		}
 
 		public void sign(char ch)
@@ -142,18 +161,32 @@ public class AngleFactory {
 			if (m_seenSign) throw new ParseException("ambiguous sign indicator");
 			m_negated = ch == '-' || ch == IndSouth || ch == IndWest;
 			m_seenSign = true;
+			if (m_buffer.length() > 0) {
+				degrees();
+			}
 		}
 
 		public void terminate()
 				throws ParseException {
-			push(m_divDefault);
+			pushTerminal(m_oDefaultFraction);
+		}
+
+		@Override
+		public String toString() {
+			final Ds ds = Ds.o("Parser");
+			ds.a("buffer", m_buffer);
+			ds.a("defaultFraction", m_oDefaultFraction);
+			ds.a("negated", m_negated);
+			ds.a("seenSign", m_seenSign);
+			ds.a("uresult", m_uresult);
+			return ds.ss();
 		}
 
 		Parser() {
 		}
 		private final StringBuilder m_buffer = new StringBuilder();
-		private double m_result = 0.0;
-		private double m_divDefault = DivDeg;
+		private double m_uresult = 0.0;
+		private Fraction m_oDefaultFraction = Fraction.Degrees;
 		private boolean m_negated;
 		private boolean m_seenSign;
 	}
