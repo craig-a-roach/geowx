@@ -41,17 +41,17 @@ class EllipsoidDictionary {
 		if (oqcctw == null) return null;
 		final Ellipsoid oMatch = m_mapNameFull.get(oqcctw);
 		if (oMatch != null) return oMatch;
-		return m_mapnameShort.get(oqcctw);
+		return m_mapNameShort.get(oqcctw);
 	}
 
 	private EllipsoidDictionary(Builder b) {
 		assert b != null;
 		m_mapNameFull = b.nf;
-		m_mapnameShort = b.ns;
+		m_mapNameShort = b.ns;
 	}
 
 	private final Map<String, Ellipsoid> m_mapNameFull;
-	private final Map<String, Ellipsoid> m_mapnameShort;
+	private final Map<String, Ellipsoid> m_mapNameShort;
 
 	private static class Builder {
 
