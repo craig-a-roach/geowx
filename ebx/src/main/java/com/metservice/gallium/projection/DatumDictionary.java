@@ -19,8 +19,8 @@ class DatumDictionary {
 
 	private static DatumDictionary newInstance() {
 		final Builder b = new Builder(16);
-		b.add(Datum.SPHERE);
-		b.add(Datum.WGS84);
+		b.add(Datum.D_SPHERE);
+		b.add(Datum.D_WGS84);
 		b.add(Datum.createInstance("NAD83", "NAD83", 0.0, 0.0, 0.0));
 		b.add(Datum.createInstance("European Datum 1979", "New International 1967", -86.0, -98.0, -119.0));
 		b.add(Datum.createInstance("Geodetic Datum 1949", "New International 1967", 84.0, -22.0, 209.0));

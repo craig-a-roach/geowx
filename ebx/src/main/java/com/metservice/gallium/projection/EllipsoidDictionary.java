@@ -55,12 +55,16 @@ class EllipsoidDictionary {
 
 	private static class Builder {
 
+		private void put(Map<String, Ellipsoid> dst, String key, Ellipsoid value) {
+			if (dst.put(key, value) != null) throw new IllegalStateException("ambiguous key '" + key + "'");
+		}
+
 		void add(Ellipsoid e) {
 			assert e != null;
 			final DualName n = e.name;
-			nf.put(n.qcctwFullName(), e);
+			put(nf, n.qcctwFullName(), e);
 			if (n.hasDistinctShortName()) {
-				ns.put(n.qcctwShortName(), e);
+				put(ns, n.qcctwShortName(), e);
 			}
 		}
 

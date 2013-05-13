@@ -15,8 +15,8 @@ public class TestUnit1Ellipsoid {
 
 	@Test
 	public void t10_wgs84() {
-		final Datum oD = DatumDictionary.findByName("WGS84");
-		Assert.assertNotNull("WGS84", oD);
+		final Datum oD = DatumDictionary.findByName("D_WGS_1984");
+		Assert.assertNotNull("D_WGS_1984", oD);
 		Assert.assertEquals("equator r", 6_378_137.0, oD.ellipsoid.equatorialRadiusMetres, 1e-1);
 		Assert.assertEquals("polar r", 6_356_752.3142, oD.ellipsoid.polarRadiusMetres, 1e-3);
 	}

@@ -19,10 +19,10 @@ class UnitDictionary {
 
 	private static UnitDictionary newInstance() {
 		final Builder b = new Builder(32);
-		b.add(Unit.DEGREES);
 		b.add(Unit.RADIANS);
-		b.add(Unit.newAngle(1.0 / 60.0, "arc minute", "min", "arc minutes", "\'"));
-		b.add(Unit.newAngle(1.0 / 3600.0, "arc second", "sec", "arc seconds", "\""));
+		b.add(Unit.DEGREES);
+		b.add(Unit.newAngle(MapMath.DTR / 60.0, "arc minute", "min", "arc minutes", "\'"));
+		b.add(Unit.newAngle(MapMath.DTR / 3600.0, "arc second", "sec", "arc seconds", "\""));
 
 		b.add(Unit.METERS);
 		b.add(Unit.KILOMETERS);

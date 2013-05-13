@@ -127,6 +127,14 @@ class WKTCoordinateSystemFactory {
 		return zlTokens;
 	}
 
+	private static Unit parseAngularUnit(TokenReader tr)
+			throws SyntaxException {
+		final Unit unit = parseUnit(tr);
+		if (unit.type == UnitType.Angle) return unit;
+		final String m = "Unit '" + unit.pluralName + "' is a " + unit.type + " type; require angular unit";
+		throw new SyntaxException(m);
+	}
+
 	private static Authority parseAuthority(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -216,14 +224,26 @@ class WKTCoordinateSystemFactory {
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
 		final String qtwName = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.DATUM);
 		final Datum datum = parseDatum(tr);
 		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.PRIMEM);
 		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
-
-		// TODO Auto-generated method stub
-		return null;
+		tr.consumeKeyword(Keyword.UNIT);
+		final Unit angularUnit = parseAngularUnit(tr);
+		Authority oAuthority = null;
+		while (tr.consumeListDelimiterMore()) {
+			final Keyword keyword = tr.consumeKeyword();
+			switch (keyword) {
+				case AUTHORITY:
+					oAuthority = parseAuthority(tr);
+				break;
+				default:
+					throw new SyntaxException("Unexpected co-ordinate system attribute '" + keyword + "'");
+			}
+		}
+		return GeographicCoordinateSystem.newInstance(qtwName, datum, primeMeridian, angularUnit, oAuthority);
 	}
 
 	private static ParameterArray parseParameterArray(TokenReader tr, int max)
@@ -256,6 +276,27 @@ class WKTCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 		return PrimeMeridian.newInstance(qtwName, longitude, oAuthority);
+	}
+
+	private static Unit parseUnit(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwName = tr.consumeLiteralQtw();
+		if (!tr.consumeListDelimiterMore()) {
+			final Unit oU = UnitDictionary.findByName(qtwName);
+			if (oU != null) return oU;
+			final String m = "Unit '" + qtwName + "' is not in dictionary; require definition";
+			throw new SyntaxException(m);
+		}
+		final double convertToBase = tr.consumeLiteralDouble();
+		tr.consumeListDelimiterSeparator();
+		Authority oAuthority = null;
+		if (tr.consumeListDelimiterMore()) {
+			tr.consumeKeyword(Keyword.AUTHORITY);
+			oAuthority = parseAuthority(tr);
+			tr.consumeListDelimiterClose();
+		}
+		return Unit.newAngle(convertToBase, oAuthority, qtwName);
 	}
 
 	private static CharacterClass selectCharacterClass(char ch)
@@ -759,7 +800,7 @@ class WKTCoordinateSystemFactory {
 			throw new SyntaxException("Expecting a " + type);
 		}
 
-		// @TODO
+		// TODO
 		// private <T extends Token> T peekToken(Class<T> tokenClass) {
 		// if (m_index < m_count) {
 		// final Token t = m_zlTokens.get(m_index);

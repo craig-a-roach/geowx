@@ -10,8 +10,8 @@ package com.metservice.gallium.projection;
  */
 class Unit implements Comparable<Unit> {
 
-	public static final Unit DEGREES = newAngle(1.0, "degree", "deg", "degrees", "\u00B0");
-	public static final Unit RADIANS = newAngle(MapMath.RTD, "radian", "rad");
+	public static final Unit RADIANS = newAngle(1.0, "radian", "rad");
+	public static final Unit DEGREES = newAngle(MapMath.DTR, "degree", "deg", "degrees", "\u00B0");
 
 	public static final Unit METERS = newLength(1.0, "meter", "m");
 	public static final Unit KILOMETERS = newLength(1000.0, "kilometer", "km");
@@ -29,7 +29,12 @@ class Unit implements Comparable<Unit> {
 		final String pluralShort = card < 4 ? singularShort : names[3];
 		final DualName singular = DualName.newInstance(singularFull, singularShort);
 		final DualName plural = DualName.newInstance(pluralFull, pluralShort);
-		return new Unit(type, singular, plural, toBase);
+		return new Unit(type, singular, plural, null, toBase);
+	}
+
+	public static Unit newAngle(double toBase, Authority oAuthority, String fname) {
+		final DualName name = DualName.newInstance(fname);
+		return new Unit(UnitType.Angle, name, name, oAuthority, toBase);
 	}
 
 	public static Unit newAngle(double toBase, String... names) {
@@ -76,20 +81,30 @@ class Unit implements Comparable<Unit> {
 
 	@Override
 	public String toString() {
-		return pluralName.qcctwFullName();
+		final StringBuilder sb = new StringBuilder();
+		sb.append(pluralName.qcctwFullName());
+		if (oAuthority != null) {
+			sb.append(" authority ").append(oAuthority);
+		}
+		if (m_scaleToBase != 1.0) {
+			sb.append(" toBase ").append(m_scaleToBase);
+		}
+		return sb.toString();
 	}
 
-	private Unit(UnitType type, DualName singular, DualName plural, double scaleToBase) {
+	private Unit(UnitType type, DualName singular, DualName plural, Authority oAuthority, double scaleToBase) {
 		if (type == null) throw new IllegalArgumentException("object is null");
 		if (singular == null) throw new IllegalArgumentException("object is null");
 		if (plural == null) throw new IllegalArgumentException("object is null");
 		this.type = type;
 		this.singularName = singular;
 		this.pluralName = plural;
+		this.oAuthority = oAuthority;
 		m_scaleToBase = scaleToBase;
 	}
 	public final UnitType type;
 	public final DualName singularName;
 	public final DualName pluralName;
+	public final Authority oAuthority;
 	private final double m_scaleToBase;
 }

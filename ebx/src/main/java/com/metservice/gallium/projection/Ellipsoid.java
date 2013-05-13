@@ -10,8 +10,8 @@ package com.metservice.gallium.projection;
  */
 class Ellipsoid {
 
-	public static final Ellipsoid SPHERE = newSphere("sphere", 6_371_008.7714, "Sphere");
-	public static final Ellipsoid WGS84 = newInverseFlattening("WGS84", 6_378_137.0, 298.257223563, "WGS 84");
+	public static final Ellipsoid SPHERE = newSphere("sphere", 6_371_000.0, "Sphere");
+	public static final Ellipsoid WGS84 = newInverseFlattening("WGS84", 6_378_137.0, 298.257223563, "WGS_1984");
 
 	private static double eccentricity2(double er, double pr) {
 		return 1.0 - ((pr * pr) / (er * er));
