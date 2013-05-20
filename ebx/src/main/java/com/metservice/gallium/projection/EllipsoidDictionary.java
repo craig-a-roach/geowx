@@ -19,15 +19,18 @@ class EllipsoidDictionary {
 
 	private static EllipsoidDictionary newInstance() {
 		final Builder b = new Builder(16);
-		b.add(Ellipsoid.SPHERE);
-		b.add(Ellipsoid.WGS84);
-		b.add(Ellipsoid.newInverseFlattening("NAD83", 6_378_137.0, 298.257222101, "NAD83: GRS 1980 (IUGG, 1980)"));
-		b.add(Ellipsoid.newInverseFlattening("GRS80", 6_378_137.0, 298.257222101, "GRS 1980 (IUGG, 1980)"));
-		b.add(Ellipsoid.newInverseFlattening("WGS72", 6_378_135.0, 298.26, "WGS 72"));
-		b.add(Ellipsoid.newMinor("new_intl", 6_378_157.5, 6_356_772.2, "New International 1967"));
-		b.add(Ellipsoid.newMinor("mod_airy", 6_377_340.189, 6_356_034.446, "Modified Airy"));
-		b.add(Ellipsoid.newMinor("airy", 6_377_563.396, 6_356_256.910, "Airy 1830"));
-		b.add(Ellipsoid.newMinor("australian", 6_378_160.0, 6_356_774.719, "Australian"));
+		b.add(Ellipsoid.Sphere);
+		b.add(Ellipsoid.Sphere_ARC_INFO);
+		b.add(Ellipsoid.WGS_1984);
+		b.add(Ellipsoid.newInverseFlattening("Airy_1830", 6_377_563.396, 299.3249646, "airy"));
+		b.add(Ellipsoid.newInverseFlattening("Airy_Modified", 6_377_340.189, 299.3249646, "mod_airy"));
+
+		b.add(Ellipsoid.newInverseFlattening("NAD83: GRS 1980 (IUGG, 1980)", 6_378_137.0, 298.257222101, "NAD83"));
+		b.add(Ellipsoid.newInverseFlattening("GRS 1980 (IUGG, 1980)", 6_378_137.0, 298.257222101, "GRS80"));
+		b.add(Ellipsoid.newInverseFlattening("WGS 72", 6_378_135.0, 298.26, "WGS72"));
+
+		b.add(Ellipsoid.newMinor("New International 1967", 6_378_157.5, 6_356_772.2, "new_intl"));
+		b.add(Ellipsoid.newMinor("Australian", 6_378_160.0, 6_356_774.719, "australian"));
 		return new EllipsoidDictionary(b);
 	}
 

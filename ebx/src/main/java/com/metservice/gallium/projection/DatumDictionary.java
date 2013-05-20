@@ -19,12 +19,14 @@ class DatumDictionary {
 
 	private static DatumDictionary newInstance() {
 		final Builder b = new Builder(16);
-		b.add(Datum.D_SPHERE);
-		b.add(Datum.D_WGS84);
+		b.add(Datum.D_Sphere);
+		b.add(Datum.D_Sphere_ARC_INFO);
+		b.add(Datum.D_WGS_1984);
+		b.add(Datum.createInstance("D_OSGB_1936", "Airy_1830", 375.0, -111.0, 431.0));
+
 		b.add(Datum.createInstance("NAD83", "NAD83", 0.0, 0.0, 0.0));
 		b.add(Datum.createInstance("European Datum 1979", "New International 1967", -86.0, -98.0, -119.0));
 		b.add(Datum.createInstance("Geodetic Datum 1949", "New International 1967", 84.0, -22.0, 209.0));
-		b.add(Datum.createInstance("Ordnance Survey 1936", "Airy 1830", 375.0, -111.0, 431.0));
 		b.add(Datum.createInstance("Australian Geodetic 1966", "Australian", -133.0, -48.0, 148.0));
 		b.add(Datum.createInstance("Australian Geodetic 1984", "Australian", -134.0, -48.0, 149.0));
 

@@ -415,7 +415,7 @@ abstract class AbstractProjection implements IGalliumProjection {
 	}
 
 	protected AbstractProjection() {
-		setEllipsoid(Ellipsoid.SPHERE);
+		setEllipsoid(Ellipsoid.Sphere);
 	}
 
 	/**

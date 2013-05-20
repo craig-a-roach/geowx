@@ -12,8 +12,9 @@ import com.metservice.argon.Ds;
  */
 class Datum {
 
-	public static final Datum D_SPHERE = newInstance("D_SPHERE", Ellipsoid.SPHERE);
-	public static final Datum D_WGS84 = newInstance("D_WGS_1984", Ellipsoid.WGS84);
+	public static final Datum D_Sphere = newInstance("D_Sphere", Ellipsoid.Sphere);
+	public static final Datum D_Sphere_ARC_INFO = newInstance("D_Sphere_ARC_INFO", Ellipsoid.Sphere_ARC_INFO);
+	public static final Datum D_WGS_1984 = newInstance("D_WGS_1984", Ellipsoid.WGS_1984);
 
 	public static Datum createInstance(String fname, String ellipsoidName, double deltaX, double deltaY, double deltaZ) {
 		final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(ellipsoidName);

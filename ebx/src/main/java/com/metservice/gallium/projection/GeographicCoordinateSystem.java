@@ -12,10 +12,17 @@ import com.metservice.argon.Ds;
  */
 class GeographicCoordinateSystem implements IGalliumGeographicCoordinateSystem {
 
-	public static final GeographicCoordinateSystem GCS_Sphere = newInstance("GCS_Sphere", Datum.D_SPHERE,
-			PrimeMeridian.Greenwich, Unit.DEGREES, null);
-	public static final GeographicCoordinateSystem GCS_WGS84 = newInstance("GCS_WGS_1984", Datum.D_WGS84,
-			PrimeMeridian.Greenwich, Unit.DEGREES, null);
+	public static final GeographicCoordinateSystem GCS_Sphere = newInstance("GCS_Sphere", Datum.D_Sphere,
+			PrimeMeridian.Greenwich, Unit.DEGREES, Authority.newEPSG(4035));
+	public static final GeographicCoordinateSystem GCS_WGS84 = newInstance("GCS_WGS_1984", Datum.D_WGS_1984,
+			PrimeMeridian.Greenwich, Unit.DEGREES, Authority.newEPSG(4326));
+
+	public static GeographicCoordinateSystem createGreenwichDegrees(String qccName, String datumName, Authority oAuthority) {
+		final Datum oDatum = DatumDictionary.findByName(datumName);
+		if (oDatum == null) return null;
+		final DualName name = DualName.newInstance(qccName);
+		return new GeographicCoordinateSystem(name, oDatum, PrimeMeridian.Greenwich, Unit.DEGREES, oAuthority);
+	}
 
 	public static GeographicCoordinateSystem newInstance(String qccName, Datum datum, PrimeMeridian primeMeridian,
 			Unit angularUnit, Authority oAuthority) {

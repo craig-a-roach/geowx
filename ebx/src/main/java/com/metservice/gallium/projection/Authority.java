@@ -12,8 +12,8 @@ class Authority implements Comparable<Authority> {
 	public static final String NamespaceEPSG = "EPSG";
 	public static final String Separator = ":";
 
-	public static final Authority newEPSG(String qccCode) {
-		return newInstance(NamespaceEPSG, qccCode);
+	public static final Authority newEPSG(int code) {
+		return newInstance(NamespaceEPSG, Integer.toString(code));
 	}
 
 	public static final Authority newInstance(String qncNamespace, String qccCode) {
@@ -51,6 +51,10 @@ class Authority implements Comparable<Authority> {
 	@Override
 	public int hashCode() {
 		return m_qcctwQualifiedCode.hashCode();
+	}
+
+	public String qcctwQualifiedCode() {
+		return m_qcctwQualifiedCode;
 	}
 
 	@Override

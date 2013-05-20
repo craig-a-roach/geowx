@@ -10,8 +10,9 @@ package com.metservice.gallium.projection;
  */
 class Ellipsoid {
 
-	public static final Ellipsoid SPHERE = newSphere("sphere", 6_371_000.0, "Sphere");
-	public static final Ellipsoid WGS84 = newInverseFlattening("WGS84", 6_378_137.0, 298.257223563, "WGS_1984");
+	public static final Ellipsoid Sphere = newSphere("Sphere", 6_371_000.0, "sphere");
+	public static final Ellipsoid Sphere_ARC_INFO = newSphere("Sphere_ARC_INFO", 6_370_997.0, "sphere_arc_info");
+	public static final Ellipsoid WGS_1984 = newInverseFlattening("WGS_1984", 6_378_137.0, 298.257223563, "WGS84");
 
 	private static double eccentricity2(double er, double pr) {
 		return 1.0 - ((pr * pr) / (er * er));
@@ -30,7 +31,7 @@ class Ellipsoid {
 		return newInverseFlattening(name, semiMajorMetres, inverseFlattening, oAuthority);
 	}
 
-	public static Ellipsoid newInverseFlattening(String sname, double semiMajorMetres, double inverseFlattening, String fname) {
+	public static Ellipsoid newInverseFlattening(String fname, double semiMajorMetres, double inverseFlattening, String sname) {
 		final DualName name = DualName.newInstance(fname, sname);
 		return newInverseFlattening(name, semiMajorMetres, inverseFlattening, null);
 	}
@@ -44,7 +45,7 @@ class Ellipsoid {
 		return newMinor(name, semiMajorMetres, semiMinorMetres, null);
 	}
 
-	public static Ellipsoid newSphere(String sname, double radiusMetres, String fname) {
+	public static Ellipsoid newSphere(String fname, double radiusMetres, String sname) {
 		final DualName name = DualName.newInstance(fname, sname);
 		return newMinor(name, radiusMetres, radiusMetres, null);
 	}
