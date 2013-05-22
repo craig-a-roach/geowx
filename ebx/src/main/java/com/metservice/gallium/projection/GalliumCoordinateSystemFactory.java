@@ -12,7 +12,7 @@ public class GalliumCoordinateSystemFactory {
 
 	public static IGalliumCoordinateSystem newCoordinateSystemFromWKT(String ozSpec)
 			throws GalliumSyntaxException {
-		return WKTCoordinateSystemFactory.newCoordinateSystem(ozSpec);
+		return WktCoordinateSystemFactory.newCoordinateSystem(ozSpec);
 	}
 
 	private GalliumCoordinateSystemFactory() {

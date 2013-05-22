@@ -16,7 +16,7 @@ import com.metservice.argon.ICodedEnum;
 /**
  * @author roach
  */
-class WKTCoordinateSystemFactory {
+class WktCoordinateSystemFactory {
 
 	private static final CodedEnumTable<Keyword> KeywordTable = new CodedEnumTable<Keyword>(Keyword.class, true, Keyword.values());
 	private static final int SyntaxPreLen = 20;
@@ -317,7 +317,7 @@ class WKTCoordinateSystemFactory {
 		return parseCS(tr);
 	}
 
-	private WKTCoordinateSystemFactory() {
+	private WktCoordinateSystemFactory() {
 	}
 
 	private static enum CharacterClass {
