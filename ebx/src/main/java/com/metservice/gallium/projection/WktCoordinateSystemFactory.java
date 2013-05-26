@@ -179,13 +179,13 @@ class WktCoordinateSystemFactory {
 		}
 		tr.consumeKeyword(Keyword.SPHEROID);
 		final Ellipsoid ellipsoid = parseEllipsoid(tr);
-		ParameterArray oTransform = null;
+		IDatumTransform oToWgs84 = null;
 		Authority oAuthority = null;
 		while (tr.consumeListDelimiterMore()) {
 			final Keyword keyword = tr.consumeKeyword();
 			switch (keyword) {
 				case TOWGS84:
-					oTransform = parseParameterArray(tr, 7);
+					oToWgs84 = parseToWgs84(tr);
 				break;
 				case AUTHORITY:
 					oAuthority = parseAuthority(tr);
@@ -194,7 +194,7 @@ class WktCoordinateSystemFactory {
 					throw new SyntaxException("Unexpected datum attribute '" + keyword + "'");
 			}
 		}
-		return Datum.newInstance(qtwName, ellipsoid, oTransform, oAuthority);
+		return Datum.newInstance(qtwName, ellipsoid, oToWgs84, oAuthority);
 	}
 
 	private static Ellipsoid parseEllipsoid(TokenReader tr)
@@ -246,17 +246,6 @@ class WktCoordinateSystemFactory {
 		return GeographicCoordinateSystem.newInstance(qtwName, datum, primeMeridian, angularUnit, oAuthority);
 	}
 
-	private static ParameterArray parseParameterArray(TokenReader tr, int max)
-			throws SyntaxException {
-		tr.consumeListDelimiterOpen();
-		final ParameterArray pa = new ParameterArray(max);
-		pa.add(tr.consumeLiteralDouble());
-		while (tr.consumeListDelimiterMore()) {
-			pa.add(tr.consumeLiteralDouble());
-		}
-		return pa;
-	}
-
 	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -276,6 +265,20 @@ class WktCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 		return PrimeMeridian.newInstance(qtwName, longitude, oAuthority);
+	}
+
+	private static IDatumTransform parseToWgs84(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final ParameterArray pa = new ParameterArray(3);
+		pa.add(tr.consumeLiteralDouble());
+		while (tr.consumeListDelimiterMore()) {
+			pa.add(tr.consumeLiteralDouble());
+		}
+		final double dXmetres = pa.select(0, 0.0);
+		final double dYmetres = pa.select(1, 0.0);
+		final double dZmetres = pa.select(2, 0.0);
+		return new GeocentricTranslation(dXmetres, dYmetres, dZmetres);
 	}
 
 	private static Unit parseUnit(TokenReader tr)

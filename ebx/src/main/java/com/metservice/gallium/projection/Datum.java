@@ -14,25 +14,24 @@ class Datum {
 
 	public static final Datum D_Sphere = newInstance("D_Sphere", Ellipsoid.Sphere, null);
 	public static final Datum D_Sphere_ARC_INFO = newInstance("D_Sphere_ARC_INFO", Ellipsoid.Sphere_ARC_INFO, null);
-	public static final Datum D_WGS_1984 = newInstance("D_WGS_1984", Ellipsoid.WGS_1984, DatumTransform.Zero);
+	public static final Datum D_WGS_1984 = newInstance("D_WGS_1984", Ellipsoid.WGS_1984, GeocentricTranslation.Zero);
 
-	public static Datum createInstance(String fname, String ellipsoidName, DatumTransform oToWgs84) {
+	public static Datum createInstance(String fname, String ellipsoidName, IDatumTransform oToWgs84) {
 		final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(ellipsoidName);
 		if (oEllipsoid == null) return null;
 		final DualName name = DualName.newInstance(fname);
 		return new Datum(name, oEllipsoid, oToWgs84, null);
 	}
 
-	public static Datum newInstance(String fname, Ellipsoid ellipsoid, DatumTransform oToWgs84) {
+	public static Datum newInstance(String fname, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
 		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
 		final DualName name = DualName.newInstance(fname);
 		return new Datum(name, ellipsoid, oToWgs84, null);
 	}
 
-	public static Datum newInstance(String fname, Ellipsoid ellipsoid, ParameterArray oParamsToWgs84, Authority oAuthority) {
+	public static Datum newInstance(String fname, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
 		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
 		final DualName name = DualName.newInstance(fname);
-		final DatumTransform oToWgs84 = oParamsToWgs84 == null ? null : DatumTransform.newInstance(oParamsToWgs84);
 		return new Datum(name, ellipsoid, oToWgs84, oAuthority);
 	}
 
@@ -46,7 +45,7 @@ class Datum {
 		return ds.s();
 	}
 
-	private Datum(DualName name, Ellipsoid ellipsoid, DatumTransform oToWgs84, Authority oAuthority) {
+	private Datum(DualName name, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
 		assert name != null;
 		assert ellipsoid != null;
 		this.name = name;
@@ -56,6 +55,6 @@ class Datum {
 	}
 	public final DualName name;
 	public final Ellipsoid ellipsoid;
-	public final DatumTransform oToWgs84;
+	public final IDatumTransform oToWgs84;
 	public final Authority oAuthority;
 }
