@@ -21,6 +21,7 @@ public class GeographicCoordinateSystemDictionary {
 		final Builder b = new Builder(16);
 		b.add(GeographicCoordinateSystem.GCS_Sphere);
 		b.add(GeographicCoordinateSystem.GCS_WGS84);
+		// GCS_Australian_1984 4203
 		b.add(GeographicCoordinateSystem.createGreenwichDegrees("GCS_OSGB_1936", "D_OSGB_1936", Authority.newEPSG(4277)));
 		return new GeographicCoordinateSystemDictionary(b);
 	}

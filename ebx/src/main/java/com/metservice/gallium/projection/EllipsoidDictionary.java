@@ -8,74 +8,73 @@ package com.metservice.gallium.projection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.metservice.argon.ArgonText;
-
 /**
  * @author roach
  */
 class EllipsoidDictionary {
+
+	// Airy_1830 (7001) 6377563.396 6356256.909 0.00334085 0.00667054
+	// GRS_1980 (7019) 6378137.000 6356752.314 0.00335281 0.00669438 (298.257222101)
+	// Australian (7003) 6378160.000 6356774.719 0.00335289 0.00669454
+	// WGS_1984 (7030) 6378137.000 6356752.314 0.00335281 0.00669438 (298.257223563)
+	//
+	// Sphere (7035) 6371000.000 6371000.000 0.0 0.0
 
 	private static final EllipsoidDictionary Instance = newInstance();
 
 	private static EllipsoidDictionary newInstance() {
 		final Builder b = new Builder(16);
 		b.add(Ellipsoid.Sphere);
-		b.add(Ellipsoid.Sphere_ARC_INFO);
 		b.add(Ellipsoid.WGS_1984);
-		b.add(Ellipsoid.newInverseFlattening("Airy_1830", 6_377_563.396, 299.3249646, "airy"));
-		b.add(Ellipsoid.newInverseFlattening("Airy_Modified", 6_377_340.189, 299.3249646, "mod_airy"));
-
-		b.add(Ellipsoid.newInverseFlattening("NAD83: GRS 1980 (IUGG, 1980)", 6_378_137.0, 298.257222101, "NAD83"));
-		b.add(Ellipsoid.newInverseFlattening("GRS 1980 (IUGG, 1980)", 6_378_137.0, 298.257222101, "GRS80"));
-		b.add(Ellipsoid.newInverseFlattening("WGS 72", 6_378_135.0, 298.26, "WGS72"));
-
-		b.add(Ellipsoid.newMinor("New International 1967", 6_378_157.5, 6_356_772.2, "new_intl"));
-		b.add(Ellipsoid.newMinor("Australian", 6_378_160.0, 6_356_774.719, "australian"));
+		b.add(Ellipsoid.GRS_1980);
+		b.add(Ellipsoid.newMinorEpsg(7001, "Airy_1830", 6_377_563.396, 6_356_256.909));
+		b.add(Ellipsoid.newMinorEpsg(7003, "Australian", 6_378_160.000, 6_356_774.719));
 		return new EllipsoidDictionary(b);
 	}
 
-	public static Ellipsoid findByName(String qcc) {
-		return Instance.findByNameImp(qcc);
+	public static Ellipsoid findByAuthority(Authority a) {
+		return Instance.findByAuthorityImp(a);
 	}
 
-	private Ellipsoid findByNameImp(String qcc) {
-		if (qcc == null || qcc.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final String oqcctw = ArgonText.oqtw(qcc);
-		if (oqcctw == null) return null;
-		final Ellipsoid oMatch = m_mapNameFull.get(oqcctw);
-		if (oMatch != null) return oMatch;
-		return m_mapNameShort.get(oqcctw);
+	public static Ellipsoid findByTitle(String nc) {
+		return Instance.findByTitleImp(Title.newInstance(nc));
+	}
+
+	private Ellipsoid findByAuthorityImp(Authority a) {
+		assert a != null;
+		return m_authorityMap.get(a);
+	}
+
+	private Ellipsoid findByTitleImp(Title t) {
+		assert t != null;
+		return m_titleMap.get(t);
 	}
 
 	private EllipsoidDictionary(Builder b) {
 		assert b != null;
-		m_mapNameFull = b.nf;
-		m_mapNameShort = b.ns;
+		m_authorityMap = b.authorityMap;
+		m_titleMap = b.titleMap;
 	}
 
-	private final Map<String, Ellipsoid> m_mapNameFull;
-	private final Map<String, Ellipsoid> m_mapNameShort;
+	private final Map<Authority, Ellipsoid> m_authorityMap;
+	private final Map<Title, Ellipsoid> m_titleMap;
 
 	private static class Builder {
 
-		private void put(Map<String, Ellipsoid> dst, String key, Ellipsoid value) {
-			if (dst.put(key, value) != null) throw new IllegalStateException("ambiguous key '" + key + "'");
-		}
-
 		void add(Ellipsoid e) {
 			assert e != null;
-			final DualName n = e.name;
-			put(nf, n.qcctwFullName(), e);
-			if (n.hasDistinctShortName()) {
-				put(ns, n.qcctwShortName(), e);
+			if (titleMap.put(e.title, e) != null) throw new IllegalStateException("ambiguous title..." + e);
+			if (e.oAuthority != null) {
+				if (authorityMap.put(e.oAuthority, e) != null)
+					throw new IllegalStateException("ambiguous authority..." + e);
 			}
 		}
 
 		Builder(int initCap) {
-			nf = new HashMap<>(initCap);
-			ns = new HashMap<>(initCap);
+			authorityMap = new HashMap<>(initCap);
+			titleMap = new HashMap<>(initCap);
 		}
-		final Map<String, Ellipsoid> nf;
-		final Map<String, Ellipsoid> ns;
+		final Map<Authority, Ellipsoid> authorityMap;
+		final Map<Title, Ellipsoid> titleMap;
 	}
 }

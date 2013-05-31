@@ -15,6 +15,18 @@ import com.metservice.argon.ArgonText;
  */
 class DatumDictionary {
 
+	// D_NAD_1983_NSRS2007 (6759) GRS_1980 To_WGS_1984_1 0,0,0
+	//
+	// D_NZGD_2000 (6167) GRS_1980 To_WGS_1984_1 0,0,0
+	//
+	// D_OSGB_1936 (6277) Airy_1830 To_WGS_1984_1 375,-111,431
+	//
+	// D_WGS_1984 (6326) WGS_1984 0,0,0
+	//
+	// D_Australian_1984 (6203) Australian
+	//
+	// D_Sphere (6035) Sphere
+
 	private static final DatumDictionary Instance = newInstance();
 
 	private static DatumDictionary newInstance() {

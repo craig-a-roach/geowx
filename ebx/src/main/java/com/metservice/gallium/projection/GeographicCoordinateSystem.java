@@ -12,6 +12,18 @@ import com.metservice.argon.Ds;
  */
 class GeographicCoordinateSystem implements IGalliumGeographicCoordinateSystem {
 
+	// GCS_NZGD_2000 (4167) D_NZGD_2000 (6167)
+	// GCS_OSGB_1936 (4277) D_OSGB_1936 (6277)
+	//
+	// GCS_NAD_1983_NSRS2007 (4759) -> D_NAD_1983_NSRS2007 (6759)
+	//
+	//
+	// GCS_Australian_1984 (4203) D_Australian_1984 (6203)
+	//
+	//
+	// GCS_Sphere (4035) D_Sphere (6035)
+	// GCS_WGS_1984 (4326) D_WGS_1984 (6326)
+
 	public static final GeographicCoordinateSystem GCS_Sphere = newInstance("GCS_Sphere", Datum.D_Sphere,
 			PrimeMeridian.Greenwich, Unit.DEGREES, Authority.newEPSG(4035));
 	public static final GeographicCoordinateSystem GCS_WGS84 = newInstance("GCS_WGS_1984", Datum.D_WGS_1984,
