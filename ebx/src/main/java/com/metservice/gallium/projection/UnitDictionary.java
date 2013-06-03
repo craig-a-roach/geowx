@@ -8,8 +8,6 @@ package com.metservice.gallium.projection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.metservice.argon.ArgonText;
-
 /**
  * @author roach
  */
@@ -18,7 +16,7 @@ class UnitDictionary {
 	private static final UnitDictionary Instance = newInstance();
 
 	private static UnitDictionary newInstance() {
-		final Builder b = new Builder(32);
+		final Builder b = new Builder(128);
 		b.add(Unit.RADIANS);
 		b.add(Unit.DEGREES);
 		b.add(Unit.newAngleEpsg(9103, MapMath.DTR / 60.0, "arc minute", "arc minutes", "min", "\'"));
@@ -42,67 +40,62 @@ class UnitDictionary {
 		return new UnitDictionary(b);
 	}
 
-	public static Unit findByName(String qcc) {
-		return Instance.findByNameImp(qcc);
+	public static Unit findByAuthority(Authority a) {
+		return Instance.findByAuthorityImp(a);
 	}
 
-	private Unit findByNameImp(String qcc) {
-		if (qcc == null || qcc.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final String oqcctw = ArgonText.oqtw(qcc);
-		if (oqcctw == null) return null;
-		Unit oMatch = m_mapPluralFull.get(oqcctw);
-		if (oMatch != null) return oMatch;
-		oMatch = m_mapPluralShort.get(oqcctw);
-		if (oMatch != null) return oMatch;
-		oMatch = m_mapSingularFull.get(oqcctw);
-		if (oMatch != null) return oMatch;
-		oMatch = m_mapSingularShort.get(oqcctw);
-		return oMatch;
+	public static Unit findByTitle(String nc) {
+		return Instance.findByTitleImp(Title.newInstance(nc));
+	}
+
+	private Unit findByAuthorityImp(Authority a) {
+		assert a != null;
+		return m_authorityMap.get(a);
+	}
+
+	private Unit findByTitleImp(Title t) {
+		assert t != null;
+		return m_titleMap.get(t);
 	}
 
 	private UnitDictionary(Builder b) {
 		assert b != null;
-		m_mapSingularFull = b.singularFull;
-		m_mapSingularShort = b.singularShort;
-		m_mapPluralFull = b.pluralFull;
-		m_mapPluralShort = b.pluralShort;
+		m_authorityMap = b.authorityMap;
+		m_titleMap = b.titleMap;
 	}
 
-	private final Map<String, Unit> m_mapSingularFull;
-	private final Map<String, Unit> m_mapSingularShort;
-	private final Map<String, Unit> m_mapPluralFull;
-	private final Map<String, Unit> m_mapPluralShort;
+	private final Map<Authority, Unit> m_authorityMap;
+	private final Map<Title, Unit> m_titleMap;
 
 	private static class Builder {
 
-		private void put(Map<String, Unit> dst, String key, Unit value) {
-			if (dst.put(key, value) != null) throw new IllegalStateException("ambiguous key '" + key + "'");
+		private void put(Authority key, Unit value) {
+			if (authorityMap.put(key, value) != null) throw new IllegalStateException("ambiguous authority '" + key + "'");
+		}
+
+		private void put(Title key, Unit value) {
+			if (titleMap.put(key, value) != null) throw new IllegalStateException("ambiguous title '" + key + "'");
 		}
 
 		void add(Unit u) {
 			assert u != null;
-			final DualName plural = u.pluralName;
-			put(pluralFull, plural.qcctwFullName(), u);
-			if (plural.hasDistinctShortName()) {
-				put(pluralShort, plural.qcctwShortName(), u);
+			put(u.singularTitle, u);
+			put(u.pluralTitle, u);
+			put(u.abbrTitle, u);
+			if (u.oAltTitle != null) {
+				put(u.oAltTitle, u);
 			}
-			final DualName singular = u.singularName;
-			put(singularFull, singular.qcctwFullName(), u);
-			if (singular.hasDistinctShortName()) {
-				put(singularShort, singular.qcctwShortName(), u);
+			if (u.oAuthority != null) {
+				put(u.oAuthority, u);
 			}
 		}
 
 		Builder(int initCap) {
-			singularFull = new HashMap<>(initCap);
-			singularShort = new HashMap<>(initCap);
-			pluralFull = new HashMap<>(initCap);
-			pluralShort = new HashMap<>(initCap);
+			authorityMap = new HashMap<>(initCap);
+			titleMap = new HashMap<>(initCap);
 		}
-		final Map<String, Unit> singularFull;
-		final Map<String, Unit> singularShort;
-		final Map<String, Unit> pluralFull;
-		final Map<String, Unit> pluralShort;
+		final Map<Authority, Unit> authorityMap;
+		final Map<Title, Unit> titleMap;
 	}
 
 }

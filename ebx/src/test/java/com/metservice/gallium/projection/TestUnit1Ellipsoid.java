@@ -15,29 +15,19 @@ public class TestUnit1Ellipsoid {
 
 	@Test
 	public void t10_wgs84() {
-		final Datum oD = DatumDictionary.findByName("D_WGS_1984");
-		Assert.assertNotNull("D_WGS_1984", oD);
-		Assert.assertEquals("equator r", 6_378_137.0, oD.ellipsoid.equatorialRadiusMetres, 1e-1);
-		Assert.assertEquals("polar r", 6_356_752.3142, oD.ellipsoid.polarRadiusMetres, 1e-3);
+		final Ellipsoid oE1 = EllipsoidDictionary.findByTitle("WGS_1984");
+		final Ellipsoid oE2 = EllipsoidDictionary.findByAuthority(Authority.newEPSG(7030));
+		Assert.assertNotNull("WGS_1984 by title", oE1);
+		Assert.assertNotNull("WGS_1984 by authority", oE2);
+		Assert.assertEquals("equator r", 6_378_137.0, oE1.equatorialRadiusMetres, 1e-1);
+		Assert.assertEquals("polar r", 6_356_752.314, oE1.polarRadiusMetres, 1e-3);
 	}
 
 	@Test
 	public void t20_airy() {
-		final Ellipsoid oE = EllipsoidDictionary.findByName("Airy 1830");
+		final Ellipsoid oE = EllipsoidDictionary.findByTitle("Airy_1830");
 		Assert.assertNotNull("Found Airy", oE);
-		Assert.assertEquals("polar r", 6_356_256.910, oE.polarRadiusMetres, 1e-2);
-		Assert.assertEquals("e", 0.08167337241474341, oE.eccentricity, 1e-6);
-		final Datum oD = DatumDictionary.findByName("Ordnance Survey 1936");
-		Assert.assertNotNull("Ordnance Survey 1936", oD);
-		Assert.assertEquals("polar r", 6_356_256.910, oD.ellipsoid.polarRadiusMetres, 1e-2);
-		Assert.assertEquals("deltaZ", 431.0, oD.deltaZ, 1e-2);
+		Assert.assertEquals("polar r", 6_356_256.909, oE.polarRadiusMetres, 1e-2);
+		Assert.assertEquals("e", 0.0816733743281685, oE.eccentricity, 1e-6);
 	}
-
-	@Test
-	public void t30_euro() {
-		final Datum oD = DatumDictionary.findByName("European Datum 1979");
-		Assert.assertNotNull("European Datum 1979", oD);
-		Assert.assertEquals("polar r", 6_356_772.2, oD.ellipsoid.polarRadiusMetres, 1e-1);
-	}
-
 }

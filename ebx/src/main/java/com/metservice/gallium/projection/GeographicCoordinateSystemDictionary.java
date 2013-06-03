@@ -8,8 +8,6 @@ package com.metservice.gallium.projection;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.metservice.argon.ArgonText;
-
 /**
  * @author roach
  */
@@ -21,8 +19,10 @@ public class GeographicCoordinateSystemDictionary {
 		final Builder b = new Builder(16);
 		b.add(GeographicCoordinateSystem.GCS_Sphere);
 		b.add(GeographicCoordinateSystem.GCS_WGS84);
-		// GCS_Australian_1984 4203
-		b.add(GeographicCoordinateSystem.createGreenwichDegrees("GCS_OSGB_1936", "D_OSGB_1936", Authority.newEPSG(4277)));
+		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4759, "GCS_NAD_1983_NSRS2007", 6759));
+		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4277, "GCS_OSGB_1936", 6277));
+		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4203, "GCS_Australian_1984", 6203));
+		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4167, "GCS_NZGD_2000", 6167));
 		return new GeographicCoordinateSystemDictionary(b);
 	}
 
@@ -30,50 +30,45 @@ public class GeographicCoordinateSystemDictionary {
 		return Instance.findByAuthorityImp(a);
 	}
 
-	public static GeographicCoordinateSystem findByName(String qcc) {
-		return Instance.findByNameImp(qcc);
+	public static GeographicCoordinateSystem findByTitle(String nc) {
+		return Instance.findByTitleImp(Title.newInstance(nc));
 	}
 
 	private GeographicCoordinateSystem findByAuthorityImp(Authority a) {
-		if (a == null) throw new IllegalArgumentException("object is null");
-		final String qcctwCode = a.qcctwQualifiedCode();
-		return m_authorityMap.get(qcctwCode);
+		assert a != null;
+		return m_authorityMap.get(a);
 	}
 
-	private GeographicCoordinateSystem findByNameImp(String qcc) {
-		if (qcc == null || qcc.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final String oqcctw = ArgonText.oqtw(qcc);
-		if (oqcctw == null) return null;
-		return m_nameMap.get(oqcctw);
+	private GeographicCoordinateSystem findByTitleImp(Title t) {
+		assert t != null;
+		return m_titleMap.get(t);
 	}
 
 	private GeographicCoordinateSystemDictionary(Builder b) {
 		assert b != null;
-		m_nameMap = b.nameMap;
 		m_authorityMap = b.authorityMap;
+		m_titleMap = b.titleMap;
 	}
-	private final Map<String, GeographicCoordinateSystem> m_nameMap;
-	private final Map<String, GeographicCoordinateSystem> m_authorityMap;
+	private final Map<Authority, GeographicCoordinateSystem> m_authorityMap;
+	private final Map<Title, GeographicCoordinateSystem> m_titleMap;
 
 	private static class Builder {
 
 		void add(GeographicCoordinateSystem oGCS) {
-			if (oGCS != null) {
-				final DualName n = oGCS.name;
-				nameMap.put(n.qcctwFullName(), oGCS);
-				if (oGCS.oAuthority != null) {
-					final String qcctwCode = oGCS.oAuthority.qcctwQualifiedCode();
-					authorityMap.put(qcctwCode, oGCS);
-				}
+			if (oGCS == null) return;
+			if (titleMap.put(oGCS.title, oGCS) != null) throw new IllegalStateException("ambiguous title..." + oGCS);
+			if (oGCS.oAuthority != null) {
+				if (authorityMap.put(oGCS.oAuthority, oGCS) != null)
+					throw new IllegalStateException("ambiguous authority..." + oGCS);
 			}
 		}
 
 		Builder(int initCap) {
-			nameMap = new HashMap<>(initCap);
 			authorityMap = new HashMap<>(initCap);
+			titleMap = new HashMap<>(initCap);
 		}
-		final Map<String, GeographicCoordinateSystem> nameMap;
-		final Map<String, GeographicCoordinateSystem> authorityMap;
+		final Map<Authority, GeographicCoordinateSystem> authorityMap;
+		final Map<Title, GeographicCoordinateSystem> titleMap;
 	}
 
 }

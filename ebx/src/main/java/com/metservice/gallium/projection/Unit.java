@@ -18,24 +18,28 @@ class Unit implements Comparable<Unit> {
 	public static final Unit NAUTICAL_MILES = newLength(1852.0, "nautical mile", "nautical miles", "nm");
 	public static final Unit MILES = newLength(1609.344, "mile", "miles", "mi");
 
-	private static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... names) {
+	private static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... titles) {
 		if (type == null) throw new IllegalArgumentException("object is null");
-		if (names == null) throw new IllegalArgumentException("object is null");
-		final int card = names.length;
+		if (titles == null) throw new IllegalArgumentException("object is null");
+		final int card = titles.length;
 		if (card == 0) throw new IllegalArgumentException("missing unit title");
-		final Title singular = Title.newInstance(names[0]);
-		final Title plural = card < 2 ? singular : Title.newInstance(names[1]);
-		final Title abbr = card < 3 ? singular : Title.newInstance(names[2]);
-		final Title oAlt = card < 4 ? null : Title.newInstance(names[3]);
+		final Title singular = Title.newInstance(titles[0]);
+		final Title plural = card < 2 ? singular : Title.newInstance(titles[1]);
+		final Title abbr = card < 3 ? singular : Title.newInstance(titles[2]);
+		final Title oAlt = card < 4 ? null : Title.newInstance(titles[3]);
 		return new Unit(type, oAuthority, singular, plural, abbr, oAlt, toBase);
 	}
 
-	public static Unit newAngleEpsg(int code, double toBase, String... names) {
-		return newInstance(UnitType.Angle, Authority.newEPSG(code), toBase, names);
+	public static Unit newAngle(Authority oAuthority, double toBase, String... titles) {
+		return newInstance(UnitType.Angle, oAuthority, toBase, titles);
 	}
 
-	public static Unit newLength(double toBase, String... names) {
-		return newInstance(UnitType.Length, null, toBase, names);
+	public static Unit newAngleEpsg(int code, double toBase, String... titles) {
+		return newInstance(UnitType.Angle, Authority.newEPSG(code), toBase, titles);
+	}
+
+	public static Unit newLength(double toBase, String... titles) {
+		return newInstance(UnitType.Length, null, toBase, titles);
 	}
 
 	@Override
@@ -65,7 +69,7 @@ class Unit implements Comparable<Unit> {
 
 	@Override
 	public int hashCode() {
-		return singularTitle.hashCode();
+		return pluralTitle.hashCode();
 	}
 
 	public double toBase(double altValue) {
@@ -75,7 +79,7 @@ class Unit implements Comparable<Unit> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(singularTitle);
+		sb.append(pluralTitle);
 		if (oAuthority != null) {
 			sb.append(" authority ").append(oAuthority);
 		}

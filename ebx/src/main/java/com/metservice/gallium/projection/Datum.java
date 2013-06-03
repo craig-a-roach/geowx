@@ -16,6 +16,7 @@ class Datum {
 	public static final Datum D_WGS_1984 = newEpsg(6326, "D_WGS_1984", Ellipsoid.WGS_1984, GeocentricTranslation.Zero);
 
 	public static Datum newEpsg(int code, String title, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
+		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
 		return new Datum(Authority.newEPSG(code), Title.newInstance(title), ellipsoid, oToWgs84);
 	}
 
@@ -25,6 +26,7 @@ class Datum {
 	}
 
 	public static Datum newInstance(String title, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
+		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
 		return new Datum(oAuthority, Title.newInstance(title), ellipsoid, oToWgs84);
 	}
 

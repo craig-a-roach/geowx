@@ -15,14 +15,17 @@ public class TestUnit1Unit {
 
 	@Test
 	public void t10_ft() {
-		final Unit oU = UnitDictionary.findByName("ft");
-		Assert.assertNotNull("feet", oU);
-		Assert.assertEquals("4 feet to metres", 1.2192, oU.toBase(4.0), 1e-3);
+		final Unit oU1 = UnitDictionary.findByTitle("Ft");
+		final Unit oU2 = UnitDictionary.findByTitle("feet");
+		Assert.assertNotNull("feet", oU1);
+		Assert.assertNotNull("feet", oU2);
+		Assert.assertEquals("4 feet to metres", 1.2192, oU1.toBase(4.0), 1e-3);
+		Assert.assertTrue("alias equality", oU1.equals(oU2));
 	}
 
 	@Test
 	public void t20_deg() {
-		final Unit oU = UnitDictionary.findByName("\u00B0");
+		final Unit oU = UnitDictionary.findByTitle("\u00B0");
 		Assert.assertNotNull("degrees", oU);
 		Assert.assertTrue("eq", oU.equals(Unit.DEGREES));
 		Assert.assertEquals("to deg", Math.PI, oU.toBase(180.0), 1e-6);
@@ -30,14 +33,14 @@ public class TestUnit1Unit {
 
 	@Test
 	public void t30_min() {
-		final Unit oU = UnitDictionary.findByName("\'");
+		final Unit oU = UnitDictionary.findByTitle("\'");
 		Assert.assertNotNull("arc minutes", oU);
 		Assert.assertEquals("to deg", (Math.PI / 180.0) * 0.75, oU.toBase(45.0), 1e-6);
 	}
 
 	@Test
 	public void t40_rad() {
-		final Unit oU = UnitDictionary.findByName("radian");
+		final Unit oU = UnitDictionary.findByTitle("radian");
 		Assert.assertNotNull("radians", oU);
 	}
 }

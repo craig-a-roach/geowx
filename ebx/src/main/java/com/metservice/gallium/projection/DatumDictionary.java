@@ -22,7 +22,7 @@ class DatumDictionary {
 		b.add(Datum.newEpsg(6759, "D_NAD_1983_NSRS2007", Ellipsoid.GRS_1980, GeocentricTranslation.Zero));
 		b.add(Datum.newEpsg(6277, "D_OSGB_1936", 7001, new GeocentricTranslation(375.0, -111.0, 431.0)));
 		b.add(Datum.newEpsg(6203, "D_Australian_1984", 7003, null));
-		b.add(Datum.newEpsg(6167, " D_NZGD_2000", Ellipsoid.GRS_1980, GeocentricTranslation.Zero));
+		b.add(Datum.newEpsg(6167, "D_NZGD_2000", Ellipsoid.GRS_1980, GeocentricTranslation.Zero));
 
 		return new DatumDictionary(b);
 	}
@@ -33,6 +33,12 @@ class DatumDictionary {
 
 	public static Datum findByTitle(String nc) {
 		return Instance.findByTitleImp(Title.newInstance(nc));
+	}
+
+	public static Datum selectByAuthority(Authority a) {
+		final Datum oMatch = findByAuthority(a);
+		if (oMatch == null) throw new IllegalArgumentException("Datum " + a + " not in dictionary");
+		return oMatch;
 	}
 
 	private Datum findByAuthorityImp(Authority a) {

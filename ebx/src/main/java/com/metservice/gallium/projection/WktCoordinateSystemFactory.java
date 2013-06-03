@@ -131,7 +131,7 @@ class WktCoordinateSystemFactory {
 			throws SyntaxException {
 		final Unit unit = parseUnit(tr);
 		if (unit.type == UnitType.Angle) return unit;
-		final String m = "Unit '" + unit.pluralName + "' is a " + unit.type + " type; require angular unit";
+		final String m = "Unit '" + unit.pluralTitle + "' is a " + unit.type + " type; require angular unit";
 		throw new SyntaxException(m);
 	}
 
@@ -200,11 +200,11 @@ class WktCoordinateSystemFactory {
 	private static Ellipsoid parseEllipsoid(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
-		final String qtwName = tr.consumeLiteralQtw();
+		final String qtwTitle = tr.consumeLiteralQtw();
 		if (!tr.consumeListDelimiterMore()) {
-			final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(qtwName);
+			final Ellipsoid oEllipsoid = EllipsoidDictionary.findByTitle(qtwTitle);
 			if (oEllipsoid != null) return oEllipsoid;
-			final String m = "Ellipsoid/spheroid '" + qtwName + "' is not in dictionary; require definition";
+			final String m = "Ellipsoid/spheroid '" + qtwTitle + "' is not in dictionary; require definition";
 			throw new SyntaxException(m);
 		}
 		final double semiMajorMetres = tr.consumeLiteralDouble();
@@ -217,7 +217,7 @@ class WktCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 
-		return Ellipsoid.newInverseFlattening(qtwName, semiMajorMetres, inverseFlattening, oAuthority);
+		return Ellipsoid.newInverseFlattening(qtwTitle, semiMajorMetres, inverseFlattening, oAuthority);
 	}
 
 	private static IGalliumCoordinateSystem parseGeographicCS(TokenReader tr)
@@ -284,11 +284,11 @@ class WktCoordinateSystemFactory {
 	private static Unit parseUnit(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
-		final String qtwName = tr.consumeLiteralQtw();
+		final String qtwTitle = tr.consumeLiteralQtw();
 		if (!tr.consumeListDelimiterMore()) {
-			final Unit oU = UnitDictionary.findByName(qtwName);
+			final Unit oU = UnitDictionary.findByTitle(qtwTitle);
 			if (oU != null) return oU;
-			final String m = "Unit '" + qtwName + "' is not in dictionary; require definition";
+			final String m = "Unit '" + qtwTitle + "' is not in dictionary; require definition";
 			throw new SyntaxException(m);
 		}
 		final double convertToBase = tr.consumeLiteralDouble();
@@ -299,7 +299,7 @@ class WktCoordinateSystemFactory {
 			oAuthority = parseAuthority(tr);
 			tr.consumeListDelimiterClose();
 		}
-		return Unit.newAngle(convertToBase, oAuthority, qtwName);
+		return Unit.newAngle(oAuthority, convertToBase, qtwTitle);
 	}
 
 	private static CharacterClass selectCharacterClass(char ch)
