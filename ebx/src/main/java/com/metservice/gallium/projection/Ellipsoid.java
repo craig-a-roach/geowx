@@ -5,6 +5,8 @@
  */
 package com.metservice.gallium.projection;
 
+import com.metservice.argon.Ds;
+
 /**
  * @author roach
  */
@@ -35,16 +37,13 @@ class Ellipsoid {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		if (oAuthority == null) {
-			sb.append(title);
-		} else {
-			sb.append(oAuthority);
-			sb.append(" (").append(title).append(")");
-		}
-		sb.append(" equatorial r(m) ").append(equatorialRadiusMetres);
-		sb.append(" polar r(m) ").append(polarRadiusMetres);
-		return sb.toString();
+		final Ds ds = Ds.o(getClass());
+		ds.a("authority", oAuthority);
+		ds.a("title", title);
+		ds.a("equatorial r(m)", equatorialRadiusMetres);
+		ds.a("polar r(m)", polarRadiusMetres);
+		ds.a("eccentricity", eccentricity);
+		return ds.ss();
 	}
 
 	private Ellipsoid(Authority oAuthority, Title title, double equatorialRadiusMetres, double polarRadiusMetres) {

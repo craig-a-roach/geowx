@@ -12,49 +12,42 @@ import com.metservice.argon.Ds;
  */
 class Datum {
 
-	public static final Datum D_Sphere = newInstance("D_Sphere", Ellipsoid.Sphere, null);
-	public static final Datum D_Sphere_ARC_INFO = newInstance("D_Sphere_ARC_INFO", Ellipsoid.Sphere_ARC_INFO, null);
-	public static final Datum D_WGS_1984 = newInstance("D_WGS_1984", Ellipsoid.WGS_1984, GeocentricTranslation.Zero);
+	public static final Datum D_Sphere = newEpsg(6035, "D_Sphere", Ellipsoid.Sphere, null);
+	public static final Datum D_WGS_1984 = newEpsg(6326, "D_WGS_1984", Ellipsoid.WGS_1984, GeocentricTranslation.Zero);
 
-	public static Datum createInstance(String fname, String ellipsoidName, IDatumTransform oToWgs84) {
-		final Ellipsoid oEllipsoid = EllipsoidDictionary.findByName(ellipsoidName);
-		if (oEllipsoid == null) return null;
-		final DualName name = DualName.newInstance(fname);
-		return new Datum(name, oEllipsoid, oToWgs84, null);
+	public static Datum newEpsg(int code, String title, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
+		return new Datum(Authority.newEPSG(code), Title.newInstance(title), ellipsoid, oToWgs84);
 	}
 
-	public static Datum newInstance(String fname, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
-		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
-		final DualName name = DualName.newInstance(fname);
-		return new Datum(name, ellipsoid, oToWgs84, null);
+	public static Datum newEpsg(int code, String title, int codeEllipsoid, IDatumTransform oToWgs84) {
+		final Ellipsoid ellipsoid = EllipsoidDictionary.selectByAuthority(Authority.newEPSG(codeEllipsoid));
+		return newEpsg(code, title, ellipsoid, oToWgs84);
 	}
 
-	public static Datum newInstance(String fname, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
-		if (ellipsoid == null) throw new IllegalArgumentException("object is null");
-		final DualName name = DualName.newInstance(fname);
-		return new Datum(name, ellipsoid, oToWgs84, oAuthority);
+	public static Datum newInstance(String title, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
+		return new Datum(oAuthority, Title.newInstance(title), ellipsoid, oToWgs84);
 	}
 
 	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
-		ds.a("name", name);
+		ds.a("authority", oAuthority);
+		ds.a("title", title);
 		ds.a("ellipsoid", ellipsoid);
 		ds.a("toWgs84", oToWgs84);
-		ds.a("authority", oAuthority);
 		return ds.s();
 	}
 
-	private Datum(DualName name, Ellipsoid ellipsoid, IDatumTransform oToWgs84, Authority oAuthority) {
-		assert name != null;
+	private Datum(Authority oAuthority, Title title, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
+		assert title != null;
 		assert ellipsoid != null;
-		this.name = name;
+		this.oAuthority = oAuthority;
+		this.title = title;
 		this.ellipsoid = ellipsoid;
 		this.oToWgs84 = oToWgs84;
-		this.oAuthority = oAuthority;
 	}
-	public final DualName name;
+	public final Authority oAuthority;
+	public final Title title;
 	public final Ellipsoid ellipsoid;
 	public final IDatumTransform oToWgs84;
-	public final Authority oAuthority;
 }

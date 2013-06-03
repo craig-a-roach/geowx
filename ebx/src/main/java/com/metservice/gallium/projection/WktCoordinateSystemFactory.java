@@ -170,11 +170,11 @@ class WktCoordinateSystemFactory {
 	private static Datum parseDatum(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
-		final String qtwName = tr.consumeLiteralQtw();
+		final String qtwTitle = tr.consumeLiteralQtw();
 		if (!tr.consumeListDelimiterMore()) {
-			final Datum oDatum = DatumDictionary.findByName(qtwName);
+			final Datum oDatum = DatumDictionary.findByTitle(qtwTitle);
 			if (oDatum != null) return oDatum;
-			final String m = "Datum '" + qtwName + "' is not in dictionary; require definition";
+			final String m = "Datum '" + qtwTitle + "' is not in dictionary; require definition";
 			throw new SyntaxException(m);
 		}
 		tr.consumeKeyword(Keyword.SPHEROID);
@@ -194,7 +194,7 @@ class WktCoordinateSystemFactory {
 					throw new SyntaxException("Unexpected datum attribute '" + keyword + "'");
 			}
 		}
-		return Datum.newInstance(qtwName, ellipsoid, oToWgs84, oAuthority);
+		return Datum.newInstance(qtwTitle, ellipsoid, oToWgs84, oAuthority);
 	}
 
 	private static Ellipsoid parseEllipsoid(TokenReader tr)
@@ -249,11 +249,11 @@ class WktCoordinateSystemFactory {
 	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
-		final String qtwName = tr.consumeLiteralQtw();
+		final String qtwTitle = tr.consumeLiteralQtw();
 		if (!tr.consumeListDelimiterMore()) {
-			final PrimeMeridian oPM = PrimeMeridian.findByName(qtwName);
+			final PrimeMeridian oPM = PrimeMeridian.findByTitle(qtwTitle);
 			if (oPM != null) return oPM;
-			final String m = "Prime meridian '" + qtwName + "' is not in dictionary; require definition";
+			final String m = "Prime meridian '" + qtwTitle + "' is not in dictionary; require definition";
 			throw new SyntaxException(m);
 		}
 		final double longitude = tr.consumeLiteralDouble();
@@ -264,7 +264,7 @@ class WktCoordinateSystemFactory {
 			oAuthority = parseAuthority(tr);
 			tr.consumeListDelimiterClose();
 		}
-		return PrimeMeridian.newInstance(qtwName, longitude, oAuthority);
+		return PrimeMeridian.newInstance(qtwTitle, longitude, oAuthority);
 	}
 
 	private static IDatumTransform parseToWgs84(TokenReader tr)

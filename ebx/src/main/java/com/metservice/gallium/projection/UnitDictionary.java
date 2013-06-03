@@ -21,23 +21,23 @@ class UnitDictionary {
 		final Builder b = new Builder(32);
 		b.add(Unit.RADIANS);
 		b.add(Unit.DEGREES);
-		b.add(Unit.newAngle(MapMath.DTR / 60.0, "arc minute", "min", "arc minutes", "\'"));
-		b.add(Unit.newAngle(MapMath.DTR / 3600.0, "arc second", "sec", "arc seconds", "\""));
+		b.add(Unit.newAngleEpsg(9103, MapMath.DTR / 60.0, "arc minute", "arc minutes", "min", "\'"));
+		b.add(Unit.newAngleEpsg(9104, MapMath.DTR / 3600.0, "arc second", "arc seconds", "sec", "\""));
 
 		b.add(Unit.METERS);
 		b.add(Unit.KILOMETERS);
 		b.add(Unit.NAUTICAL_MILES);
 		b.add(Unit.MILES);
 
-		b.add(Unit.newLength(0.01, "centimeter", "cm"));
-		b.add(Unit.newLength(0.001, "millimeter", "mm"));
-		b.add(Unit.newLength(0.9144, "yard", "yd", "yards", "yds"));
-		b.add(Unit.newLength(0.3048, "foot", "ft", "feet"));
-		b.add(Unit.newLength(0.0254, "inch", "in", "inches", "ins"));
-		b.add(Unit.newLength(1609.347218694437, "U.S. mile", "us-mi"));
-		b.add(Unit.newLength(0.914401828803658, "U.S. yard", "us-yd", "U.S. yards", "us-yds"));
-		b.add(Unit.newLength(0.304800609601219, "U.S. foot", "us-ft", "U.S. feet"));
-		b.add(Unit.newLength(1.0 / 39.37, "U.S. inch", "us-in", "U.S. inches", "us-ins"));
+		b.add(Unit.newLength(0.01, "centimeter", "centimeters", "cm"));
+		b.add(Unit.newLength(0.001, "millimeter", "millimeters", "mm"));
+		b.add(Unit.newLength(0.9144, "yard", "yards", "yd"));
+		b.add(Unit.newLength(0.3048, "foot", "feet", "ft"));
+		b.add(Unit.newLength(0.0254, "inch", "inches", "in"));
+		b.add(Unit.newLength(1609.347218694437, "U.S. mile", "U.S. miles", "us-mi"));
+		b.add(Unit.newLength(0.914401828803658, "U.S. yard", "U.S. yards", "us-yd"));
+		b.add(Unit.newLength(0.304800609601219, "U.S. foot", "U.S. feet", "us-ft"));
+		b.add(Unit.newLength(1.0 / 39.37, "U.S. inch", "U.S. inches", "us-in"));
 
 		return new UnitDictionary(b);
 	}

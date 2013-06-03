@@ -13,13 +13,6 @@ import java.util.Map;
  */
 class EllipsoidDictionary {
 
-	// Airy_1830 (7001) 6377563.396 6356256.909 0.00334085 0.00667054
-	// GRS_1980 (7019) 6378137.000 6356752.314 0.00335281 0.00669438 (298.257222101)
-	// Australian (7003) 6378160.000 6356774.719 0.00335289 0.00669454
-	// WGS_1984 (7030) 6378137.000 6356752.314 0.00335281 0.00669438 (298.257223563)
-	//
-	// Sphere (7035) 6371000.000 6371000.000 0.0 0.0
-
 	private static final EllipsoidDictionary Instance = newInstance();
 
 	private static EllipsoidDictionary newInstance() {
@@ -38,6 +31,12 @@ class EllipsoidDictionary {
 
 	public static Ellipsoid findByTitle(String nc) {
 		return Instance.findByTitleImp(Title.newInstance(nc));
+	}
+
+	public static Ellipsoid selectByAuthority(Authority a) {
+		final Ellipsoid oMatch = findByAuthority(a);
+		if (oMatch == null) throw new IllegalArgumentException("Eliipsoid " + a + " not in dictionary");
+		return oMatch;
 	}
 
 	private Ellipsoid findByAuthorityImp(Authority a) {

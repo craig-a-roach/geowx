@@ -10,46 +10,39 @@ package com.metservice.gallium.projection;
  */
 class Unit implements Comparable<Unit> {
 
-	public static final Unit RADIANS = newAngle(1.0, "radian", "rad");
-	public static final Unit DEGREES = newAngle(MapMath.DTR, "degree", "deg", "degrees", "\u00B0");
+	public static final Unit RADIANS = newAngleEpsg(9101, 1.0, "radian", "radians", "rad");
+	public static final Unit DEGREES = newAngleEpsg(9102, MapMath.DTR, "degree", "degrees", "deg", "\u00B0");
 
-	public static final Unit METERS = newLength(1.0, "meter", "m");
-	public static final Unit KILOMETERS = newLength(1000.0, "kilometer", "km");
-	public static final Unit NAUTICAL_MILES = newLength(1852.0, "nautical mile", "nm");
-	public static final Unit MILES = newLength(1609.344, "mile", "mi");
+	public static final Unit METERS = newLength(1.0, "meter", "meters", "m");
+	public static final Unit KILOMETERS = newLength(1000.0, "kilometer", "kilometres", "km");
+	public static final Unit NAUTICAL_MILES = newLength(1852.0, "nautical mile", "nautical miles", "nm");
+	public static final Unit MILES = newLength(1609.344, "mile", "miles", "mi");
 
-	private static Unit newInstance(UnitType type, double toBase, String... names) {
+	private static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... names) {
 		if (type == null) throw new IllegalArgumentException("object is null");
 		if (names == null) throw new IllegalArgumentException("object is null");
 		final int card = names.length;
-		if (card == 0) throw new IllegalArgumentException("missing unit name");
-		final String singularFull = names[0];
-		final String singularShort = card < 2 ? singularFull : names[1];
-		final String pluralFull = card < 3 ? (singularFull + "s") : names[2];
-		final String pluralShort = card < 4 ? singularShort : names[3];
-		final DualName singular = DualName.newInstance(singularFull, singularShort);
-		final DualName plural = DualName.newInstance(pluralFull, pluralShort);
-		return new Unit(type, singular, plural, null, toBase);
+		if (card == 0) throw new IllegalArgumentException("missing unit title");
+		final Title singular = Title.newInstance(names[0]);
+		final Title plural = card < 2 ? singular : Title.newInstance(names[1]);
+		final Title abbr = card < 3 ? singular : Title.newInstance(names[2]);
+		final Title oAlt = card < 4 ? null : Title.newInstance(names[3]);
+		return new Unit(type, oAuthority, singular, plural, abbr, oAlt, toBase);
 	}
 
-	public static Unit newAngle(double toBase, Authority oAuthority, String fname) {
-		final DualName name = DualName.newInstance(fname);
-		return new Unit(UnitType.Angle, name, name, oAuthority, toBase);
-	}
-
-	public static Unit newAngle(double toBase, String... names) {
-		return newInstance(UnitType.Angle, toBase, names);
+	public static Unit newAngleEpsg(int code, double toBase, String... names) {
+		return newInstance(UnitType.Angle, Authority.newEPSG(code), toBase, names);
 	}
 
 	public static Unit newLength(double toBase, String... names) {
-		return newInstance(UnitType.Length, toBase, names);
+		return newInstance(UnitType.Length, null, toBase, names);
 	}
 
 	@Override
 	public int compareTo(Unit rhs) {
 		final int c0 = type.compareTo(rhs.type);
 		if (c0 != 0) return 0;
-		final int c1 = pluralName.compareTo(rhs.pluralName);
+		final int c1 = singularTitle.compareTo(rhs.singularTitle);
 		return c1;
 	}
 
@@ -63,7 +56,7 @@ class Unit implements Comparable<Unit> {
 	public boolean equals(Unit rhs) {
 		if (rhs == this) return true;
 		if (rhs == null) return false;
-		return type == rhs.type && pluralName.equals(rhs.pluralName);
+		return type == rhs.type && singularTitle.equals(rhs.singularTitle);
 	}
 
 	public double fromBase(double baseValue) {
@@ -72,7 +65,7 @@ class Unit implements Comparable<Unit> {
 
 	@Override
 	public int hashCode() {
-		return pluralName.hashCode();
+		return singularTitle.hashCode();
 	}
 
 	public double toBase(double altValue) {
@@ -82,7 +75,7 @@ class Unit implements Comparable<Unit> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(pluralName.qcctwFullName());
+		sb.append(singularTitle);
 		if (oAuthority != null) {
 			sb.append(" authority ").append(oAuthority);
 		}
@@ -92,19 +85,24 @@ class Unit implements Comparable<Unit> {
 		return sb.toString();
 	}
 
-	private Unit(UnitType type, DualName singular, DualName plural, Authority oAuthority, double scaleToBase) {
+	private Unit(UnitType type, Authority oAuthority, Title singular, Title plural, Title abbr, Title oAlt, double scaleToBase) {
 		if (type == null) throw new IllegalArgumentException("object is null");
 		if (singular == null) throw new IllegalArgumentException("object is null");
 		if (plural == null) throw new IllegalArgumentException("object is null");
+		if (abbr == null) throw new IllegalArgumentException("object is null");
 		this.type = type;
-		this.singularName = singular;
-		this.pluralName = plural;
 		this.oAuthority = oAuthority;
+		this.singularTitle = singular;
+		this.pluralTitle = plural;
+		this.abbrTitle = abbr;
+		this.oAltTitle = oAlt;
 		m_scaleToBase = scaleToBase;
 	}
 	public final UnitType type;
-	public final DualName singularName;
-	public final DualName pluralName;
 	public final Authority oAuthority;
+	public final Title singularTitle;
+	public final Title pluralTitle;
+	public final Title abbrTitle;
+	public final Title oAltTitle;
 	private final double m_scaleToBase;
 }
