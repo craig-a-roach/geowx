@@ -42,7 +42,8 @@ class WktCoordinateSystemFactory {
 	private static final TokenListDelimiter TokenList_Separator = new TokenListDelimiter(ListDelimiter.Separator);
 
 	private static final String KA_CS = "<CS>";
-	private static final String KA_S = "<S>";
+	private static final String KA_S = "<STRUCT>";
+	private static final String KA_D = "<DIR>";
 
 	private static String diagnostic(String qtwSpec, int chIndex) {
 		final String zPre = qtwSpec.substring(0, chIndex);
@@ -149,7 +150,7 @@ class WktCoordinateSystemFactory {
 			throws GalliumSyntaxException {
 		assert tr != null;
 		try {
-			final Keyword keyword = tr.consumeKeyword();
+			final Keyword keyword = tr.consumeStructureKeyword();
 			if (!keyword.isCoordinateSystem()) {
 				final String m = "'" + keyword.qCode() + "' is not a coordinate system";
 				throw new SyntaxException(m);
@@ -182,7 +183,7 @@ class WktCoordinateSystemFactory {
 		IDatumTransform oToWgs84 = null;
 		Authority oAuthority = null;
 		while (tr.consumeListDelimiterMore()) {
-			final Keyword keyword = tr.consumeKeyword();
+			final Keyword keyword = tr.consumeStructureKeyword();
 			switch (keyword) {
 				case TOWGS84:
 					oToWgs84 = parseToWgs84(tr);
@@ -230,14 +231,18 @@ class WktCoordinateSystemFactory {
 		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.PRIMEM);
 		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
+		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.UNIT);
 		final Unit angularUnit = parseAngularUnit(tr);
 		Authority oAuthority = null;
 		while (tr.consumeListDelimiterMore()) {
-			final Keyword keyword = tr.consumeKeyword();
+			final Keyword keyword = tr.consumeStructureKeyword();
 			switch (keyword) {
 				case AUTHORITY:
 					oAuthority = parseAuthority(tr);
+				break;
+				case AXIS:
+					validateGCSAxes(tr);
 				break;
 				default:
 					throw new SyntaxException("Unexpected co-ordinate system attribute '" + keyword + "'");
@@ -257,7 +262,6 @@ class WktCoordinateSystemFactory {
 			throw new SyntaxException(m);
 		}
 		final double longitude = tr.consumeLiteralDouble();
-		tr.consumeListDelimiterSeparator();
 		Authority oAuthority = null;
 		if (tr.consumeListDelimiterMore()) {
 			tr.consumeKeyword(Keyword.AUTHORITY);
@@ -292,7 +296,6 @@ class WktCoordinateSystemFactory {
 			throw new SyntaxException(m);
 		}
 		final double convertToBase = tr.consumeLiteralDouble();
-		tr.consumeListDelimiterSeparator();
 		Authority oAuthority = null;
 		if (tr.consumeListDelimiterMore()) {
 			tr.consumeKeyword(Keyword.AUTHORITY);
@@ -309,6 +312,30 @@ class WktCoordinateSystemFactory {
 		if (ArgonText.isWhitespace(ch)) return CharacterClass.Whitespace;
 		if (PuncSymbols.indexOf(ch) >= 0) return CharacterClass.Punctuation;
 		throw new SyntaxException("Unrecognised punctuation symbol");
+	}
+
+	private static void validateGCSAxes(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String quctwName = tr.consumeLiteralQtw().toUpperCase();
+		tr.consumeListDelimiterSeparator();
+		final String quctwDir = tr.consumeDirectionKeyword().qCode().toUpperCase();
+		tr.consumeListDelimiterClose();
+		if (quctwName.startsWith("LO") && quctwDir.equals("EAST")) return;
+		if (quctwName.startsWith("LA") && quctwDir.equals("NORTH")) return;
+		throw new SyntaxException("Unsupported geographic axes..." + quctwName + "," + quctwDir);
+	}
+
+	private static void validatePCSAxes(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String quctwName = tr.consumeLiteralQtw().toUpperCase();
+		tr.consumeListDelimiterSeparator();
+		final String quctwDir = tr.consumeDirectionKeyword().qCode().toUpperCase();
+		tr.consumeListDelimiterClose();
+		if (quctwName.equals("X") && quctwDir.equals("EAST")) return;
+		if (quctwName.equals("Y") && quctwDir.equals("NORTH")) return;
+		throw new SyntaxException("Unsupported projected axes..." + quctwName + "," + quctwDir);
 	}
 
 	public static IGalliumCoordinateSystem newCoordinateSystem(String ozSpec)
@@ -406,10 +433,23 @@ class WktCoordinateSystemFactory {
 		PRIMEM("PRIMEM", KA_S),
 		TOWGS84("TOWGS84", KA_S),
 		UNIT("UNIT", KA_S),
-		AUTHORITY("AUTHORITY", KA_S);
+		AUTHORITY("AUTHORITY", KA_S),
+		AXIS("AXIS", KA_S),
+		NORTH("NORTH", KA_D),
+		SOUTH("SOUTH", KA_D),
+		EAST("EAST", KA_D),
+		WEST("WEST", KA_D);
 
 		public boolean isCoordinateSystem() {
 			return zAttributes.contains(KA_CS);
+		}
+
+		public boolean isDirection() {
+			return zAttributes.contains(KA_D);
+		}
+
+		public boolean isStructure() {
+			return zAttributes.contains(KA_S);
 		}
 
 		@Override
@@ -803,14 +843,16 @@ class WktCoordinateSystemFactory {
 			throw new SyntaxException("Expecting a " + type);
 		}
 
-		// TODO
-		// private <T extends Token> T peekToken(Class<T> tokenClass) {
-		// if (m_index < m_count) {
-		// final Token t = m_zlTokens.get(m_index);
-		// if (tokenClass.isInstance(t)) return tokenClass.cast(t);
-		// }
-		// return null;
-		// }
+		public Keyword consumeDirectionKeyword()
+				throws SyntaxException {
+			final Keyword kw = consumeKeyword();
+			if (!kw.isDirection()) {
+				final String m = "Expecting a direction keyword";
+				throw new SyntaxException(m);
+			}
+			return kw;
+		}
+
 		public Keyword consumeKeyword()
 				throws SyntaxException {
 			return consumeToken(TokenKeyword.class, "keyword").keyword;
@@ -877,6 +919,16 @@ class WktCoordinateSystemFactory {
 			return consumeToken(TokenLiteralString.class, "string literal").qtwValue;
 		}
 
+		public Keyword consumeStructureKeyword()
+				throws SyntaxException {
+			final Keyword kw = consumeKeyword();
+			if (!kw.isStructure()) {
+				final String m = "Expecting a structure keyword";
+				throw new SyntaxException(m);
+			}
+			return kw;
+		}
+
 		public String diagnostic() {
 			final int start = Math.max(0, m_index - SyntaxPreCount);
 			final int end = Math.min(m_count, m_index + SyntaxPostCount);
@@ -890,12 +942,6 @@ class WktCoordinateSystemFactory {
 			}
 			return sb.toString();
 		}
-
-		// @TODO
-		// public Keyword peekKeyword() {
-		// final TokenKeyword oToken = peekToken(TokenKeyword.class);
-		// return oToken == null ? null : oToken.keyword;
-		// }
 
 		@Override
 		public String toString() {
