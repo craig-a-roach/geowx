@@ -23,7 +23,7 @@ class WktCoordinateSystemFactory {
 	private static final int SyntaxPostLen = 20;
 	private static final int SyntaxPreCount = 5;
 	private static final int SyntaxPostCount = 5;
-	private static final String SyntaxMarker = "^^^";
+	private static final String SyntaxMarker = "<<--";
 
 	private static final char PuncQuote = '\"';
 	private static final char PuncPlus = '+';
@@ -156,8 +156,10 @@ class WktCoordinateSystemFactory {
 				throw new SyntaxException(m);
 			}
 			switch (keyword) {
+				case PROJCS:
+					return parseCSProjected(tr);
 				case GEOGCS:
-					return parseGeographicCS(tr);
+					return parseCSGeographic(tr);
 				default:
 					throw new SyntaxException("Coordinate system '" + keyword.qCode() + "' is not supported");
 			}
@@ -166,6 +168,76 @@ class WktCoordinateSystemFactory {
 			final String diag = tr.diagnostic();
 			throw new GalliumSyntaxException(m + "\n" + diag);
 		}
+	}
+
+	private static GeographicCoordinateSystem parseCSGeographic(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwTitle = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.DATUM);
+		final Datum datum = parseDatum(tr);
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.PRIMEM);
+		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.UNIT);
+		final Unit angularUnit = parseAngularUnit(tr);
+		Authority oAuthority = null;
+		while (tr.consumeListDelimiterMore()) {
+			final Keyword keyword = tr.consumeStructureKeyword();
+			switch (keyword) {
+				case AUTHORITY:
+					oAuthority = parseAuthority(tr);
+				break;
+				case AXIS:
+					validateGCSAxes(tr);
+				break;
+				default:
+					throw new SyntaxException("Unexpected co-ordinate system attribute '" + keyword + "'");
+			}
+		}
+		return GeographicCoordinateSystem.newInstance(qtwTitle, datum, primeMeridian, angularUnit, oAuthority);
+	}
+
+	private static IGalliumCoordinateSystem parseCSProjected(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwTitle = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.GEOGCS);
+		final GeographicCoordinateSystem gcs = parseCSGeographic(tr);
+		tr.consumeListDelimiterSeparator();
+		tr.consumeKeyword(Keyword.PROJECTION);
+		final ProjectionId projectionId = parseProjectionId(tr);
+		final ParameterMap pmap = new ParameterMap();
+		Unit oLinearUnit = null;
+		Authority oAuthority = null;
+		while (tr.consumeListDelimiterMore()) {
+			final Keyword keyword = tr.consumeStructureKeyword();
+			switch (keyword) {
+				case PARAMETER: {
+					final TitleParameter neo = parseTitleParameter(tr);
+					if (!pmap.add(neo)) throw new SyntaxException("Ambiguous parameter '" + neo.title + "'");
+				}
+				break;
+				case UNIT:
+					oLinearUnit = parseLinearUnit(tr);
+				break;
+				case AUTHORITY:
+					oAuthority = parseAuthority(tr);
+				break;
+				case AXIS:
+					validatePCSAxes(tr);
+				break;
+				default:
+					throw new SyntaxException("Unexpected co-ordinate system attribute '" + keyword + "'");
+			}
+		}
+		if (oLinearUnit == null) throw new SyntaxException("Missing linear unit of measure");
+
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private static Datum parseDatum(TokenReader tr)
@@ -221,34 +293,12 @@ class WktCoordinateSystemFactory {
 		return Ellipsoid.newInverseFlattening(qtwTitle, semiMajorMetres, inverseFlattening, oAuthority);
 	}
 
-	private static IGalliumCoordinateSystem parseGeographicCS(TokenReader tr)
+	private static Unit parseLinearUnit(TokenReader tr)
 			throws SyntaxException {
-		tr.consumeListDelimiterOpen();
-		final String qtwName = tr.consumeLiteralQtw();
-		tr.consumeListDelimiterSeparator();
-		tr.consumeKeyword(Keyword.DATUM);
-		final Datum datum = parseDatum(tr);
-		tr.consumeListDelimiterSeparator();
-		tr.consumeKeyword(Keyword.PRIMEM);
-		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
-		tr.consumeListDelimiterSeparator();
-		tr.consumeKeyword(Keyword.UNIT);
-		final Unit angularUnit = parseAngularUnit(tr);
-		Authority oAuthority = null;
-		while (tr.consumeListDelimiterMore()) {
-			final Keyword keyword = tr.consumeStructureKeyword();
-			switch (keyword) {
-				case AUTHORITY:
-					oAuthority = parseAuthority(tr);
-				break;
-				case AXIS:
-					validateGCSAxes(tr);
-				break;
-				default:
-					throw new SyntaxException("Unexpected co-ordinate system attribute '" + keyword + "'");
-			}
-		}
-		return GeographicCoordinateSystem.newInstance(qtwName, datum, primeMeridian, angularUnit, oAuthority);
+		final Unit unit = parseUnit(tr);
+		if (unit.type == UnitType.Length) return unit;
+		final String m = "Unit '" + unit.pluralTitle + "' is a " + unit.type + " type; require linear unit";
+		throw new SyntaxException(m);
 	}
 
 	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
@@ -269,6 +319,29 @@ class WktCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 		return PrimeMeridian.newInstance(qtwTitle, longitude, oAuthority);
+	}
+
+	private static ProjectionId parseProjectionId(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwTitle = tr.consumeLiteralQtw();
+		Authority oAuthority = null;
+		if (tr.consumeListDelimiterMore()) {
+			tr.consumeKeyword(Keyword.AUTHORITY);
+			oAuthority = parseAuthority(tr);
+			tr.consumeListDelimiterClose();
+		}
+
+		return ProjectionId.newInstance(qtwTitle, oAuthority);
+	}
+
+	private static TitleParameter parseTitleParameter(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwTitle = tr.consumeLiteralQtw();
+		final double value = tr.consumeLiteralDouble();
+		tr.consumeListDelimiterClose();
+		return TitleParameter.newInstance(qtwTitle, value);
 	}
 
 	private static IDatumTransform parseToWgs84(TokenReader tr)
@@ -429,9 +502,11 @@ class WktCoordinateSystemFactory {
 		GEOGCS("GEOGCS", KA_CS + KA_S),
 		PROJCS("PROJCS", KA_CS + KA_S),
 		DATUM("DATUM", KA_S),
+		PROJECTION("PROJECTION", KA_S),
 		SPHEROID("SPHEROID", KA_S),
 		PRIMEM("PRIMEM", KA_S),
 		TOWGS84("TOWGS84", KA_S),
+		PARAMETER("PARAMETER", KA_S),
 		UNIT("UNIT", KA_S),
 		AUTHORITY("AUTHORITY", KA_S),
 		AXIS("AXIS", KA_S),
