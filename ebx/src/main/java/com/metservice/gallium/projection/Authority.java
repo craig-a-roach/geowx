@@ -10,10 +10,46 @@ import com.metservice.argon.ArgonText;
 class Authority implements Comparable<Authority> {
 
 	public static final String NamespaceEPSG = "EPSG";
+	public static final String NamespaceESRI = "ESRI";
+	public static final String NamespaceCUSTOM = "CUSTOM";
+	public static final int CodeLo_EPSG = 1000;
+	public static final int CodeHiEx_EPSG = 32_767;
+	public static final int CodeLo_ESRI = 32_767;
+	public static final int CodeHiEx_ESRI = 200_000;
+	public static final int CodeLo_CUSTOM = 200_000;
+	public static final int CodeHiEx_CUSTOM = 209_199;
 	public static final String Separator = ":";
 
+	private static void validate(String ns, int code, int lo, int hiex) {
+		if (code >= lo && code < hiex) return;
+		final String m = "invalid " + ns + " code " + code + "; valid range is " + lo + " to " + hiex;
+		throw new IllegalArgumentException(m);
+	}
+
+	public static final Authority createWKID(int code) {
+		if (code >= CodeLo_EPSG && code < CodeHiEx_EPSG) return newInstance(NamespaceEPSG, code);
+		if (code >= CodeLo_ESRI && code < CodeHiEx_ESRI) return newInstance(NamespaceESRI, code);
+		if (code >= CodeLo_CUSTOM && code < CodeHiEx_CUSTOM) return newInstance(NamespaceCUSTOM, code);
+		return null;
+	}
+
+	public static final Authority newCUSTOM(int code) {
+		validate(NamespaceCUSTOM, code, CodeLo_CUSTOM, CodeHiEx_CUSTOM);
+		return newInstance(NamespaceESRI, code);
+	}
+
 	public static final Authority newEPSG(int code) {
-		return newInstance(NamespaceEPSG, Integer.toString(code));
+		validate(NamespaceEPSG, code, CodeLo_EPSG, CodeHiEx_EPSG);
+		return newInstance(NamespaceEPSG, code);
+	}
+
+	public static final Authority newESRI(int code) {
+		validate(NamespaceESRI, code, CodeLo_ESRI, CodeHiEx_ESRI);
+		return newInstance(NamespaceESRI, code);
+	}
+
+	public static final Authority newInstance(String qncNamespace, int code) {
+		return newInstance(qncNamespace, Integer.toString(code));
 	}
 
 	public static final Authority newInstance(String qncNamespace, String qccCode) {
