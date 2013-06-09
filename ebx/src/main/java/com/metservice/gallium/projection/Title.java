@@ -14,9 +14,22 @@ class Title implements Comparable<Title> {
 
 	public static Title newInstance(String ncTitle) {
 		if (ncTitle == null) throw new IllegalArgumentException("object is null");
-		final String oqtw = ArgonText.oqtw(ncTitle);
-		if (oqtw == null) throw new IllegalArgumentException("title is empty or whitespace");
-		return new Title(oqtw);
+		final String oqnctw = ArgonText.oqtw(ncTitle);
+		if (oqnctw == null) throw new IllegalArgumentException("title is all whitespace");
+		final int slen = oqnctw.length();
+		final StringBuilder sb = new StringBuilder(slen);
+		if (slen == 1) {
+			sb.append(oqnctw);
+		} else {
+			for (int i = 0; i < slen; i++) {
+				final char ch = oqnctw.charAt(i);
+				if (ArgonText.isLetterOrDigit(ch)) {
+					sb.append(Character.toUpperCase(ch));
+				}
+			}
+		}
+		if (sb.length() == 0) throw new IllegalArgumentException("title contains no letters or digits");
+		return new Title(oqnctw, sb.toString());
 	}
 
 	public static String oquctwKey(String oz) {
@@ -56,10 +69,11 @@ class Title implements Comparable<Title> {
 		return m_qnctw;
 	}
 
-	private Title(String qnctw) {
+	private Title(String qnctw, String quctw) {
 		assert qnctw != null && qnctw.length() > 0;
+		assert quctw != null && quctw.length() > 0;
 		m_qnctw = qnctw;
-		m_quctw = qnctw.toUpperCase();
+		m_quctw = quctw;
 	}
 	private final String m_qnctw;
 	private final String m_quctw;

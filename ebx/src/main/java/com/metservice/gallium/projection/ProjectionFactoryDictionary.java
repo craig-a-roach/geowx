@@ -15,18 +15,28 @@ class ProjectionFactoryDictionary {
 
 	private static final ProjectionFactoryDictionary Instance = newInstance();
 
-	private static Entry epsg(int code, String title) {
-		return new Entry(Authority.newEPSG(code), Title.newInstance(title));
-	}
-
-	private static Entry esri(int code, String title) {
-		return new Entry(Authority.newESRI(code), Title.newInstance(title));
-	}
-
 	private static ProjectionFactoryDictionary newInstance() {
 		final Builder b = new Builder(128);
-		b.add(epsg(1, "demo"));
+		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", ProjectionFactoryMercator.class, 1));
 		return new ProjectionFactoryDictionary(b);
+	}
+
+	public static ProjectionSelector findByAuthority(Authority a) {
+		return Instance.findByAuthorityImp(a);
+	}
+
+	public static ProjectionSelector findByTitle(String nc) {
+		return Instance.findByTitleImp(Title.newInstance(nc));
+	}
+
+	private ProjectionSelector findByAuthorityImp(Authority a) {
+		assert a != null;
+		return m_authorityMap.get(a);
+	}
+
+	private ProjectionSelector findByTitleImp(Title t) {
+		assert t != null;
+		return m_titleMap.get(t);
 	}
 
 	private ProjectionFactoryDictionary(Builder b) {
@@ -34,17 +44,17 @@ class ProjectionFactoryDictionary {
 		m_authorityMap = b.authorityMap;
 		m_titleMap = b.titleMap;
 	}
-	final Map<Authority, Entry> m_authorityMap;
-	final Map<Title, Entry> m_titleMap;
+	final Map<Authority, ProjectionSelector> m_authorityMap;
+	final Map<Title, ProjectionSelector> m_titleMap;
 
 	private static class Builder {
 
-		void add(Entry e) {
-			assert e != null;
-			if (titleMap.put(e.title, e) != null) throw new IllegalStateException("ambiguous title..." + e);
-			if (e.oAuthority != null) {
-				if (authorityMap.put(e.oAuthority, e) != null)
-					throw new IllegalStateException("ambiguous authority..." + e);
+		void add(ProjectionSelector s) {
+			assert s != null;
+			if (titleMap.put(s.title, s) != null) throw new IllegalStateException("ambiguous title..." + s);
+			if (s.oAuthority != null) {
+				if (authorityMap.put(s.oAuthority, s) != null)
+					throw new IllegalStateException("ambiguous authority..." + s);
 			}
 		}
 
@@ -52,29 +62,7 @@ class ProjectionFactoryDictionary {
 			authorityMap = new HashMap<>(initCap);
 			titleMap = new HashMap<>(initCap);
 		}
-		final Map<Authority, Entry> authorityMap;
-		final Map<Title, Entry> titleMap;
+		final Map<Authority, ProjectionSelector> authorityMap;
+		final Map<Title, ProjectionSelector> titleMap;
 	}
-
-	private static class Entry {
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(title);
-			if (oAuthority != null) {
-				sb.append(" authority ").append(oAuthority);
-			}
-			return sb.toString();
-		}
-
-		Entry(Authority oAuthority, Title title) {
-			assert title != null;
-			this.oAuthority = oAuthority;
-			this.title = title;
-		}
-		public final Authority oAuthority;
-		public final Title title;
-	}
-
 }

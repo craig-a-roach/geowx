@@ -209,7 +209,7 @@ class WktCoordinateSystemFactory {
 		final GeographicCoordinateSystem gcs = parseCSGeographic(tr);
 		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.PROJECTION);
-		final ProjectionId projectionId = parseProjectionId(tr);
+		final ProjectionSelector ps = parseProjectionSelector(tr);
 		final ParameterMap pmap = new ParameterMap();
 		Unit oLinearUnit = null;
 		Authority oAuthority = null;
@@ -321,7 +321,7 @@ class WktCoordinateSystemFactory {
 		return PrimeMeridian.newInstance(qtwTitle, longitude, oAuthority);
 	}
 
-	private static ProjectionId parseProjectionId(TokenReader tr)
+	private static ProjectionSelector parseProjectionSelector(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
 		final String qtwTitle = tr.consumeLiteralQtw();
@@ -332,7 +332,16 @@ class WktCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 
-		return ProjectionId.newInstance(qtwTitle, oAuthority);
+		if (oAuthority != null) {
+			final ProjectionSelector oSel = ProjectionFactoryDictionary.findByTitle(qtwTitle);
+			if (oSel != null) return oSel;
+			final String m = "Projection method " + oAuthority + "' (" + qtwTitle + ") is not in dictionary";
+			throw new SyntaxException(m);
+		}
+		final ProjectionSelector oSel = ProjectionFactoryDictionary.findByAuthority(oAuthority);
+		if (oSel != null) return oSel;
+		final String m = "Projection method '" + qtwTitle + "' is not in dictionary";
+		throw new SyntaxException(m);
 	}
 
 	private static TitleParameter parseTitleParameter(TokenReader tr)
