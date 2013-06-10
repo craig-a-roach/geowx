@@ -30,11 +30,11 @@ class UnitDictionary {
 		b.add(Unit.newLength(0.01, "centimeter", "centimeters", "cm"));
 		b.add(Unit.newLength(0.001, "millimeter", "millimeters", "mm"));
 		b.add(Unit.newLength(0.9144, "yard", "yards", "yd"));
-		b.add(Unit.newLength(0.3048, "foot", "feet", "ft"));
+		b.add(Unit.newLengthEpsg(9002, 0.3048, "foot", "feet", "ft"));
 		b.add(Unit.newLength(0.0254, "inch", "inches", "in"));
-		b.add(Unit.newLength(1609.347218694437, "U.S. mile", "U.S. miles", "us-mi"));
+		b.add(Unit.newLengthEpsg(9035, 1609.3472186944375, "U.S. mile", "U.S. miles", "us-mi"));
 		b.add(Unit.newLength(0.914401828803658, "U.S. yard", "U.S. yards", "us-yd"));
-		b.add(Unit.newLength(0.304800609601219, "U.S. foot", "U.S. feet", "us-ft"));
+		b.add(Unit.newLengthEpsg(9003, 0.30480060960121924, "U.S. foot", "U.S. feet", "us-ft"));
 		b.add(Unit.newLength(1.0 / 39.37, "U.S. inch", "U.S. inches", "us-in"));
 
 		return new UnitDictionary(b);

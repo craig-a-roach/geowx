@@ -18,6 +18,7 @@ class ProjectionFactoryDictionary {
 	private static ProjectionFactoryDictionary newInstance() {
 		final Builder b = new Builder(128);
 		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", ProjectionFactoryMercator.class, 1));
+		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", ProjectionFactoryTransverseMercator.class));
 		return new ProjectionFactoryDictionary(b);
 	}
 

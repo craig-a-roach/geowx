@@ -40,7 +40,7 @@ public class TestUnit1WktFactory {
 		}
 	}
 
-	// @Test
+	@Test
 	public void t10_gcs() {
 		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST]]";
 		try {
@@ -51,7 +51,7 @@ public class TestUnit1WktFactory {
 		}
 	}
 
-	// @Test
+	@Test
 	public void t20_gcs() {
 		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\"],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]]";
 		try {

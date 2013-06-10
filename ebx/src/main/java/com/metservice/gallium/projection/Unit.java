@@ -13,10 +13,10 @@ class Unit implements Comparable<Unit> {
 	public static final Unit RADIANS = newAngleEpsg(9101, 1.0, "radian", "radians", "rad");
 	public static final Unit DEGREES = newAngleEpsg(9102, MapMath.DTR, "degree", "degrees", "deg", "\u00B0");
 
-	public static final Unit METERS = newLength(1.0, "meter", "meters", "m");
-	public static final Unit KILOMETERS = newLength(1000.0, "kilometer", "kilometres", "km");
-	public static final Unit NAUTICAL_MILES = newLength(1852.0, "nautical mile", "nautical miles", "nm");
-	public static final Unit MILES = newLength(1609.344, "mile", "miles", "mi");
+	public static final Unit METERS = newLengthEpsg(9001, 1.0, "metre", "metres", "m", "meter");
+	public static final Unit KILOMETERS = newLengthEpsg(9036, 1000.0, "kilometer", "kilometres", "km");
+	public static final Unit NAUTICAL_MILES = newLengthEpsg(9030, 1852.0, "nautical mile", "nautical miles", "nm");
+	public static final Unit MILES = newLengthEpsg(9093, 1609.344, "mile", "miles", "mi");
 
 	private static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... titles) {
 		if (type == null) throw new IllegalArgumentException("object is null");
@@ -40,6 +40,10 @@ class Unit implements Comparable<Unit> {
 
 	public static Unit newLength(double toBase, String... titles) {
 		return newInstance(UnitType.Length, null, toBase, titles);
+	}
+
+	public static Unit newLengthEpsg(int code, double toBase, String... titles) {
+		return newInstance(UnitType.Length, Authority.newEPSG(code), toBase, titles);
 	}
 
 	@Override

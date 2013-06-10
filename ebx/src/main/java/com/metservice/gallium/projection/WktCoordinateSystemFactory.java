@@ -23,7 +23,7 @@ class WktCoordinateSystemFactory {
 	private static final int SyntaxPostLen = 20;
 	private static final int SyntaxPreCount = 5;
 	private static final int SyntaxPostCount = 5;
-	private static final String SyntaxMarker = "<<--";
+	private static final String SyntaxMarker = "--->>";
 
 	private static final char PuncQuote = '\"';
 	private static final char PuncPlus = '+';
@@ -91,10 +91,10 @@ class WktCoordinateSystemFactory {
 		CharacterClass oCharacterClass = null;
 		while (chIndex < len) {
 			final char ch = qtwSpec.charAt(chIndex);
+			if (oCharacterClass == null) {
+				oCharacterClass = selectCharacterClass(ch);
+			}
 			try {
-				if (oCharacterClass == null) {
-					oCharacterClass = selectCharacterClass(ch);
-				}
 				switch (oCharacterClass) {
 					case Digit:
 						state = state.digit(ctl, ch);
@@ -107,6 +107,9 @@ class WktCoordinateSystemFactory {
 					break;
 					case Whitespace:
 						state = state.whitespace(ctl);
+					break;
+					case Quotable:
+						state = state.quoteable(ctl, ch);
 					default:
 				}
 			} catch (final SyntaxException ex) {
@@ -332,15 +335,15 @@ class WktCoordinateSystemFactory {
 			tr.consumeListDelimiterClose();
 		}
 
-		if (oAuthority != null) {
+		if (oAuthority == null) {
 			final ProjectionSelector oSel = ProjectionFactoryDictionary.findByTitle(qtwTitle);
 			if (oSel != null) return oSel;
-			final String m = "Projection method " + oAuthority + "' (" + qtwTitle + ") is not in dictionary";
+			final String m = "Projection method '" + qtwTitle + "' is not in dictionary";
 			throw new SyntaxException(m);
 		}
 		final ProjectionSelector oSel = ProjectionFactoryDictionary.findByAuthority(oAuthority);
 		if (oSel != null) return oSel;
-		final String m = "Projection method '" + qtwTitle + "' is not in dictionary";
+		final String m = "Projection method " + oAuthority + "' (" + qtwTitle + ") is not in dictionary";
 		throw new SyntaxException(m);
 	}
 
@@ -348,6 +351,7 @@ class WktCoordinateSystemFactory {
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
 		final String qtwTitle = tr.consumeLiteralQtw();
+		tr.consumeListDelimiterSeparator();
 		final double value = tr.consumeLiteralDouble();
 		tr.consumeListDelimiterClose();
 		return TitleParameter.newInstance(qtwTitle, value);
@@ -384,16 +388,15 @@ class WktCoordinateSystemFactory {
 			oAuthority = parseAuthority(tr);
 			tr.consumeListDelimiterClose();
 		}
-		return Unit.newAngle(oAuthority, convertToBase, qtwTitle);
+		return Unit.newAngle(oAuthority, convertToBase, qtwTitle); // TODO
 	}
 
-	private static CharacterClass selectCharacterClass(char ch)
-			throws SyntaxException {
+	private static CharacterClass selectCharacterClass(char ch) {
 		if (ArgonText.isDigit(ch)) return CharacterClass.Digit;
 		if (ArgonText.isLetter(ch)) return CharacterClass.Letter;
 		if (ArgonText.isWhitespace(ch)) return CharacterClass.Whitespace;
 		if (PuncSymbols.indexOf(ch) >= 0) return CharacterClass.Punctuation;
-		throw new SyntaxException("Unrecognised punctuation symbol");
+		return CharacterClass.Quotable;
 	}
 
 	private static void validateGCSAxes(TokenReader tr)
@@ -433,7 +436,7 @@ class WktCoordinateSystemFactory {
 	}
 
 	private static enum CharacterClass {
-		Letter, Digit, Whitespace, Punctuation;
+		Letter, Digit, Whitespace, Punctuation, Quotable;
 	}
 
 	private static class Controller {
@@ -587,6 +590,11 @@ class WktCoordinateSystemFactory {
 			throw new SyntaxException(expectedMessage());
 		}
 
+		public State quoteable(Controller ctl, char ch)
+				throws SyntaxException {
+			throw new SyntaxException(expectedMessage());
+		}
+
 		public State terminator(Controller ctl)
 				throws SyntaxException {
 			throw new SyntaxException(expectedMessage());
@@ -625,6 +633,7 @@ class WktCoordinateSystemFactory {
 				throws SyntaxException {
 			if (isPuncQuote(ch)) return new StateString();
 			if (isPuncListDelimiter(ch)) return new StateListDelimiter();
+			if (isPuncNumber(ch)) return new StateNumber();
 			return super.punctuation(ctl, ch);
 		}
 
@@ -725,7 +734,7 @@ class WktCoordinateSystemFactory {
 
 		@Override
 		protected String expectingAdvice() {
-			return "floating-point digits, indicators, keywords or punctuation";
+			return "floating-point digits or indicators";
 		}
 
 		@Override
@@ -804,6 +813,12 @@ class WktCoordinateSystemFactory {
 				m_open = true;
 				return this;
 			}
+			return consumeBlack(ctl, ch);
+		}
+
+		@Override
+		public State quoteable(Controller ctl, char ch)
+				throws SyntaxException {
 			return consumeBlack(ctl, ch);
 		}
 
