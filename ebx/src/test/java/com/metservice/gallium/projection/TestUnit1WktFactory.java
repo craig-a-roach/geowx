@@ -27,7 +27,7 @@ public class TestUnit1WktFactory {
 		final String pj = "PROJECTION[\"Transverse_Mercator\"]";
 		final String pp = "PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000]";
 		final String pu = "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]";
-		final String pax = "AXIS[\"E\",EAST],AXIS[\"N\",NORTH]";
+		final String pax = "AXIS[\"X\",EAST],AXIS[\"Y\",NORTH]";
 		final String pa = "AUTHORITY[\"EPSG\",\"27700\"]";
 		final String pcs = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + pj + ",\n" + pp + ",\n" + pu
 				+ ",\n" + pax + ",\n" + pa + "\n]";

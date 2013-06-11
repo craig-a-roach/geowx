@@ -82,8 +82,8 @@ class UnitDictionary {
 			put(u.singularTitle, u);
 			put(u.pluralTitle, u);
 			put(u.abbrTitle, u);
-			if (u.oAltTitle != null) {
-				put(u.oAltTitle, u);
+			for (int i = 0; i < u.zptAlt.length; i++) {
+				put(u.zptAlt[i], u);
 			}
 			if (u.oAuthority != null) {
 				put(u.oAuthority, u);

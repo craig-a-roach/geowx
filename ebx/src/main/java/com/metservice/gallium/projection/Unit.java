@@ -13,22 +13,10 @@ class Unit implements Comparable<Unit> {
 	public static final Unit RADIANS = newAngleEpsg(9101, 1.0, "radian", "radians", "rad");
 	public static final Unit DEGREES = newAngleEpsg(9102, MapMath.DTR, "degree", "degrees", "deg", "\u00B0");
 
-	public static final Unit METERS = newLengthEpsg(9001, 1.0, "metre", "metres", "m", "meter");
+	public static final Unit METERS = newLengthEpsg(9001, 1.0, "metre", "metres", "m", "meter", "meters");
 	public static final Unit KILOMETERS = newLengthEpsg(9036, 1000.0, "kilometer", "kilometres", "km");
 	public static final Unit NAUTICAL_MILES = newLengthEpsg(9030, 1852.0, "nautical mile", "nautical miles", "nm");
 	public static final Unit MILES = newLengthEpsg(9093, 1609.344, "mile", "miles", "mi");
-
-	private static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... titles) {
-		if (type == null) throw new IllegalArgumentException("object is null");
-		if (titles == null) throw new IllegalArgumentException("object is null");
-		final int card = titles.length;
-		if (card == 0) throw new IllegalArgumentException("missing unit title");
-		final Title singular = Title.newInstance(titles[0]);
-		final Title plural = card < 2 ? singular : Title.newInstance(titles[1]);
-		final Title abbr = card < 3 ? singular : Title.newInstance(titles[2]);
-		final Title oAlt = card < 4 ? null : Title.newInstance(titles[3]);
-		return new Unit(type, oAuthority, singular, plural, abbr, oAlt, toBase);
-	}
 
 	public static Unit newAngle(Authority oAuthority, double toBase, String... titles) {
 		return newInstance(UnitType.Angle, oAuthority, toBase, titles);
@@ -36,6 +24,22 @@ class Unit implements Comparable<Unit> {
 
 	public static Unit newAngleEpsg(int code, double toBase, String... titles) {
 		return newInstance(UnitType.Angle, Authority.newEPSG(code), toBase, titles);
+	}
+
+	public static Unit newInstance(UnitType type, Authority oAuthority, double toBase, String... titles) {
+		if (type == null) throw new IllegalArgumentException("object is null");
+		if (titles == null) throw new IllegalArgumentException("object is null");
+		final int card = titles.length;
+		if (card == 0) throw new IllegalArgumentException("missing unit title");
+		final Title singular = Title.newInstance(titles[0]);
+		final Title plural = card < 2 ? singular : Title.newInstance(titles[1]);
+		final Title abbr = card < 3 ? singular : Title.newInstance(titles[2]);
+		final int altCount = Math.max(0, card - 3);
+		final Title[] zptAlt = new Title[altCount];
+		for (int i = 0; i < altCount; i++) {
+			zptAlt[i] = Title.newInstance(titles[3 + i]);
+		}
+		return new Unit(type, oAuthority, singular, plural, abbr, zptAlt, toBase);
 	}
 
 	public static Unit newLength(double toBase, String... titles) {
@@ -93,17 +97,18 @@ class Unit implements Comparable<Unit> {
 		return sb.toString();
 	}
 
-	private Unit(UnitType type, Authority oAuthority, Title singular, Title plural, Title abbr, Title oAlt, double scaleToBase) {
+	private Unit(UnitType type, Authority oAuthority, Title singular, Title plural, Title abbr, Title[] zptAlt, double scaleToBase) {
 		if (type == null) throw new IllegalArgumentException("object is null");
 		if (singular == null) throw new IllegalArgumentException("object is null");
 		if (plural == null) throw new IllegalArgumentException("object is null");
 		if (abbr == null) throw new IllegalArgumentException("object is null");
+		if (zptAlt == null) throw new IllegalArgumentException("object is null");
 		this.type = type;
 		this.oAuthority = oAuthority;
 		this.singularTitle = singular;
 		this.pluralTitle = plural;
 		this.abbrTitle = abbr;
-		this.oAltTitle = oAlt;
+		this.zptAlt = zptAlt;
 		m_scaleToBase = scaleToBase;
 	}
 	public final UnitType type;
@@ -111,6 +116,6 @@ class Unit implements Comparable<Unit> {
 	public final Title singularTitle;
 	public final Title pluralTitle;
 	public final Title abbrTitle;
-	public final Title oAltTitle;
+	public final Title[] zptAlt;
 	private final double m_scaleToBase;
 }

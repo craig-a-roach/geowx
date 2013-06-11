@@ -131,14 +131,6 @@ class WktCoordinateSystemFactory {
 		return zlTokens;
 	}
 
-	private static Unit parseAngularUnit(TokenReader tr)
-			throws SyntaxException {
-		final Unit unit = parseUnit(tr);
-		if (unit.type == UnitType.Angle) return unit;
-		final String m = "Unit '" + unit.pluralTitle + "' is a " + unit.type + " type; require angular unit";
-		throw new SyntaxException(m);
-	}
-
 	private static Authority parseAuthority(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -185,7 +177,7 @@ class WktCoordinateSystemFactory {
 		final PrimeMeridian primeMeridian = parsePrimeMeridian(tr);
 		tr.consumeListDelimiterSeparator();
 		tr.consumeKeyword(Keyword.UNIT);
-		final Unit angularUnit = parseAngularUnit(tr);
+		final Unit angularUnit = parseUnit(tr, UnitType.Angle);
 		Authority oAuthority = null;
 		while (tr.consumeListDelimiterMore()) {
 			final Keyword keyword = tr.consumeStructureKeyword();
@@ -225,7 +217,7 @@ class WktCoordinateSystemFactory {
 				}
 				break;
 				case UNIT:
-					oLinearUnit = parseLinearUnit(tr);
+					oLinearUnit = parseUnit(tr, UnitType.Length);
 				break;
 				case AUTHORITY:
 					oAuthority = parseAuthority(tr);
@@ -296,14 +288,6 @@ class WktCoordinateSystemFactory {
 		return Ellipsoid.newInverseFlattening(qtwTitle, semiMajorMetres, inverseFlattening, oAuthority);
 	}
 
-	private static Unit parseLinearUnit(TokenReader tr)
-			throws SyntaxException {
-		final Unit unit = parseUnit(tr);
-		if (unit.type == UnitType.Length) return unit;
-		final String m = "Unit '" + unit.pluralTitle + "' is a " + unit.type + " type; require linear unit";
-		throw new SyntaxException(m);
-	}
-
 	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -343,7 +327,7 @@ class WktCoordinateSystemFactory {
 		}
 		final ProjectionSelector oSel = ProjectionFactoryDictionary.findByAuthority(oAuthority);
 		if (oSel != null) return oSel;
-		final String m = "Projection method " + oAuthority + "' (" + qtwTitle + ") is not in dictionary";
+		final String m = "Projection method " + oAuthority + " (" + qtwTitle + ") is not in dictionary";
 		throw new SyntaxException(m);
 	}
 
@@ -371,15 +355,22 @@ class WktCoordinateSystemFactory {
 		return new GeocentricTranslation(dXmetres, dYmetres, dZmetres);
 	}
 
-	private static Unit parseUnit(TokenReader tr)
+	private static Unit parseUnit(TokenReader tr, UnitType reqdType)
 			throws SyntaxException {
+		assert reqdType != null;
 		tr.consumeListDelimiterOpen();
 		final String qtwTitle = tr.consumeLiteralQtw();
 		if (!tr.consumeListDelimiterMore()) {
 			final Unit oU = UnitDictionary.findByTitle(qtwTitle);
-			if (oU != null) return oU;
-			final String m = "Unit '" + qtwTitle + "' is not in dictionary; require definition";
-			throw new SyntaxException(m);
+			if (oU == null) {
+				final String m = "Unit '" + qtwTitle + "' is not in dictionary; require definition";
+				throw new SyntaxException(m);
+			}
+			if (oU.type != reqdType) {
+				final String m = "Unit '" + qtwTitle + "' is " + oU.type + ", but require " + reqdType;
+				throw new SyntaxException(m);
+			}
+			return oU;
 		}
 		final double convertToBase = tr.consumeLiteralDouble();
 		Authority oAuthority = null;
@@ -388,7 +379,26 @@ class WktCoordinateSystemFactory {
 			oAuthority = parseAuthority(tr);
 			tr.consumeListDelimiterClose();
 		}
-		return Unit.newAngle(oAuthority, convertToBase, qtwTitle); // TODO
+		if (oAuthority != null) {
+			final Unit oU = UnitDictionary.findByAuthority(oAuthority);
+			if (oU != null) {
+				if (oU.type != reqdType) {
+					final String m = "Unit " + oAuthority + " is " + oU.type + ", but require " + reqdType;
+					throw new SyntaxException(m);
+				}
+				return oU;
+			}
+		}
+		final Unit oU = UnitDictionary.findByTitle(qtwTitle);
+		if (oU != null) {
+			if (oU.type != reqdType) {
+				final String m = "Unit '" + qtwTitle + "' is " + oU.type + ", but require " + reqdType;
+				throw new SyntaxException(m);
+			}
+			return oU;
+		}
+
+		return Unit.newInstance(reqdType, oAuthority, convertToBase, qtwTitle);
 	}
 
 	private static CharacterClass selectCharacterClass(char ch) {
