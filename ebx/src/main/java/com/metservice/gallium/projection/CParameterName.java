@@ -8,6 +8,12 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-public interface IGalliumProjectedCoordinateSystem extends IGalliumCoordinateSystem {
+class CParameterName {
 
+	public static final Title False_Easting = Title.newInstance("False_Easting");
+	public static final Title False_Northing = Title.newInstance("False_Northing");
+	public static final Title Central_Meridian = Title.newInstance("Central_Meridian");
+
+	private CParameterName() {
+	}
 }

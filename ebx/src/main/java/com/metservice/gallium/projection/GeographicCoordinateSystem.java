@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class GeographicCoordinateSystem implements IGalliumGeographicCoordinateSystem {
+class GeographicCoordinateSystem {
 
 	public static final GeographicCoordinateSystem GCS_Sphere = newGreenwichDegreesEpsg(4035, "GCS_Sphere", Datum.D_Sphere);
 	public static final GeographicCoordinateSystem GCS_WGS84 = newGreenwichDegreesEpsg(4326, "GCS_WGS_1984", Datum.D_WGS_1984);

@@ -29,12 +29,12 @@ public class TestUnit1WktFactory {
 		final String pu = "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]";
 		final String pax = "AXIS[\"X\",EAST],AXIS[\"Y\",NORTH]";
 		final String pa = "AUTHORITY[\"EPSG\",\"27700\"]";
-		final String pcs = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + pj + ",\n" + pp + ",\n" + pu
+		final String spec = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + pj + ",\n" + pp + ",\n" + pu
 				+ ",\n" + pax + ",\n" + pa + "\n]";
-		System.out.println(pcs);
+		System.out.println(spec);
 		try {
-			final IGalliumCoordinateSystem cs = GalliumCoordinateSystemFactory.newCoordinateSystemFromWKT(pcs);
-			System.out.println(cs);
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec);
+			System.out.println(pcs);
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
@@ -44,8 +44,8 @@ public class TestUnit1WktFactory {
 	public void t10_gcs() {
 		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST]]";
 		try {
-			final IGalliumCoordinateSystem cs = GalliumCoordinateSystemFactory.newCoordinateSystemFromWKT(spec);
-			System.out.println(cs);
+			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
+			System.out.println(gcs);
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
@@ -55,8 +55,8 @@ public class TestUnit1WktFactory {
 	public void t20_gcs() {
 		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\"],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]]";
 		try {
-			final IGalliumCoordinateSystem cs = GalliumCoordinateSystemFactory.newCoordinateSystemFromWKT(spec);
-			System.out.println(cs);
+			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
+			System.out.println(gcs);
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}

@@ -32,7 +32,7 @@ class Ellipsoid {
 	}
 
 	public static Ellipsoid newSphereEpsg(int code, String title, double radiusMetres) {
-		return newMinorEpsg(code, title, radiusMetres, radiusMetres);
+		return new Ellipsoid(Authority.newEPSG(code), Title.newInstance(title), radiusMetres);
 	}
 
 	@Override
@@ -40,16 +40,32 @@ class Ellipsoid {
 		final Ds ds = Ds.o(getClass());
 		ds.a("authority", oAuthority);
 		ds.a("title", title);
-		ds.a("equatorial r(m)", equatorialRadiusMetres);
-		ds.a("polar r(m)", polarRadiusMetres);
-		ds.a("eccentricity", eccentricity);
+		if (isSpherical) {
+			ds.a("r(m)", equatorialRadiusMetres);
+		} else {
+			ds.a("equatorial r(m)", equatorialRadiusMetres);
+			ds.a("polar r(m)", polarRadiusMetres);
+			ds.a("eccentricity", eccentricity);
+		}
 		return ds.ss();
+	}
+
+	private Ellipsoid(Authority oAuthority, Title title, double radiusMetres) {
+		assert title != null;
+		this.oAuthority = oAuthority;
+		this.title = title;
+		this.isSpherical = true;
+		this.equatorialRadiusMetres = radiusMetres;
+		this.polarRadiusMetres = radiusMetres;
+		this.eccentricity = 0.0;
+		this.eccentricity2 = 0.0;
 	}
 
 	private Ellipsoid(Authority oAuthority, Title title, double equatorialRadiusMetres, double polarRadiusMetres) {
 		assert title != null;
 		this.oAuthority = oAuthority;
 		this.title = title;
+		this.isSpherical = false;
 		this.equatorialRadiusMetres = equatorialRadiusMetres;
 		this.polarRadiusMetres = polarRadiusMetres;
 		final double e2 = eccentricity2(equatorialRadiusMetres, polarRadiusMetres);
@@ -58,6 +74,7 @@ class Ellipsoid {
 	}
 	public final Authority oAuthority;
 	public final Title title;
+	public boolean isSpherical;
 	public final double equatorialRadiusMetres;
 	public final double polarRadiusMetres;
 	public final double eccentricity;

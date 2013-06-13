@@ -10,6 +10,9 @@ package com.metservice.gallium.projection;
  */
 public interface IProjectionFactory {
 
+	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
+			throws GalliumProjectionException;
+
 	public void setAuthority(Authority a);
 
 	public void setTitle(Title t);

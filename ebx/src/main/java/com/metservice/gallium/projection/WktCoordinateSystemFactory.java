@@ -41,7 +41,6 @@ class WktCoordinateSystemFactory {
 	private static final TokenListDelimiter TokenList_Close = new TokenListDelimiter(ListDelimiter.Close);
 	private static final TokenListDelimiter TokenList_Separator = new TokenListDelimiter(ListDelimiter.Separator);
 
-	private static final String KA_CS = "<CS>";
 	private static final String KA_S = "<STRUCT>";
 	private static final String KA_D = "<DIR>";
 
@@ -79,6 +78,20 @@ class WktCoordinateSystemFactory {
 
 	private static boolean isPuncQuote(char ch) {
 		return ch == PuncQuote;
+	}
+
+	private static String newSyntaxMessage(TokenReader tr, SyntaxException ex) {
+		final String m = "Malformed WKT spec; " + ex.getMessage();
+		final String diag = tr.diagnostic();
+		return m + "\n" + diag;
+	}
+
+	private static TokenReader newTokenReader(String ozSpec)
+			throws GalliumSyntaxException {
+		final String oqtwSpec = ArgonText.oqtw(ozSpec);
+		if (oqtwSpec == null) throw new GalliumSyntaxException("Empty WKT Spec");
+		final List<Token> zlTokens = newTokenStream(oqtwSpec);
+		return new TokenReader(zlTokens);
 	}
 
 	private static List<Token> newTokenStream(String qtwSpec)
@@ -141,30 +154,6 @@ class WktCoordinateSystemFactory {
 		return Authority.newInstance(qtwNamespace, qtwCode);
 	}
 
-	private static IGalliumCoordinateSystem parseCS(TokenReader tr)
-			throws GalliumSyntaxException {
-		assert tr != null;
-		try {
-			final Keyword keyword = tr.consumeStructureKeyword();
-			if (!keyword.isCoordinateSystem()) {
-				final String m = "'" + keyword.qCode() + "' is not a coordinate system";
-				throw new SyntaxException(m);
-			}
-			switch (keyword) {
-				case PROJCS:
-					return parseCSProjected(tr);
-				case GEOGCS:
-					return parseCSGeographic(tr);
-				default:
-					throw new SyntaxException("Coordinate system '" + keyword.qCode() + "' is not supported");
-			}
-		} catch (final SyntaxException ex) {
-			final String m = "Malformed WKT spec; " + ex.getMessage();
-			final String diag = tr.diagnostic();
-			throw new GalliumSyntaxException(m + "\n" + diag);
-		}
-	}
-
 	private static GeographicCoordinateSystem parseCSGeographic(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -195,7 +184,7 @@ class WktCoordinateSystemFactory {
 		return GeographicCoordinateSystem.newInstance(qtwTitle, datum, primeMeridian, angularUnit, oAuthority);
 	}
 
-	private static IGalliumCoordinateSystem parseCSProjected(TokenReader tr)
+	private static ProjectedCoordinateSystem parseCSProjected(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
 		final String qtwTitle = tr.consumeLiteralQtw();
@@ -231,8 +220,7 @@ class WktCoordinateSystemFactory {
 		}
 		if (oLinearUnit == null) throw new SyntaxException("Missing linear unit of measure");
 
-		// TODO Auto-generated method stub
-		return null;
+		return ProjectedCoordinateSystem.newInstance(qtwTitle, ps, pmap, gcs, oLinearUnit, oAuthority);
 	}
 
 	private static Datum parseDatum(TokenReader tr)
@@ -433,13 +421,26 @@ class WktCoordinateSystemFactory {
 		throw new SyntaxException("Unsupported projected axes..." + quctwName + "," + quctwDir);
 	}
 
-	public static IGalliumCoordinateSystem newCoordinateSystem(String ozSpec)
+	public static GeographicCoordinateSystem newCoordinateSystemGeographic(String ozSpec)
 			throws GalliumSyntaxException {
-		final String oqtwSpec = ArgonText.oqtw(ozSpec);
-		if (oqtwSpec == null) throw new GalliumSyntaxException("Empty WKT Spec");
-		final List<Token> zlTokens = newTokenStream(oqtwSpec);
-		final TokenReader tr = new TokenReader(zlTokens);
-		return parseCS(tr);
+		final TokenReader tr = newTokenReader(ozSpec);
+		try {
+			tr.consumeKeyword(Keyword.GEOGCS);
+			return parseCSGeographic(tr);
+		} catch (final SyntaxException ex) {
+			throw new GalliumSyntaxException(newSyntaxMessage(tr, ex));
+		}
+	}
+
+	public static ProjectedCoordinateSystem newCoordinateSystemProjected(String ozSpec)
+			throws GalliumSyntaxException {
+		final TokenReader tr = newTokenReader(ozSpec);
+		try {
+			tr.consumeKeyword(Keyword.PROJCS);
+			return parseCSProjected(tr);
+		} catch (final SyntaxException ex) {
+			throw new GalliumSyntaxException(newSyntaxMessage(tr, ex));
+		}
 	}
 
 	private WktCoordinateSystemFactory() {
@@ -521,8 +522,8 @@ class WktCoordinateSystemFactory {
 	}
 
 	private static enum Keyword implements ICodedEnum {
-		GEOGCS("GEOGCS", KA_CS + KA_S),
-		PROJCS("PROJCS", KA_CS + KA_S),
+		GEOGCS("GEOGCS", KA_S),
+		PROJCS("PROJCS", KA_S),
 		DATUM("DATUM", KA_S),
 		PROJECTION("PROJECTION", KA_S),
 		SPHEROID("SPHEROID", KA_S),
@@ -536,10 +537,6 @@ class WktCoordinateSystemFactory {
 		SOUTH("SOUTH", KA_D),
 		EAST("EAST", KA_D),
 		WEST("WEST", KA_D);
-
-		public boolean isCoordinateSystem() {
-			return zAttributes.contains(KA_CS);
-		}
 
 		public boolean isDirection() {
 			return zAttributes.contains(KA_D);

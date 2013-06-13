@@ -5,7 +5,6 @@
  */
 package com.metservice.gallium.projection;
 
-
 /**
  * @author roach
  */
@@ -20,8 +19,8 @@ class TitleParameter {
 		return title + "=" + value;
 	}
 
-	private TitleParameter(Title title, double value) {
-		assert title != null;
+	public TitleParameter(Title title, double value) {
+		if (title == null) throw new IllegalArgumentException("object is null");
 		this.title = title;
 		this.value = value;
 	}
