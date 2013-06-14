@@ -29,8 +29,8 @@ class ArgBase {
 		this.es = elp.eccentricity2;
 		this.one_es = 1.0 - this.es;
 		this.rone_es = 1.0 / this.one_es;
-		this.falseEastingMetres = pmap.select(CParameterName.False_Easting, pmapDefault).value;
-		this.falseNorthingMetres = pmap.select(CParameterName.False_Northing, pmapDefault).value;
+		this.falseEastingMetres = pmap.select(ParameterDefinition.False_Easting, pmapDefault).value;
+		this.falseNorthingMetres = pmap.select(ParameterDefinition.False_Northing, pmapDefault).value;
 		this.totalFalseEasting = toProjectedUnits(this.falseEastingMetres, lu);
 		this.totalFalseNorthing = toProjectedUnits(this.falseNorthingMetres, lu);
 	}

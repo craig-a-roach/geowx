@@ -10,6 +10,6 @@ package com.metservice.gallium.projection;
  */
 enum UnitType {
 
-	Angle, Length;
+	Angle, Length, Ratio;
 
 }

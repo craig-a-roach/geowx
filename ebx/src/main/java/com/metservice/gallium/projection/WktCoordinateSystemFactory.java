@@ -8,6 +8,8 @@ package com.metservice.gallium.projection;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.metservice.argon.AngleFactory;
+import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.CodedEnumTable;
 import com.metservice.argon.Ds;
@@ -201,8 +203,8 @@ class WktCoordinateSystemFactory {
 			final Keyword keyword = tr.consumeStructureKeyword();
 			switch (keyword) {
 				case PARAMETER: {
-					final TitleParameter neo = parseTitleParameter(tr);
-					if (!pmap.add(neo)) throw new SyntaxException("Ambiguous parameter '" + neo.title + "'");
+					final ParameterValue neo = parseParameter(tr);
+					if (!pmap.add(neo)) throw new SyntaxException("Ambiguous parameter '" + neo.definition + "'");
 				}
 				break;
 				case UNIT:
@@ -276,6 +278,21 @@ class WktCoordinateSystemFactory {
 		return Ellipsoid.newInverseFlattening(qtwTitle, semiMajorMetres, inverseFlattening, oAuthority);
 	}
 
+	private static ParameterValue parseParameter(TokenReader tr)
+			throws SyntaxException {
+		tr.consumeListDelimiterOpen();
+		final String qtwTitle = tr.consumeLiteralQtw();
+		final ParameterDefinition oDef = ParameterDictionary.findByTitle(qtwTitle);
+		if (oDef == null) {
+			final String m = "Parameter '" + qtwTitle + "' is undefined";
+			throw new SyntaxException(m);
+		}
+		tr.consumeListDelimiterSeparator();
+		final double value = tr.consumeLiteralDouble(oDef.type);
+		tr.consumeListDelimiterClose();
+		return new ParameterValue(oDef, value);
+	}
+
 	private static PrimeMeridian parsePrimeMeridian(TokenReader tr)
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
@@ -317,16 +334,6 @@ class WktCoordinateSystemFactory {
 		if (oSel != null) return oSel;
 		final String m = "Projection method " + oAuthority + " (" + qtwTitle + ") is not in dictionary";
 		throw new SyntaxException(m);
-	}
-
-	private static TitleParameter parseTitleParameter(TokenReader tr)
-			throws SyntaxException {
-		tr.consumeListDelimiterOpen();
-		final String qtwTitle = tr.consumeLiteralQtw();
-		tr.consumeListDelimiterSeparator();
-		final double value = tr.consumeLiteralDouble();
-		tr.consumeListDelimiterClose();
-		return TitleParameter.newInstance(qtwTitle, value);
 	}
 
 	private static IDatumTransform parseToWgs84(TokenReader tr)
@@ -1018,6 +1025,27 @@ class WktCoordinateSystemFactory {
 		public double consumeLiteralDouble()
 				throws SyntaxException {
 			return consumeToken(TokenLiteralNumber.class, "numeric literal").value;
+		}
+
+		public double consumeLiteralDouble(UnitType unitType)
+				throws SyntaxException {
+			assert unitType != null;
+			switch (unitType) {
+				case Angle: {
+					final String qtw = consumeLiteralQtw();
+					try {
+						return AngleFactory.newDegrees(qtw);
+					} catch (final ArgonFormatException ex) {
+						final String m = "Malformed angle..." + ex.getMessage();
+						throw new SyntaxException(m);
+					}
+				}
+				case Length:
+				case Ratio:
+					return consumeLiteralDouble();
+				default:
+					throw new IllegalArgumentException("unsupported unitType>" + unitType + "<");
+			}
 		}
 
 		public String consumeLiteralQtw()

@@ -19,12 +19,12 @@ class ParameterMap {
 	public static ParameterMap newDefault(Object... zpt) {
 		final ParameterMap neo = new ParameterMap();
 		for (int iName = 0, iValue = 1; iValue < zpt.length; iName += 2, iValue += 2) {
-			final Object oTitle = zpt[iName];
+			final Object oDef = zpt[iName];
 			final Object oValue = zpt[iValue];
-			if (oTitle instanceof Title && oValue instanceof Double) {
-				final Title title = (Title) oTitle;
+			if (oDef instanceof ParameterDefinition && oValue instanceof Double) {
+				final ParameterDefinition def = (ParameterDefinition) oDef;
 				final double value = ((Double) oValue).doubleValue();
-				neo.add(new TitleParameter(title, value));
+				neo.add(new ParameterValue(def, value));
 			} else {
 				final String s = ArgonJoiner.zComma(zpt);
 				final String m = "Malformed default parameter bindings at index " + iName + " of [" + s + "]";
@@ -34,39 +34,40 @@ class ParameterMap {
 		return neo;
 	}
 
-	public boolean add(TitleParameter neo) {
+	public boolean add(ParameterValue neo) {
 		if (neo == null) throw new IllegalArgumentException("object is null");
-		return m_mapTitle.put(neo.title, neo) == null;
+		return m_mapDefinition.put(neo.definition, neo) == null;
 	}
 
-	public TitleParameter find(Title key) {
-		if (key == null) throw new IllegalArgumentException("object is null");
-		return m_mapTitle.get(key);
-	}
-
-	public TitleParameter find(Title key, ParameterMap def) {
+	public ParameterValue find(ParameterDefinition def) {
 		if (def == null) throw new IllegalArgumentException("object is null");
-		final TitleParameter oMatch = find(key);
-		return oMatch == null ? def.find(key) : oMatch;
+		return m_mapDefinition.get(def);
 	}
 
-	public TitleParameter select(Title key, ParameterMap def)
+	public ParameterValue find(ParameterDefinition def, ParameterMap defaultValues) {
+		if (def == null) throw new IllegalArgumentException("object is null");
+		if (defaultValues == null) throw new IllegalArgumentException("object is null");
+		final ParameterValue oMatch = find(def);
+		return oMatch == null ? defaultValues.find(def) : oMatch;
+	}
+
+	public ParameterValue select(ParameterDefinition def, ParameterMap defaultValues)
 			throws GalliumProjectionException {
-		final TitleParameter oMatch = find(key, def);
+		final ParameterValue oMatch = find(def, defaultValues);
 		if (oMatch != null) return oMatch;
-		final String m = "No explicit or default value defined for parameter '" + key + "'";
+		final String m = "No explicit or default value defined for parameter '" + def + "'";
 		throw new GalliumProjectionException(m);
 	}
 
 	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
-		ds.a("mapTitle", m_mapTitle);
+		ds.a("map", m_mapDefinition);
 		return ds.s();
 	}
 
 	public ParameterMap() {
-		m_mapTitle = new HashMap<>(16);
+		m_mapDefinition = new HashMap<>(16);
 	}
-	private final Map<Title, TitleParameter> m_mapTitle;
+	private final Map<ParameterDefinition, ParameterValue> m_mapDefinition;
 }

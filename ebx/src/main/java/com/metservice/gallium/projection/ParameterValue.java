@@ -8,22 +8,18 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-class TitleParameter {
-
-	public static TitleParameter newInstance(String title, double value) {
-		return new TitleParameter(Title.newInstance(title), value);
-	}
+class ParameterValue {
 
 	@Override
 	public String toString() {
-		return title + "=" + value;
+		return definition + "=" + value;
 	}
 
-	public TitleParameter(Title title, double value) {
-		if (title == null) throw new IllegalArgumentException("object is null");
-		this.title = title;
+	public ParameterValue(ParameterDefinition def, double value) {
+		if (def == null) throw new IllegalArgumentException("object is null");
+		this.definition = def;
 		this.value = value;
 	}
-	public final Title title;
+	public final ParameterDefinition definition;
 	public final double value;
 }
