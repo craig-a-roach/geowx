@@ -10,10 +10,6 @@ package com.metservice.gallium.projection;
  */
 class ArgBase {
 
-	private static double toProjectedUnits(double metres, Unit lu) {
-		return lu.fromBase(metres);
-	}
-
 	public ArgBase(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
 			throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
@@ -24,15 +20,17 @@ class ArgBase {
 		this.ellipsoid = elp;
 		this.projectedUnit = lu;
 		this.spherical = elp.isSpherical;
-		this.totalScale = toProjectedUnits(elp.equatorialRadiusMetres, lu);
+		this.totalScale = lu.fromBase(elp.equatorialRadiusMetres);
 		this.e = elp.eccentricity;
 		this.es = elp.eccentricity2;
 		this.one_es = 1.0 - this.es;
 		this.rone_es = 1.0 / this.one_es;
-		this.falseEastingMetres = pmap.select(ParameterDefinition.False_Easting, pmapDefault).value;
-		this.falseNorthingMetres = pmap.select(ParameterDefinition.False_Northing, pmapDefault).value;
-		this.totalFalseEasting = toProjectedUnits(this.falseEastingMetres, lu);
-		this.totalFalseNorthing = toProjectedUnits(this.falseNorthingMetres, lu);
+		final AccessorLinear aFalseEasting = pmap.select(ParameterDefinition.False_Easting, pmapDefault).linear();
+		this.falseEastingMetres = aFalseEasting.value();
+		this.totalFalseEasting = aFalseEasting.projectedUnitsFromMetres(lu);
+		final AccessorLinear aFalseNorthing = pmap.select(ParameterDefinition.False_Northing, pmapDefault).linear();
+		this.falseNorthingMetres = aFalseNorthing.value();
+		this.totalFalseNorthing = aFalseNorthing.projectedUnitsFromMetres(lu);
 	}
 
 	public final Ellipsoid ellipsoid;

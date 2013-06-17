@@ -8,8 +8,6 @@ package com.metservice.gallium.projection;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.metservice.argon.AngleFactory;
-import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.CodedEnumTable;
 import com.metservice.argon.Ds;
@@ -288,7 +286,7 @@ class WktCoordinateSystemFactory {
 			throw new SyntaxException(m);
 		}
 		tr.consumeListDelimiterSeparator();
-		final double value = tr.consumeLiteralDouble(oDef.type);
+		final double value = tr.consumeLiteralDouble();
 		tr.consumeListDelimiterClose();
 		return new ParameterValue(oDef, value);
 	}
@@ -1025,27 +1023,6 @@ class WktCoordinateSystemFactory {
 		public double consumeLiteralDouble()
 				throws SyntaxException {
 			return consumeToken(TokenLiteralNumber.class, "numeric literal").value;
-		}
-
-		public double consumeLiteralDouble(UnitType unitType)
-				throws SyntaxException {
-			assert unitType != null;
-			switch (unitType) {
-				case Angle: {
-					final String qtw = consumeLiteralQtw();
-					try {
-						return AngleFactory.newDegrees(qtw);
-					} catch (final ArgonFormatException ex) {
-						final String m = "Malformed angle..." + ex.getMessage();
-						throw new SyntaxException(m);
-					}
-				}
-				case Length:
-				case Ratio:
-					return consumeLiteralDouble();
-				default:
-					throw new IllegalArgumentException("unsupported unitType>" + unitType + "<");
-			}
 		}
 
 		public String consumeLiteralQtw()

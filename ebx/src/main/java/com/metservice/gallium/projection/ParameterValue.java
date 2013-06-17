@@ -10,6 +10,14 @@ package com.metservice.gallium.projection;
  */
 class ParameterValue {
 
+	public AccessorAngle angle() {
+		return new AccessorAngle(this);
+	}
+
+	public AccessorLinear linear() {
+		return new AccessorLinear(this);
+	}
+
 	@Override
 	public String toString() {
 		return definition + "=" + value;

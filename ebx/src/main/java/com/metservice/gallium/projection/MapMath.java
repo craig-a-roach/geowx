@@ -299,8 +299,8 @@ class MapMath {
 	}
 
 	public static double normalizeAngle(double angle)
-			throws GalliumProjectionException {
-		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new GalliumProjectionException("Infinite angle");
+			throws ProjectionException {
+		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new ProjectionException("Infinite angle");
 		while (angle > TWOPI) {
 			angle -= TWOPI;
 		}
@@ -311,8 +311,8 @@ class MapMath {
 	}
 
 	public static double normalizeLatitude(final double angle)
-			throws GalliumProjectionException {
-		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new GalliumProjectionException("Infinite latitude");
+			throws ProjectionException {
+		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new ProjectionException("Infinite latitude");
 		double na = angle;
 		while (na > HALFPI) {
 			na -= PI;
@@ -326,20 +326,20 @@ class MapMath {
 	/**
 	 * normalize longitude angle in radians
 	 * 
-	 * @param angle
+	 * @param rads
 	 * @return
-	 * @throws GalliumProjectionException
+	 * @throws ProjectionException
 	 */
-	public static double normalizeLongitude(final double angle)
-			throws GalliumProjectionException {
-		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new GalliumProjectionException("Infinite longitude");
+	public static double normalizeLongitude(final double rads)
+			throws ProjectionException {
+		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw new ProjectionException("Infinite longitude");
 
 		// avoid instable computations with very small numbers: if the
 		// angle is very close to the graticule boundary, return +/-PI.
 		// Bernhard Jenny, May 25 2010.
-		if (Math.abs(angle - PI) < 1e-15) return Math.PI;
-		if (Math.abs(angle + PI) < 1e-15) return -Math.PI;
-		double na = angle;
+		if (Math.abs(rads - PI) < 1e-15) return Math.PI;
+		if (Math.abs(rads + PI) < 1e-15) return -Math.PI;
+		double na = rads;
 		while (na > PI) {
 			na -= TWOPI;
 		}
@@ -354,7 +354,7 @@ class MapMath {
 	}
 
 	public static double phi2(final double ts, final double e)
-			throws GalliumProjectionException {
+			throws ProjectionException {
 		double eccnth, phi, con, dphi;
 		int i;
 
@@ -366,7 +366,7 @@ class MapMath {
 			dphi = HALFPI - 2.0 * Math.atan(ts * Math.pow((1. - con) / (1. + con), eccnth)) - phi;
 			phi += dphi;
 		} while (Math.abs(dphi) > 1e-10 && --i != 0);
-		if (i <= 0) throw new GalliumProjectionException("phi2 did not converge");
+		if (i <= 0) throw new ProjectionException("phi2 did not converge");
 		return phi;
 	}
 
