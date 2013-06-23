@@ -1,14 +1,7 @@
 /*
- * Copyright 2006 Jerry Huxtable
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Copyright 2013 Meteorological Service of New Zealand Limited all rights reserved. No part of this work may be stored
+ * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
+ * Meteorological Service of New Zealand
  */
 package com.metservice.gallium.projection;
 
@@ -18,14 +11,6 @@ import com.metservice.gallium.GalliumPointD.Builder;
  * @author roach
  */
 class ProjectionMercator extends AbstractProjectionCylindrical {
-
-	/**
-	 * Returns the ESPG code for this projection, or 0 if unknown.
-	 */
-	@Override
-	public int getEPSGCode() {
-		return 9804;
-	}
 
 	@Override
 	public boolean hasInverse() {
@@ -39,36 +24,31 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 
 	@Override
 	public Builder project(double lam, double phi, Builder dst) {
-		if (spherical) {
+		if (args.base.spherical) {
 			dst.x = scaleFactor * lam;
 			dst.y = scaleFactor * Math.log(Math.tan(MapMath.QUARTERPI + 0.5 * phi));
 		} else {
 			dst.x = scaleFactor * lam;
-			dst.y = -scaleFactor * Math.log(MapMath.tsfn(phi, Math.sin(phi), e));
+			dst.y = -scaleFactor * Math.log(MapMath.tsfn(phi, Math.sin(phi), args.base.e));
 		}
 		return dst;
 	}
 
 	@Override
 	public Builder projectInverse(double x, double y, Builder dst)
-			throws GalliumProjectionException {
-		if (spherical) {
+			throws ProjectionException {
+		if (args.base.spherical) {
 			dst.y = MapMath.HALFPI - 2. * Math.atan(Math.exp(-y / scaleFactor));
 			dst.x = x / scaleFactor;
 		} else {
-			dst.y = MapMath.phi2(Math.exp(-y / scaleFactor), e);
+			dst.y = MapMath.phi2(Math.exp(-y / scaleFactor), args.base.e);
 			dst.x = x / scaleFactor;
 		}
 		return dst;
 	}
 
-	@Override
-	public String toString() {
-		return "Mercator";
+	public ProjectionMercator(Authority oAuthority, Title title, ArgCylindrical args) {
+		super(oAuthority, title, args);
 	}
 
-	public ProjectionMercator() {
-		clippingMinLatitude = MapMath.degToRad(-85.0);
-		clippingMaxLatitude = MapMath.degToRad(85.0);
-	}
 }

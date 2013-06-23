@@ -8,17 +8,15 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-abstract class AbstractProjectionCylindrical extends AbstractProjection {
+abstract class XAbstractProjectionCylindrical extends XAbstractProjection {
 
 	@Override
-	public boolean isRectilinear() {
+	public final boolean isRectilinear() {
 		return true;
 	}
 
-	protected AbstractProjectionCylindrical(Authority oAuthority, Title title, ArgCylindrical args) {
-		super(oAuthority, title);
-		if (args == null) throw new IllegalArgumentException("object is null");
-		this.args = args;
+	@Override
+	public String toString() {
+		return "Cylindrical";
 	}
-	protected final ArgCylindrical args;
 }

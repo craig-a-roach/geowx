@@ -15,7 +15,7 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-abstract class AbstractProjectionAzimuthal extends AbstractProjection {
+abstract class XAbstractProjectionAzimuthal extends XAbstractProjection {
 
 	public final static int NORTH_POLE = 1;
 	public final static int SOUTH_POLE = 2;
@@ -59,11 +59,11 @@ abstract class AbstractProjectionAzimuthal extends AbstractProjection {
 		return "Azimuthal";
 	}
 
-	public AbstractProjectionAzimuthal() throws GalliumProjectionException {
+	public XAbstractProjectionAzimuthal() throws GalliumProjectionException {
 		this(0.0, 0.0);
 	}
 
-	public AbstractProjectionAzimuthal(double projectionLatitude, double projectionLongitude) throws GalliumProjectionException {
+	public XAbstractProjectionAzimuthal(double projectionLatitude, double projectionLongitude) throws GalliumProjectionException {
 		this.projectionLatitude = projectionLatitude;
 		this.projectionLongitude = projectionLongitude;
 		initialize();

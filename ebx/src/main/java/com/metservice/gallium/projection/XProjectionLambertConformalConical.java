@@ -10,7 +10,7 @@ import com.metservice.gallium.GalliumPointD.Builder;
 /**
  * @author roach
  */
-class ProjectionLambertConformalConical extends AbstractProjectionConic {
+class XProjectionLambertConformalConical extends XAbstractProjectionConic {
 
 	@Override
 	public boolean hasInverse() {
@@ -115,7 +115,7 @@ class ProjectionLambertConformalConical extends AbstractProjectionConic {
 		return "Lambert Conformal Conic";
 	}
 
-	public ProjectionLambertConformalConical() throws GalliumProjectionException {
+	public XProjectionLambertConformalConical() throws GalliumProjectionException {
 		clippingMinLatitude = Math.toRadians(0);
 		clippingMaxLatitude = Math.toRadians(80.0);
 		projectionLatitude = MapMath.QUARTERPI;
@@ -124,7 +124,7 @@ class ProjectionLambertConformalConical extends AbstractProjectionConic {
 		initialize();
 	}
 
-	public ProjectionLambertConformalConical(Ellipsoid ellipsoid, double lon_0, double lat_1, double lat_2, double lat_0,
+	public XProjectionLambertConformalConical(Ellipsoid ellipsoid, double lon_0, double lat_1, double lat_2, double lat_0,
 			double x_0, double y_0) throws GalliumProjectionException {
 		setEllipsoid(ellipsoid);
 		projectionLongitude = lon_0;

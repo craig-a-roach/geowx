@@ -12,11 +12,17 @@ import com.metservice.gallium.GalliumPointD;
  */
 public interface IGalliumProjection {
 
+	public boolean hasInverse();
+
 	public boolean inside(double lonDeg, double latDeg)
 			throws GalliumProjectionException;
 
 	public GalliumPointD inverseDegrees(double xMetres, double yMetres)
 			throws GalliumProjectionException;
+
+	public boolean isConformal();
+
+	public boolean isRectilinear();
 
 	public GalliumPointD transform(double lonDeg, double latDeg)
 			throws GalliumProjectionException;

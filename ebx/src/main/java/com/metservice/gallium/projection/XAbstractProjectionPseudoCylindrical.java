@@ -15,7 +15,7 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-abstract class AbstractProjectionPseudoCylindrical extends AbstractProjection {
+abstract class XAbstractProjectionPseudoCylindrical extends XAbstractProjection {
 
 	@Override
 	public boolean parallelsAreParallel() {

@@ -49,6 +49,10 @@ class ParameterDictionary {
 		void add(ParameterDefinition u) {
 			assert u != null;
 			put(u.title, u);
+			final int altCount = u.zptAltTitles.length;
+			for (int i = 0; i < altCount; i++) {
+				put(u.zptAltTitles[i], u);
+			}
 		}
 
 		Builder(int initCap) {

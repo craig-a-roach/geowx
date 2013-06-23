@@ -10,14 +10,12 @@ package com.metservice.gallium.projection;
  */
 class ArgCylindrical {
 
-	public ArgCylindrical(ParameterMap pmapDefault, ParameterMap pmap, ArgBase base) throws GalliumProjectionException {
+	public ArgCylindrical(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
-		if (base == null) throw new IllegalArgumentException("object is null");
 		this.projectionLongitudeRads = pmap.select(ParameterDefinition.Central_Meridian, pmapDefault).angle()
 				.normalizedLongitudeRadsFromDeg();
 	}
-
 	/**
 	 * Projection longitude or central meridian in radians.
 	 */

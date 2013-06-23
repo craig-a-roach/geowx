@@ -8,7 +8,7 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-abstract class AbstractProjectionConic extends AbstractProjection {
+abstract class XAbstractProjectionConic extends XAbstractProjection {
 
 	/**
 	 * Default standard latitude for conic projections
@@ -62,7 +62,7 @@ abstract class AbstractProjectionConic extends AbstractProjection {
 		return "Conic";
 	}
 
-	protected AbstractProjectionConic() {
+	protected XAbstractProjectionConic() {
 		projectionLatitude = Math.toRadians(CONIC_LAT_DEG);
 		projectionLatitude1 = projectionLatitude;
 		projectionLatitude2 = projectionLatitude;
