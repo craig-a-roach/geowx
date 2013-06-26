@@ -15,10 +15,7 @@ abstract class AbstractProjectionCylindrical extends AbstractProjection {
 		return true;
 	}
 
-	protected AbstractProjectionCylindrical(Authority oAuthority, Title title, ArgCylindrical args) {
-		super(oAuthority, title);
-		if (args == null) throw new IllegalArgumentException("object is null");
-		this.args = args;
+	protected AbstractProjectionCylindrical(Authority oAuthority, Title title, ArgBase aBase) {
+		super(oAuthority, title, aBase);
 	}
-	protected final ArgCylindrical args;
 }

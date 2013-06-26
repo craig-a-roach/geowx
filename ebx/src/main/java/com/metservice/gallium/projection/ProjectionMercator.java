@@ -47,8 +47,9 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 		return dst;
 	}
 
-	public ProjectionMercator(Authority oAuthority, Title title, ArgCylindrical args) {
-		super(oAuthority, title, args);
+	public ProjectionMercator(Authority oAuthority, Title title, ArgBase argBase, ArgMercator arg) {
+		super(oAuthority, title, argBase);
+		m_arg = arg;
 	}
-
+	private final ArgMercator m_arg;
 }

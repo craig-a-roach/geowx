@@ -31,6 +31,8 @@ class ArgBase {
 		final AccessorLinear aFalseNorthing = pmap.select(ParameterDefinition.False_Northing, pmapDefault).linear();
 		this.falseNorthingMetres = aFalseNorthing.value();
 		this.totalFalseNorthing = aFalseNorthing.projectedUnitsFromMetres(lu);
+		final AccessorAngle aCentralMeridian = pmap.select(ParameterDefinition.Central_Meridian, pmapDefault).angle();
+		this.projectionLongitudeRads = aCentralMeridian.normalizedLongitudeRadsFromDeg();
 	}
 
 	public final Ellipsoid ellipsoid;
@@ -85,4 +87,9 @@ class ArgBase {
 	 * False northing in projected units
 	 */
 	public final double totalFalseNorthing;
+
+	/**
+	 * Projection longitude or central meridian in radians.
+	 */
+	public final double projectionLongitudeRads;
 }

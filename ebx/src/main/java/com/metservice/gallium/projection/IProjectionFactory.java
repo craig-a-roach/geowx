@@ -16,6 +16,4 @@ public interface IProjectionFactory {
 	public void setAuthority(Authority a);
 
 	public void setTitle(Title t);
-
-	public void setVariant(int id);
 }

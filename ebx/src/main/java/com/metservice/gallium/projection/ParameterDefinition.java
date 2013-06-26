@@ -14,7 +14,8 @@ enum ParameterDefinition {
 	False_Easting(UnitType.Length, "False_Easting"),
 	False_Northing(UnitType.Length, "False_Northing"),
 	Latitude_Of_Origin(UnitType.Angle, "Latitude_Of_Origin"),
-	Scale_Factor(UnitType.Ratio, "Scale_Factor");
+	Scale_Factor(UnitType.Ratio, "Scale_Factor"),
+	Standard_Parallel_1(UnitType.Angle, "Standard_Parallel_1");
 
 	@Override
 	public String toString() {

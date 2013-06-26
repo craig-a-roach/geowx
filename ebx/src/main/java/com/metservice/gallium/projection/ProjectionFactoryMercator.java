@@ -11,15 +11,16 @@ package com.metservice.gallium.projection;
 class ProjectionFactoryMercator extends AbstractProjectionFactory {
 
 	public static final ParameterMap DefaultMap = ParameterMap.newDefault(ParameterDefinition.False_Easting, 0.0,
-			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0);
+			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0,
+			ParameterDefinition.Standard_Parallel_1, 60.0);
 
 	@Override
 	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
 			throws GalliumProjectionException {
 
-		final ArgBase aBase = new ArgBase(DefaultMap, pmap, gcs, lu);
-		final ArgCylindrical aCylindrical = new ArgCylindrical(DefaultMap, pmap, aBase);
-		return new ProjectionMercator(oAuthority, title, aCylindrical);
+		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, lu);
+		final ArgMercator arg = new ArgMercator(DefaultMap, pmap, gcs);
+		return new ProjectionMercator(oAuthority, title, argBase, arg);
 	}
 
 	public ProjectionFactoryMercator() {

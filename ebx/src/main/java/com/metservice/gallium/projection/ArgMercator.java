@@ -8,17 +8,13 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-class ArgCylindrical {
+class ArgMercator {
 
-	public ArgCylindrical(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
+	public ArgMercator(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
+			throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
-		this.projectionLongitudeRads = pmap.select(ParameterDefinition.Central_Meridian, pmapDefault).angle()
-				.normalizedLongitudeRadsFromDeg();
-	}
-	/**
-	 * Projection longitude or central meridian in radians.
-	 */
-	public final double projectionLongitudeRads;
 
+		pmap.find(ParameterDefinition.Scale_Factor);
+	}
 }
