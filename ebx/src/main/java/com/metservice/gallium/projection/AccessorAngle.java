@@ -21,14 +21,28 @@ class AccessorAngle {
 		return "Failed to " + op + " " + m_src + "..." + ex.getMessage();
 	}
 
+	public double normalizedLatitudeRadsFromDeg()
+			throws GalliumProjectionException {
+		try {
+			return MapMath.normalizeLatitude(radsFromDeg());
+		} catch (final ProjectionException ex) {
+			final String m = fail("normalize latitude", ex);
+			throw new GalliumProjectionException(m);
+		}
+	}
+
 	public double normalizedLongitudeRadsFromDeg()
 			throws GalliumProjectionException {
 		try {
-			return MapMath.normalizeLongitude(MapMath.degToRad(m_src.value));
+			return MapMath.normalizeLongitude(radsFromDeg());
 		} catch (final ProjectionException ex) {
 			final String m = fail("normalize longitude", ex);
 			throw new GalliumProjectionException(m);
 		}
+	}
+
+	public double radsFromDeg() {
+		return MapMath.degToRad(m_src.value);
 	}
 
 	public double value() {

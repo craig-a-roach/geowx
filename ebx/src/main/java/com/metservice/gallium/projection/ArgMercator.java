@@ -15,6 +15,19 @@ class ArgMercator {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
 
-		pmap.find(ParameterDefinition.Scale_Factor);
+		final ParameterValue oScaleFactor = pmap.find(ParameterDefinition.Scale_Factor);
+		if (oScaleFactor == null) {
+			final AccessorAngle aStandardParallel = pmap.select(ParameterDefinition.Standard_Parallel_1, pmapDefault).angle();
+			final double phits = aStandardParallel.radsFromDeg();
+			final Ellipsoid elp = gcs.datum.ellipsoid;
+			if (elp.isSpherical) {
+				this.scaleFactor = Math.cos(phits);
+			} else {
+				this.scaleFactor = MapMath.msfn(Math.sin(phits), Math.cos(phits), elp.eccentricity2);
+			}
+		} else {
+			this.scaleFactor = MapMath.clamp(0.01, oScaleFactor.value, 1.0);
+		}
 	}
+	public final double scaleFactor;
 }

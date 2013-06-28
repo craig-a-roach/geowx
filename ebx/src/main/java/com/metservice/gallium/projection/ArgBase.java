@@ -5,10 +5,26 @@
  */
 package com.metservice.gallium.projection;
 
+import com.metservice.argon.Ds;
+
 /**
  * @author roach
  */
 class ArgBase {
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		ds.a("falseEasting(m)", falseEastingMetres);
+		ds.a("falseNorthing(m)", falseNorthingMetres);
+		ds.a("pu", projectedUnit);
+		ds.a("totalScale(pu)", totalScale);
+		ds.a("totalFalseEasting(pu)", totalFalseEasting);
+		ds.a("totalFalseNorthing(pu)", totalFalseNorthing);
+		ds.a("centralMeridan(deg)", MapMath.radToDeg(projectionLongitudeRads));
+		ds.a("ellipsoid", ellipsoid);
+		return ds.s();
+	}
 
 	public ArgBase(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
 			throws GalliumProjectionException {

@@ -12,6 +12,27 @@ import com.metservice.gallium.GalliumPointD.Builder;
  */
 class ProjectionMercator extends AbstractProjectionCylindrical {
 
+	private static final double clippingMaxLatDeg = 85.0;
+	private static final double clippingMaxPhi = MapMath.degToRad(clippingMaxLatDeg);
+	private static final double clippingMinLatDeg = -85.0;
+	private static final double clippingMinPhi = MapMath.degToRad(clippingMinLatDeg);
+
+	@Override
+	protected boolean inside(double lam, double phi)
+			throws ProjectionException {
+		return clippingMinPhi <= lam && lam <= clippingMaxPhi;
+	}
+
+	@Override
+	public double clippingMaxLatitudeDegrees() {
+		return clippingMaxLatDeg;
+	}
+
+	@Override
+	public double clippingMinLatitudeDegrees() {
+		return clippingMinLatDeg;
+	}
+
 	@Override
 	public boolean hasInverse() {
 		return true;
@@ -23,33 +44,34 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 	}
 
 	@Override
-	public Builder project(double lam, double phi, Builder dst) {
-		if (args.base.spherical) {
-			dst.x = scaleFactor * lam;
-			dst.y = scaleFactor * Math.log(Math.tan(MapMath.QUARTERPI + 0.5 * phi));
+	public void project(double lam, double phi, Builder dst) {
+		final double k0 = m_arg.scaleFactor;
+		if (argBase.spherical) {
+			dst.x = k0 * lam;
+			dst.y = k0 * Math.log(Math.tan(MapMath.QUARTERPI + 0.5 * phi));
 		} else {
-			dst.x = scaleFactor * lam;
-			dst.y = -scaleFactor * Math.log(MapMath.tsfn(phi, Math.sin(phi), args.base.e));
+			dst.x = k0 * lam;
+			dst.y = -k0 * Math.log(MapMath.tsfn(phi, Math.sin(phi), argBase.e));
 		}
-		return dst;
 	}
 
 	@Override
-	public Builder projectInverse(double x, double y, Builder dst)
+	public void projectInverse(double x, double y, Builder dst)
 			throws ProjectionException {
-		if (args.base.spherical) {
-			dst.y = MapMath.HALFPI - 2. * Math.atan(Math.exp(-y / scaleFactor));
-			dst.x = x / scaleFactor;
+		final double k0 = m_arg.scaleFactor;
+		if (argBase.spherical) {
+			dst.y = MapMath.HALFPI - 2. * Math.atan(Math.exp(-y / k0));
+			dst.x = x / k0;
 		} else {
-			dst.y = MapMath.phi2(Math.exp(-y / scaleFactor), args.base.e);
-			dst.x = x / scaleFactor;
+			dst.y = MapMath.phi2(Math.exp(-y / k0), argBase.e);
+			dst.x = x / k0;
 		}
-		return dst;
 	}
 
 	public ProjectionMercator(Authority oAuthority, Title title, ArgBase argBase, ArgMercator arg) {
 		super(oAuthority, title, argBase);
 		m_arg = arg;
 	}
+
 	private final ArgMercator m_arg;
 }

@@ -113,6 +113,12 @@ class MapMath {
 		return APA;
 	}
 
+	public static double clamp(double lo, double val, double hi) {
+		if (val < lo) return lo;
+		if (val > hi) return hi;
+		return val;
+	}
+
 	public static double cosd(double v) {
 		return Math.cos(v * DTR);
 	}
@@ -310,10 +316,10 @@ class MapMath {
 		return angle;
 	}
 
-	public static double normalizeLatitude(final double angle)
+	public static double normalizeLatitude(final double rads)
 			throws ProjectionException {
-		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new ProjectionException("Infinite latitude");
-		double na = angle;
+		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw new ProjectionException("Infinite latitude");
+		double na = rads;
 		while (na > HALFPI) {
 			na -= PI;
 		}
