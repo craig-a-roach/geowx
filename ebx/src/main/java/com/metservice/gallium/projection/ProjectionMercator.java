@@ -44,6 +44,16 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 	}
 
 	@Override
+	public boolean isEqualArea() {
+		return false;
+	}
+
+	@Override
+	public boolean isRectilinear() {
+		return true;
+	}
+
+	@Override
 	public void project(double lam, double phi, Builder dst) {
 		final double k0 = m_arg.scaleFactor;
 		if (argBase.spherical) {

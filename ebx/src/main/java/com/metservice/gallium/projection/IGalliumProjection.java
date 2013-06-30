@@ -23,6 +23,8 @@ public interface IGalliumProjection {
 
 	public boolean isConformal();
 
+	public boolean isEqualArea();
+
 	public boolean isInside(double lonDeg, double latDeg)
 			throws GalliumProjectionException;
 

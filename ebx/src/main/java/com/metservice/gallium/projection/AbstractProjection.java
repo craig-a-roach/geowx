@@ -17,6 +17,12 @@ abstract class AbstractProjection implements IGalliumProjection {
 	protected static final double RTD = MapMath.RTD;
 	protected static final double DTR = MapMath.DTR;
 
+	private static void rtd(GalliumPointD.Builder dst) {
+		assert dst != null;
+		dst.x = dst.x * RTD;
+		dst.y = dst.y * RTD;
+	}
+
 	private double longitudeAbsolute(double radsRel)
 			throws ProjectionException {
 		final double radsRef = argBase.projectionLongitudeRads;
@@ -53,52 +59,6 @@ abstract class AbstractProjection implements IGalliumProjection {
 		dst.y = yRads;
 	}
 
-	private void transformNonrectilinear(GalliumBoundingBoxF src, GalliumBoundingBoxF.BuilderD dst)
-			throws ProjectionException {
-		assert src != null;
-		assert dst != null;
-		final float rx = src.xLo();
-		final float ry = src.yLo();
-		final float rw = src.width();
-		final float rh = src.height();
-		for (int ix = 0; ix < 7; ix++) {
-			final double x = rx + rw * ix / 6;
-			for (int iy = 0; iy < 7; iy++) {
-				final double y = ry + rh * iy / 6;
-				final GalliumPointD.Builder out = GalliumPointD.newBuilder();
-				transform(x, y, out);
-				if (ix == 0 && iy == 0) {
-					dst.init(out.y, out.x);
-				} else {
-					dst.add(out.y, out.x);
-				}
-			}
-		}
-	}
-
-	private void transformRectilinear(GalliumBoundingBoxF srcDeg, GalliumBoundingBoxF.BuilderD dst)
-			throws ProjectionException {
-		assert srcDeg != null;
-		assert dst != null;
-		final float rx = srcDeg.xLo();
-		final float ry = srcDeg.yLo();
-		final float rw = srcDeg.width();
-		final float rh = srcDeg.height();
-		for (int ix = 0; ix < 2; ix++) {
-			final double x = rx + rw * ix;
-			for (int iy = 0; iy < 2; iy++) {
-				final double y = ry + rh * iy;
-				final GalliumPointD.Builder out = GalliumPointD.newBuilder();
-				transform(x, y, out);
-				if (ix == 0 && iy == 0) {
-					dst.init(out.y, out.x);
-				} else {
-					dst.add(out.y, out.x);
-				}
-			}
-		}
-	}
-
 	protected abstract boolean inside(double lam, double phi)
 			throws ProjectionException;
 
@@ -118,13 +78,13 @@ abstract class AbstractProjection implements IGalliumProjection {
 		final GalliumPointD.Builder dst = GalliumPointD.newBuilder();
 		try {
 			transformInverseRadians(xPU, yPU, dst);
-			dst.x = dst.x * RTD;
-			dst.y = dst.y * RTD;
-		} catch (final ProjectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			rtd(dst);
+			return new GalliumPointD(dst);
+		} catch (final ProjectionException ex) {
+			final Unit pu = argBase.projectedUnit;
+			final String m = "Failed to determine inverse of x=" + xPU + ", y=" + yPU + " (" + pu + ")..." + ex.getMessage();
+			throw new GalliumProjectionException(m);
 		}
-		return new GalliumPointD(dst);
 	}
 
 	@Override
@@ -176,13 +136,27 @@ abstract class AbstractProjection implements IGalliumProjection {
 			throws GalliumProjectionException {
 		if (srcDeg == null) throw new IllegalArgumentException("object is null");
 		try {
-			final GalliumBoundingBoxF.BuilderD bb = GalliumBoundingBoxF.newBuilderD();
-			if (isRectilinear()) {
-				transformRectilinear(srcDeg, bb);
-			} else {
-				transformNonrectilinear(srcDeg, bb);
+			final GalliumBoundingBoxF.BuilderD dst = GalliumBoundingBoxF.newBuilderD();
+			final boolean isRectlinear = isRectilinear();
+			final float rxDeg = srcDeg.xLo();
+			final float ryDeg = srcDeg.yLo();
+			final float rwDeg = srcDeg.width();
+			final float rhDeg = srcDeg.height();
+			final int imax = isRectlinear ? 1 : 6;
+			for (int ix = 0; ix <= imax; ix++) {
+				final double x = rxDeg + rwDeg * ix / imax;
+				for (int iy = 0; iy <= imax; iy++) {
+					final double y = ryDeg + rhDeg * iy / imax;
+					final GalliumPointD.Builder out = GalliumPointD.newBuilder();
+					transform(x, y, out);
+					if (ix == 0 && iy == 0) {
+						dst.init(out.y, out.x);
+					} else {
+						dst.add(out.y, out.x);
+					}
+				}
 			}
-			return GalliumBoundingBoxF.newInstance(bb);
+			return GalliumBoundingBoxF.newInstance(dst);
 		} catch (final ProjectionException ex) {
 			final String m = "Failed to transform bounding box " + srcDeg + " (deg)..." + ex.getMessage();
 			throw new GalliumProjectionException(m);

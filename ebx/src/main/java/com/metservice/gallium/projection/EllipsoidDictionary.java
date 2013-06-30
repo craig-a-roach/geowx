@@ -46,7 +46,10 @@ class EllipsoidDictionary {
 
 	private Ellipsoid findByTitleImp(Title t) {
 		assert t != null;
-		return m_titleMap.get(t);
+		final Ellipsoid oMatch = m_titleMap.get(t);
+		if (oMatch != null) return oMatch;
+		final Authority oAuth = Authority.createInstance(t);
+		return oAuth == null ? null : findByAuthorityImp(oAuth);
 	}
 
 	private EllipsoidDictionary(Builder b) {

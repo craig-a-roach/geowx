@@ -10,11 +10,6 @@ package com.metservice.gallium.projection;
  */
 abstract class AbstractProjectionCylindrical extends AbstractProjection {
 
-	@Override
-	public boolean isRectilinear() {
-		return true;
-	}
-
 	protected AbstractProjectionCylindrical(Authority oAuthority, Title title, ArgBase aBase) {
 		super(oAuthority, title, aBase);
 	}

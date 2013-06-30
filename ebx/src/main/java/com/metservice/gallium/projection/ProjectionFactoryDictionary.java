@@ -18,6 +18,7 @@ class ProjectionFactoryDictionary {
 	private static ProjectionFactoryDictionary newInstance() {
 		final Builder b = new Builder(128);
 		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", ProjectionFactoryMercator.class));
+		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", ProjectionFactoryMercator.class));
 		b.add(ProjectionSelector.newEsri(43004, "Mercator", ProjectionFactoryMercator.class));
 		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", ProjectionFactoryTransverseMercator.class));
 		return new ProjectionFactoryDictionary(b);
@@ -38,7 +39,10 @@ class ProjectionFactoryDictionary {
 
 	private ProjectionSelector findByTitleImp(Title t) {
 		assert t != null;
-		return m_titleMap.get(t);
+		final ProjectionSelector oMatch = m_titleMap.get(t);
+		if (oMatch != null) return oMatch;
+		final Authority oAuth = Authority.createInstance(t);
+		return oAuth == null ? null : findByAuthorityImp(oAuth);
 	}
 
 	private ProjectionFactoryDictionary(Builder b) {

@@ -48,7 +48,10 @@ class DatumDictionary {
 
 	private Datum findByTitleImp(Title t) {
 		assert t != null;
-		return m_titleMap.get(t);
+		final Datum oMatch = m_titleMap.get(t);
+		if (oMatch != null) return oMatch;
+		final Authority oAuth = Authority.createInstance(t);
+		return oAuth == null ? null : findByAuthorityImp(oAuth);
 	}
 
 	private DatumDictionary(Builder b) {

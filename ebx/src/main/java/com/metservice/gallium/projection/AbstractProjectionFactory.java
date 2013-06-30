@@ -11,7 +11,6 @@ package com.metservice.gallium.projection;
 abstract class AbstractProjectionFactory implements IProjectionFactory {
 
 	private static final Title TitlePending = Title.newInstance("pending");
-	private static final int VariantPending = -1;
 
 	@Override
 	public void setAuthority(Authority a) {
@@ -25,15 +24,8 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 		title = t;
 	}
 
-	@Override
-	public void setVariant(int id) {
-		if (id < 0) throw new IllegalArgumentException("invalid variant>" + id + "<");
-		id = variantId;
-	}
-
 	protected AbstractProjectionFactory() {
 	}
 	protected Authority oAuthority;
 	protected Title title = TitlePending;
-	protected int variantId = VariantPending;
 }

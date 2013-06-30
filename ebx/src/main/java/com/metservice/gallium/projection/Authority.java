@@ -18,12 +18,19 @@ class Authority implements Comparable<Authority> {
 	public static final int CodeHiEx_ESRI = 200_000;
 	public static final int CodeLo_CUSTOM = 200_000;
 	public static final int CodeHiEx_CUSTOM = 209_199;
-	public static final String Separator = ":";
+	public static final char Separator = ':';
 
 	private static void validate(String ns, int code, int lo, int hiex) {
 		if (code >= lo && code < hiex) return;
 		final String m = "invalid " + ns + " code " + code + "; valid range is " + lo + " to " + hiex;
 		throw new IllegalArgumentException(m);
+	}
+
+	public static final Authority createInstance(Title t) {
+		if (t == null) throw new IllegalArgumentException("object is null");
+		final int code = ArgonText.parse(t.quctwKey(), 0);
+		if (code == 0) return null;
+		return createWKID(code);
 	}
 
 	public static final Authority createWKID(int code) {
@@ -35,7 +42,7 @@ class Authority implements Comparable<Authority> {
 
 	public static final Authority newCUSTOM(int code) {
 		validate(NamespaceCUSTOM, code, CodeLo_CUSTOM, CodeHiEx_CUSTOM);
-		return newInstance(NamespaceESRI, code);
+		return newInstance(NamespaceCUSTOM, code);
 	}
 
 	public static final Authority newEPSG(int code) {
