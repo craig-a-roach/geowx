@@ -17,14 +17,26 @@ abstract class AbstractProjection implements IGalliumProjection {
 	protected static final double RTD = MapMath.RTD;
 	protected static final double DTR = MapMath.DTR;
 
+	private double longitudeAbsolute(double radsRel)
+			throws ProjectionException {
+		final double radsRef = argBase.projectionLongitudeRads;
+		if (radsRef == 0.0) return radsRel;
+		return MapMath.normalizeLongitude(radsRef - radsRel);
+	}
+
+	private double longitudeRelative(double radsAbs)
+			throws ProjectionException {
+		final double radsRef = argBase.projectionLongitudeRads;
+		if (radsRef == 0.0) return radsAbs;
+		return MapMath.normalizeLongitude(radsAbs - radsRef);
+	}
+
 	private void transform(double srcXdeg, double srcYdeg, GalliumPointD.Builder dst)
 			throws ProjectionException {
 		if (dst == null) throw new IllegalArgumentException("object is null");
-		final double xRads = srcXdeg * DTR;
+		final double xRads = longitudeRelative(srcXdeg * DTR);
 		final double yRads = srcYdeg * DTR;
-		final double lonRads = argBase.projectionLongitudeRads;
-		final double xNormRads = lonRads == 0.0 ? xRads : MapMath.normalizeLongitude(xRads - lonRads);
-		project(xNormRads, yRads, dst);
+		project(xRads, yRads, dst);
 		dst.x = (argBase.totalScale * dst.x) + argBase.totalFalseEasting;
 		dst.y = (argBase.totalScale * dst.y) + argBase.totalFalseNorthing;
 	}
@@ -36,8 +48,9 @@ abstract class AbstractProjection implements IGalliumProjection {
 		final double y = (srcYpu - argBase.totalFalseNorthing) / argBase.totalScale;
 		projectInverse(x, y, dst);
 		final double xRads = MapMath.clamp(-Math.PI, dst.x, Math.PI);
-		final double lonRads = argBase.projectionLongitudeRads;
-		dst.x = lonRads == 0.0 ? xRads : MapMath.normalizeLongitude(xRads + lonRads);
+		final double yRads = MapMath.clamp(-MapMath.HALFPI, dst.y, MapMath.HALFPI);
+		dst.x = longitudeAbsolute(xRads);
+		dst.y = yRads;
 	}
 
 	private void transformNonrectilinear(GalliumBoundingBoxF src, GalliumBoundingBoxF.BuilderD dst)
@@ -103,7 +116,14 @@ abstract class AbstractProjection implements IGalliumProjection {
 	public GalliumPointD inverseDegrees(double xPU, double yPU)
 			throws GalliumProjectionException {
 		final GalliumPointD.Builder dst = GalliumPointD.newBuilder();
-		transformInverse(xPU, yPU, dst);
+		try {
+			transformInverseRadians(xPU, yPU, dst);
+			dst.x = dst.x * RTD;
+			dst.y = dst.y * RTD;
+		} catch (final ProjectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return new GalliumPointD(dst);
 	}
 
@@ -114,10 +134,8 @@ abstract class AbstractProjection implements IGalliumProjection {
 			final double yRads = srcLatDeg * DTR;
 			if (yRads < -MapMath.HALFPI) return false;
 			if (yRads > MapMath.HALFPI) return false;
-			final double xRads = srcLonDeg * DTR;
-			final double lonRads = argBase.projectionLongitudeRads;
-			final double xNormRads = lonRads == 0.0 ? xRads : MapMath.normalizeLongitude(xRads - lonRads);
-			return inside(xNormRads, yRads);
+			final double xRads = longitudeRelative(srcLonDeg * DTR);
+			return inside(xRads, yRads);
 		} catch (final ProjectionException ex) {
 			final String m = "Failed to determine inside lon " + srcLonDeg + ", lat " + srcLatDeg + " (deg)..."
 					+ ex.getMessage();
