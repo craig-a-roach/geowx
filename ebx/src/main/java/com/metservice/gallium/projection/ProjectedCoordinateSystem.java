@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class ProjectedCoordinateSystem {
+class ProjectedCoordinateSystem implements IWktEmit {
 
 	public static ProjectedCoordinateSystem newInstance(String title, ProjectionSelector ps, ParameterMap pmap,
 			GeographicCoordinateSystem gcs, Unit linearUnit, Authority oAuthority) {
@@ -38,6 +38,11 @@ class ProjectedCoordinateSystem {
 		ds.a("gcs", gcs);
 		ds.a("linearUnit", linearUnit);
 		return ds.s();
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("PROJCS", title, gcs, selector, parameterMap, linearUnit);
 	}
 
 	private ProjectedCoordinateSystem(Authority oAuthority, Title title, ProjectionSelector ps, ParameterMap pmap,

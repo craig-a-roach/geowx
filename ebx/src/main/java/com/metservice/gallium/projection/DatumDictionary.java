@@ -23,7 +23,7 @@ class DatumDictionary {
 		b.add(Datum.newEpsg(6277, "D_OSGB_1936", 7001, new GeocentricTranslation(375.0, -111.0, 431.0)));
 		b.add(Datum.newEpsg(6203, "D_Australian_1984", 7003, null));
 		b.add(Datum.newEpsg(6167, "D_NZGD_2000", Ellipsoid.GRS_1980, GeocentricTranslation.Zero));
-
+		b.add(Datum.newEpsg(6004, "D_Bessel_1841", 7004, null));
 		return new DatumDictionary(b);
 	}
 

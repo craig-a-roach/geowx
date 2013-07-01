@@ -7,7 +7,7 @@ package com.metservice.gallium.projection;
 
 import com.metservice.argon.ArgonText;
 
-class Authority implements Comparable<Authority> {
+class Authority implements IWktEmit, Comparable<Authority> {
 
 	public static final String NamespaceEPSG = "EPSG";
 	public static final String NamespaceESRI = "ESRI";
@@ -62,15 +62,11 @@ class Authority implements Comparable<Authority> {
 	public static final Authority newInstance(String qncNamespace, String qccCode) {
 		if (qncNamespace == null) throw new IllegalArgumentException("object is null");
 		if (qccCode == null) throw new IllegalArgumentException("object is null");
-		final String oquctwNamespace = ArgonText.oqtw(qncNamespace);
-		if (oquctwNamespace == null) throw new IllegalArgumentException("empty namespace");
+		final String oqtwNamespace = ArgonText.oqtw(qncNamespace);
+		if (oqtwNamespace == null) throw new IllegalArgumentException("empty namespace");
 		final String oqccCode = ArgonText.oqtw(qccCode);
 		if (oqccCode == null) throw new IllegalArgumentException("empty code");
-		final StringBuilder sb = new StringBuilder();
-		sb.append(oquctwNamespace.toUpperCase());
-		sb.append(Separator);
-		sb.append(oqccCode);
-		return new Authority(sb.toString());
+		return new Authority(oqtwNamespace.toUpperCase(), oqccCode);
 	}
 
 	@Override
@@ -96,8 +92,16 @@ class Authority implements Comparable<Authority> {
 		return m_qcctwQualifiedCode.hashCode();
 	}
 
+	public String qcctwCode() {
+		return m_qcctwCode;
+	}
+
 	public String qcctwQualifiedCode() {
 		return m_qcctwQualifiedCode;
+	}
+
+	public String quctwNamespace() {
+		return m_quctwNamespace;
 	}
 
 	@Override
@@ -105,10 +109,23 @@ class Authority implements Comparable<Authority> {
 		return m_qcctwQualifiedCode;
 	}
 
-	private Authority(String qcctwQualifiedCode) {
-		assert qcctwQualifiedCode != null && qcctwQualifiedCode.length() > 0;
-		m_qcctwQualifiedCode = qcctwQualifiedCode;
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("AUTHORITY", m_quctwNamespace, m_qcctwCode);
 	}
 
+	private Authority(String quctwNamespace, String qcctwCode) {
+		assert quctwNamespace != null && quctwNamespace.length() > 0;
+		assert qcctwCode != null && qcctwCode.length() > 0;
+		m_quctwNamespace = quctwNamespace;
+		m_qcctwCode = qcctwCode;
+		final StringBuilder sb = new StringBuilder();
+		sb.append(quctwNamespace);
+		sb.append(Separator);
+		sb.append(qcctwCode);
+		m_qcctwQualifiedCode = sb.toString();
+	}
+	private final String m_quctwNamespace;
+	private final String m_qcctwCode;
 	private final String m_qcctwQualifiedCode;
 }

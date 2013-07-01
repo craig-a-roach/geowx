@@ -5,7 +5,10 @@
  */
 package com.metservice.gallium.projection;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.metservice.argon.Ds;
@@ -14,7 +17,7 @@ import com.metservice.argon.text.ArgonJoiner;
 /**
  * @author roach
  */
-class ParameterMap {
+class ParameterMap implements IWktList {
 
 	public static ParameterMap newDefault(Object... zpt) {
 		final ParameterMap neo = new ParameterMap();
@@ -49,6 +52,13 @@ class ParameterMap {
 		if (defaultValues == null) throw new IllegalArgumentException("object is null");
 		final ParameterValue oMatch = find(def);
 		return oMatch == null ? defaultValues.find(def) : oMatch;
+	}
+
+	@Override
+	public List<? extends IWktEmit> listEmit() {
+		final ArrayList<ParameterValue> dst = new ArrayList<>(m_mapDefinition.values());
+		Collections.sort(dst);
+		return dst;
 	}
 
 	public ParameterValue select(ParameterDefinition def, ParameterMap defaultValues)

@@ -8,7 +8,7 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-class Unit implements Comparable<Unit> {
+class Unit implements IWktEmit, Comparable<Unit> {
 
 	public static final Unit RADIANS = newAngleEpsg(9101, 1.0, "radian", "radians", "rad");
 	public static final Unit DEGREES = newAngleEpsg(9102, MapMath.DTR, "degree", "degrees", "deg", "\u00B0");
@@ -97,6 +97,11 @@ class Unit implements Comparable<Unit> {
 		return sb.toString();
 	}
 
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("UNIT", pluralTitle, m_scaleToBase, oAuthority);
+	}
+
 	private Unit(UnitType type, Authority oAuthority, Title singular, Title plural, Title abbr, Title[] zptAlt, double scaleToBase) {
 		if (type == null) throw new IllegalArgumentException("object is null");
 		if (singular == null) throw new IllegalArgumentException("object is null");
@@ -117,5 +122,6 @@ class Unit implements Comparable<Unit> {
 	public final Title pluralTitle;
 	public final Title abbrTitle;
 	public final Title[] zptAlt;
+
 	private final double m_scaleToBase;
 }

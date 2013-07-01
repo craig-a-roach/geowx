@@ -22,6 +22,7 @@ class EllipsoidDictionary {
 		b.add(Ellipsoid.GRS_1980);
 		b.add(Ellipsoid.newMinorEpsg(7001, "Airy_1830", 6_377_563.396, 6_356_256.909));
 		b.add(Ellipsoid.newMinorEpsg(7003, "Australian", 6_378_160.000, 6_356_774.719));
+		b.add(Ellipsoid.newMinorEpsg(7004, "Bessel_1841", 6_377_397.155, 6_356_078.963));
 		return new EllipsoidDictionary(b);
 	}
 

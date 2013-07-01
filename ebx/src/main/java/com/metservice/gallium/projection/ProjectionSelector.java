@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class ProjectionSelector {
+class ProjectionSelector implements IWktEmit {
 
 	public static ProjectionSelector newEpsg(int code, String title, Class<? extends IProjectionFactory> factoryClass) {
 		return new ProjectionSelector(Authority.newEPSG(code), Title.newInstance(title), factoryClass);
@@ -44,6 +44,11 @@ class ProjectionSelector {
 		}
 		sb.append(", class ").append(m_factoryClass.getName());
 		return sb.toString();
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("PROJECTION", title, oAuthority);
 	}
 
 	private ProjectionSelector(Authority oAuthority, Title title, Class<? extends IProjectionFactory> factoryClass) {

@@ -16,13 +16,14 @@ public class GeographicCoordinateSystemDictionary {
 	private static final GeographicCoordinateSystemDictionary Instance = newInstance();
 
 	private static GeographicCoordinateSystemDictionary newInstance() {
-		final Builder b = new Builder(16);
+		final Builder b = new Builder(32);
 		b.add(GeographicCoordinateSystem.GCS_Sphere);
 		b.add(GeographicCoordinateSystem.GCS_WGS84);
 		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4759, "GCS_NAD_1983_NSRS2007", 6759));
 		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4277, "GCS_OSGB_1936", 6277));
 		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4203, "GCS_Australian_1984", 6203));
 		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4167, "GCS_NZGD_2000", 6167));
+		b.add(GeographicCoordinateSystem.newGreenwichDegreesEpsg(4004, "GCS_Bessel_1841", 6004));
 		return new GeographicCoordinateSystemDictionary(b);
 	}
 

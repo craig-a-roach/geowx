@@ -8,10 +8,15 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-class ParameterValue {
+class ParameterValue implements IWktEmit, Comparable<ParameterValue> {
 
 	public AccessorAngle angle() {
 		return new AccessorAngle(this);
+	}
+
+	@Override
+	public int compareTo(ParameterValue rhs) {
+		return definition.compareTo(rhs.definition);
 	}
 
 	public AccessorLinear linear() {
@@ -21,6 +26,11 @@ class ParameterValue {
 	@Override
 	public String toString() {
 		return definition + "=" + value;
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("PARAMETER", definition.title, value);
 	}
 
 	public ParameterValue(ParameterDefinition def, double value) {

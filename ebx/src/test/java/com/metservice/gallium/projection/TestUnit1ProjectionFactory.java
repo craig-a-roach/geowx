@@ -6,15 +6,17 @@
 package com.metservice.gallium.projection;
 
 import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * @author roach
  */
-public class TestUnit1WktFactory {
+public class TestUnit1ProjectionFactory {
 
-	@Test
-	public void t05_pcs() {
+	public void t10_mercator() {
+
+	}
+
+	public void t90_transverseMercator() {
 		final String spheroid = "  SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]]";
 		final String datum = " DATUM[\"OSGB_1936\",\n" + spheroid
 				+ ",TOWGS84[375,-111,431,0,0,0,0],AUTHORITY[\"EPSG\",\"6277\"]]";
@@ -35,28 +37,6 @@ public class TestUnit1WktFactory {
 		try {
 			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec);
 			System.out.println(pcs);
-		} catch (final GalliumSyntaxException ex) {
-			Assert.fail("Syntax Exception: " + ex.getMessage());
-		}
-	}
-
-	@Test
-	public void t10_gcs() {
-		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST]]";
-		try {
-			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
-			System.out.println(gcs);
-		} catch (final GalliumSyntaxException ex) {
-			Assert.fail("Syntax Exception: " + ex.getMessage());
-		}
-	}
-
-	@Test
-	public void t20_gcs() {
-		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\"],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]]";
-		try {
-			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
-			System.out.println(gcs);
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
