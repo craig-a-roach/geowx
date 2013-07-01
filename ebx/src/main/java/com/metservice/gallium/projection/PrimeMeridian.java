@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class PrimeMeridian {
+class PrimeMeridian implements IWktEmit {
 
 	public static final PrimeMeridian Greenwich = newInstance("Greenwich", 0.0, Authority.newEPSG(8901));
 
@@ -36,6 +36,11 @@ class PrimeMeridian {
 		ds.a("title", title);
 		ds.a("longitude", longitude);
 		return ds.ss();
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("PRIMEM", title, longitude, oAuthority);
 	}
 
 	private PrimeMeridian(Authority oAuthority, Title title, double longitude) {

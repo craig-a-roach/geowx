@@ -23,6 +23,11 @@ class GeocentricTranslation implements IDatumTransform {
 		return ds.s();
 	}
 
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("TOWGS84", deltaXmetres, deltaYmetres, deltaZmetres);
+	}
+
 	public GeocentricTranslation(double deltaXmetres, double deltaYmetres, double deltaZmetres) {
 		this.deltaXmetres = deltaXmetres;
 		this.deltaYmetres = deltaYmetres;
@@ -31,5 +36,4 @@ class GeocentricTranslation implements IDatumTransform {
 	public final double deltaXmetres;
 	public final double deltaYmetres;
 	public final double deltaZmetres;
-
 }

@@ -60,7 +60,7 @@ class Ellipsoid implements IWktEmit {
 
 	@Override
 	public WktStructure toWkt() {
-		return new WktStructure("SPHEROID", title, equatorialRadiusMetres);
+		return new WktStructure("SPHEROID", title, equatorialRadiusMetres, inverseFlattening, oAuthority);
 	}
 
 	private Ellipsoid(Authority oAuthority, Title title, double radiusMetres) {

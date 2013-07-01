@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class GeographicCoordinateSystem {
+class GeographicCoordinateSystem implements IWktEmit {
 
 	public static final GeographicCoordinateSystem GCS_Sphere = newGreenwichDegreesEpsg(4035, "GCS_Sphere", Datum.D_Sphere);
 	public static final GeographicCoordinateSystem GCS_WGS84 = newGreenwichDegreesEpsg(4326, "GCS_WGS_1984", Datum.D_WGS_1984);
@@ -42,6 +42,11 @@ class GeographicCoordinateSystem {
 		ds.a("primeMeridian", primeMeridian);
 		ds.a("angularUnit", angularUnit);
 		return ds.s();
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("GEOGCS", title, datum, primeMeridian, angularUnit, oAuthority);
 	}
 
 	private GeographicCoordinateSystem(Authority oAuthority, Title title, Datum datum, PrimeMeridian primeMeridian,

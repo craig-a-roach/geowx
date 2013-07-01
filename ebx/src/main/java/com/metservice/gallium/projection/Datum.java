@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class Datum {
+class Datum implements IWktEmit {
 
 	public static final Datum D_Sphere = newEpsg(6035, "D_Sphere", Ellipsoid.Sphere, null);
 	public static final Datum D_WGS_1984 = newEpsg(6326, "D_WGS_1984", Ellipsoid.WGS_1984, GeocentricTranslation.Zero);
@@ -38,6 +38,11 @@ class Datum {
 		ds.a("ellipsoid", ellipsoid);
 		ds.a("toWgs84", oToWgs84);
 		return ds.s();
+	}
+
+	@Override
+	public WktStructure toWkt() {
+		return new WktStructure("DATUM", title, ellipsoid, oToWgs84, oAuthority);
 	}
 
 	private Datum(Authority oAuthority, Title title, Ellipsoid ellipsoid, IDatumTransform oToWgs84) {
