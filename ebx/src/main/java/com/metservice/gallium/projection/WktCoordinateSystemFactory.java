@@ -158,7 +158,12 @@ class WktCoordinateSystemFactory {
 			throws SyntaxException {
 		tr.consumeListDelimiterOpen();
 		final String qtwTitle = tr.consumeLiteralQtw();
-		tr.consumeListDelimiterSeparator();
+		if (!tr.consumeListDelimiterMore()) {
+			final GeographicCoordinateSystem oGCS = GeographicCoordinateSystemDictionary.findByTitle(qtwTitle);
+			if (oGCS != null) return oGCS;
+			final String m = "Geographic coordinate system '" + qtwTitle + "' is not in dictionary; require definition";
+			throw new SyntaxException(m);
+		}
 		tr.consumeKeyword(Keyword.DATUM);
 		final Datum datum = parseDatum(tr);
 		tr.consumeListDelimiterSeparator();

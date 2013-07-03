@@ -16,13 +16,23 @@ class PrimeMeridian implements IWktEmit {
 
 	private static final PrimeMeridian[] Table = { Greenwich };
 
+	public static PrimeMeridian findByAuthority(Authority a) {
+		if (a == null) throw new IllegalArgumentException("object is null");
+		for (int i = 0; i < Table.length; i++) {
+			final PrimeMeridian pm = Table[i];
+			if (pm.oAuthority != null && pm.oAuthority.equals(a)) return pm;
+		}
+		return null;
+	}
+
 	public static PrimeMeridian findByTitle(String nc) {
 		final Title target = Title.newInstance(nc);
 		for (int i = 0; i < Table.length; i++) {
 			final PrimeMeridian pm = Table[i];
 			if (pm.title.equals(target)) return pm;
 		}
-		return null;
+		final Authority oAuth = Authority.createInstance(target);
+		return oAuth == null ? null : findByAuthority(oAuth);
 	}
 
 	public static PrimeMeridian newInstance(String title, double longitude, Authority oAuthority) {
