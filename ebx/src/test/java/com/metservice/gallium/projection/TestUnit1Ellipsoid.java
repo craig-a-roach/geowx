@@ -25,6 +25,8 @@ public class TestUnit1Ellipsoid {
 		Assert.assertEquals("polar r", 6_356_752.314, oE1.polarRadiusMetres, 1e-3);
 		Assert.assertEquals("equator r", 6_378_137.0, oE2.equatorialRadiusMetres, 1e-1);
 		Assert.assertEquals("equator r", 6_378_137.0, oE3.equatorialRadiusMetres, 1e-1);
+		final String wkt = "SPHEROID[\"WGS_1984\",6378137.0,298.25722014342756,AUTHORITY[\"EPSG\",\"7030\"]]";
+		Assert.assertEquals("WKT", wkt, oE3.toWkt().formatFlat());
 	}
 
 	@Test

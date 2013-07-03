@@ -14,22 +14,42 @@ import org.junit.Test;
 public class TestUnit1GcsFactory {
 
 	@Test
-	public void t10_gcs() {
+	public void t10_gcs_byDef() {
 		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137,298.257223563]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295],AXIS[\"Lat\",NORTH],AXIS[\"Long\",EAST]]";
 		try {
 			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
-			System.out.println(gcs);
+			System.out.println("byDef\n" + gcs.toWkt().format());
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
 	}
 
 	@Test
-	public void t20_gcs() {
-		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\"],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.017453292519943295]]";
+	public void t20_gcs_byDatumTitle() {
+		final String spec = "GEOGCS[\"GCS_WGS_1984\",DATUM[\"D_WGS_1984\"],PRIMEM[\"Greenwich\"],UNIT[\"Degree\"]]";
+		try {
+			WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
+		} catch (final GalliumSyntaxException ex) {
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t30_gcs_byTitle() {
+		final String spec = "GEOGCS[\"GCS_WGS_1984\"]";
+		try {
+			WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
+		} catch (final GalliumSyntaxException ex) {
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t40_gcs_byAuth() {
+		final String spec = "GEOGCS[\"4326\"]";
 		try {
 			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
-			System.out.println(gcs);
+			System.out.println("byAuth\n" + gcs.toWkt().format());
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}

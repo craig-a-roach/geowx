@@ -6,13 +6,21 @@
 package com.metservice.gallium.projection;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author roach
  */
 public class TestUnit1ProjectionFactory {
 
+	@Test
 	public void t10_mercator() {
+		final WktStructure spheroid = new WktStructure("SPHEROID", "Krassowski", 6378245.0, 298.3);
+		final WktStructure datum = new WktStructure("DATUM", "D_Krassowski", spheroid);
+		final WktStructure primem = new WktStructure("PRIMEM", "Greenwich");
+		final WktStructure degrees = new WktStructure("UNIT", "degrees");
+		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, primem, degrees);
+		System.out.println(gcs);
 
 	}
 

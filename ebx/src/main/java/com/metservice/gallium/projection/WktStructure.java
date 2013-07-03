@@ -5,6 +5,7 @@
  */
 package com.metservice.gallium.projection;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -12,77 +13,181 @@ import java.util.List;
  */
 class WktStructure {
 
-	private static final int MaxInline = 100;
+	public static final String DefaultTab = "  ";
+	public static final int DefaultFlatLimit = 80;
+
+	private void emitFlat(StringBuilder dst) {
+		final int tcount = m_terms.size();
+		dst.append(m_keyword);
+		dst.append('[');
+		for (int i = 0; i < tcount; i++) {
+			final ITerm t = m_terms.get(i);
+			if (i > 0) {
+				dst.append(',');
+			}
+			if (t instanceof TextTerm) {
+				final String value = ((TextTerm) t).value;
+				dst.append(value);
+				continue;
+			}
+			if (t instanceof StructureTerm) {
+				final WktStructure value = ((StructureTerm) t).value;
+				value.emitFlat(dst);
+				continue;
+			}
+		}
+		dst.append(']');
+	}
+
+	private void emitMulti(StringBuilder dst, int depth, String tab, int flatLimit) {
+		final int tcount = m_terms.size();
+		if (depth > 0) {
+			indent(dst, depth, tab);
+		}
+		dst.append(m_keyword);
+		dst.append('[');
+		for (int i = 0; i < tcount; i++) {
+			final ITerm t = m_terms.get(i);
+			if (i > 0) {
+				dst.append(',');
+			}
+			if (t instanceof TextTerm) {
+				final String value = ((TextTerm) t).value;
+				dst.append(value);
+				continue;
+			}
+			if (t instanceof StructureTerm) {
+				final WktStructure value = ((StructureTerm) t).value;
+				if (value.m_charCount > flatLimit) {
+					value.emitMulti(dst, depth + 1, tab, flatLimit);
+				} else {
+					indent(dst, depth, tab);
+					value.emitFlat(dst);
+				}
+				continue;
+			}
+		}
+		indent(dst, depth, tab);
+		dst.append(']');
+	}
+
+	private void indent(StringBuilder dst, int depth, String tab) {
+		dst.append('\n');
+		if (tab != null && tab.length() == 0) return;
+		for (int i = 0; i < depth; i++) {
+			dst.append(tab);
+		}
+	}
+
+	public String format() {
+		return format(DefaultTab, DefaultFlatLimit);
+	}
+
+	public String format(String tab, int flatLimit) {
+		final StringBuilder sb = new StringBuilder(512);
+		emitMulti(sb, 0, tab, flatLimit);
+		return sb.toString();
+	}
+
+	public String formatFlat() {
+		final StringBuilder sb = new StringBuilder(512);
+		emitFlat(sb);
+		return sb.toString();
+	}
 
 	@Override
 	public String toString() {
-		return m_text;
+		return format();
 	}
 
 	public WktStructure(String keyword, Object... zptTerms) {
 		if (keyword == null || keyword.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final StringBuilder sb = new StringBuilder(512);
-		sb.append(keyword.toUpperCase());
-		final int termCount = zptTerms.length;
-		if (termCount > 0) {
-			sb.append('[');
-		}
-		boolean comma = false;
-		for (int i = 0; i < termCount; i++) {
+		final int inCount = zptTerms.length;
+		m_keyword = keyword;
+		m_terms = new ArrayList<>(inCount);
+		for (int i = 0; i < inCount; i++) {
 			final Object oTerm = zptTerms[i];
 			if (oTerm == null) {
 				continue;
 			}
+			if ((oTerm instanceof Double) || (oTerm instanceof Integer)) {
+				final String text = oTerm.toString();
+				m_terms.add(new TextTerm(text));
+				continue;
+			}
+			if (oTerm instanceof Title) {
+				final Title t = (Title) oTerm;
+				final String text = "\"" + t.toString() + "\"";
+				m_terms.add(new TextTerm(text));
+				continue;
+			}
+			if (oTerm instanceof String) {
+				final String text = "\"" + oTerm.toString() + "\"";
+				m_terms.add(new TextTerm(text));
+				continue;
+			}
 			if (oTerm instanceof IWktEmit) {
-				final IWktEmit e = (IWktEmit) oTerm;
-				final WktStructure wkt = e.toWkt();
-				final String swkt = wkt.toString();
-				if (swkt.length() > MaxInline) {
-					sb.append("\n");
-				}
-				if (comma) {
-					sb.append(',');
-				}
-				sb.append(swkt);
-				comma = true;
+				final IWktEmit we = (IWktEmit) oTerm;
+				final WktStructure ws = we.toWkt();
+				m_terms.add(new StructureTerm(ws));
 				continue;
 			}
 			if (oTerm instanceof IWktList) {
-				final IWktList list = (IWktList) oTerm;
-				final List<? extends IWktEmit> listEmit = list.listEmit();
+				final IWktList wl = (IWktList) oTerm;
+				final List<? extends IWktEmit> listEmit = wl.listEmit();
 				final int ecount = listEmit.size();
 				for (int ei = 0; ei < ecount; ei++) {
-					final IWktEmit e = listEmit.get(ei);
-					final WktStructure wkt = e.toWkt();
-					final String swkt = wkt.toString();
-					sb.append("\n");
-					if (comma) {
-						sb.append(',');
-					}
-					sb.append(swkt);
-					comma = true;
+					final IWktEmit we = listEmit.get(ei);
+					final WktStructure ws = we.toWkt();
+					m_terms.add(new StructureTerm(ws));
 				}
 				continue;
 			}
-			if ((oTerm instanceof Double) || (oTerm instanceof Integer)) {
-				if (comma) {
-					sb.append(',');
-				}
-				sb.append(oTerm.toString());
-				comma = true;
+			if (oTerm instanceof WktStructure) {
+				final WktStructure ws = (WktStructure) oTerm;
+				m_terms.add(new StructureTerm(ws));
+				continue;
 			}
-			if (comma) {
-				sb.append(',');
-			}
-			sb.append("\"");
-			sb.append(oTerm.toString());
-			sb.append("\"");
-			comma = true;
 		}
-		if (termCount > 0) {
-			sb.append(']');
+		final int termCount = m_terms.size();
+		int charCount = m_keyword.length();
+		for (int i = 0; i < termCount; i++) {
+			charCount += m_terms.get(i).charCount();
 		}
-		m_text = sb.toString();
+		m_charCount = charCount;
 	}
-	private final String m_text;
+	private final String m_keyword;
+	private final List<ITerm> m_terms;
+	private final int m_charCount;
+
+	private static interface ITerm {
+
+		public int charCount();
+	}
+
+	private static class StructureTerm implements ITerm {
+
+		@Override
+		public int charCount() {
+			return value.m_charCount;
+		}
+
+		StructureTerm(WktStructure value) {
+			this.value = value;
+		}
+		final WktStructure value;
+	}
+
+	private static class TextTerm implements ITerm {
+
+		@Override
+		public int charCount() {
+			return value.length();
+		}
+
+		TextTerm(String value) {
+			this.value = value;
+		}
+		final String value;
+	}
 }

@@ -18,6 +18,8 @@ public class TestUnit1Datum {
 		final Datum oD = DatumDictionary.findByTitle("D_WGS_1984");
 		Assert.assertNotNull("D_WGS_1984", oD);
 		Assert.assertTrue("EPSG:7030", oD.ellipsoid.oAuthority.equals(Authority.newEPSG(7030)));
+		final String wkt = "DATUM[\"D_WGS_1984\",SPHEROID[\"WGS_1984\",6378137.0,298.25722014342756,AUTHORITY[\"EPSG\",\"7030\"]],TOWGS84[0.0,0.0,0.0],AUTHORITY[\"EPSG\",\"6326\"]]";
+		Assert.assertEquals("WKT", wkt, oD.toWkt().formatFlat());
 	}
 
 	@Test
