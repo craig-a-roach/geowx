@@ -45,6 +45,11 @@ class AccessorAngle {
 		return MapMath.degToRad(m_src.value);
 	}
 
+	@Override
+	public String toString() {
+		return m_src.toString();
+	}
+
 	public double value() {
 		return m_src.value;
 	}

@@ -148,6 +148,13 @@ class WktStructure {
 				m_terms.add(new StructureTerm(ws));
 				continue;
 			}
+			if (oTerm instanceof WktStructure[]) {
+				final WktStructure[] wsa = (WktStructure[]) oTerm;
+				for (int ai = 0; ai < wsa.length; ai++) {
+					m_terms.add(new StructureTerm(wsa[ai]));
+				}
+				continue;
+			}
 		}
 		final int termCount = m_terms.size();
 		int charCount = m_keyword.length();

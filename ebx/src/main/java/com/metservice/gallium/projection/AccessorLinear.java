@@ -21,6 +21,11 @@ class AccessorLinear {
 		return lu.fromBase(m_src.value);
 	}
 
+	@Override
+	public String toString() {
+		return m_src.toString();
+	}
+
 	public double value() {
 		return m_src.value;
 	}

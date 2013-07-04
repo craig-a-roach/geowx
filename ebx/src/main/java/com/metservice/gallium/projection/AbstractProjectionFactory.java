@@ -24,6 +24,18 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 		title = t;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(title);
+		if (oAuthority != null) {
+			sb.append(" (");
+			sb.append(oAuthority);
+			sb.append(")");
+		}
+		return sb.toString();
+	}
+
 	protected AbstractProjectionFactory() {
 	}
 	protected Authority oAuthority;

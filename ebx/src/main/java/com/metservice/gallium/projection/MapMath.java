@@ -57,6 +57,15 @@ class MapMath {
 	private final static double P11 = .06640211640211640211;
 	private final static double P20 = .01641501294219154443;
 
+	// avoid instable computations with very small numbers: if the
+	// angle is very close to the graticule boundary, return +/-PI.
+	// Bernhard Jenny, May 25 2010.
+	private static double snapLongitude(double rads) {
+		if (Math.abs(rads - PI) < 1e-15) return Math.PI;
+		if (Math.abs(rads + PI) < 1e-15) return -Math.PI;
+		return rads;
+	}
+
 	public static double acos(double v) {
 		if (Math.abs(v) > 1.) return v < 0.0 ? PI : 0.0;
 		return Math.acos(v);
@@ -329,23 +338,10 @@ class MapMath {
 		return na;
 	}
 
-	/**
-	 * normalize longitude angle in radians
-	 * 
-	 * @param rads
-	 * @return
-	 * @throws ProjectionException
-	 */
 	public static double normalizeLongitude(final double rads)
 			throws ProjectionException {
 		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw new ProjectionException("Infinite longitude");
-
-		// avoid instable computations with very small numbers: if the
-		// angle is very close to the graticule boundary, return +/-PI.
-		// Bernhard Jenny, May 25 2010.
-		if (Math.abs(rads - PI) < 1e-15) return Math.PI;
-		if (Math.abs(rads + PI) < 1e-15) return -Math.PI;
-		double na = rads;
+		double na = snapLongitude(rads);
 		while (na > PI) {
 			na -= TWOPI;
 		}
@@ -397,9 +393,6 @@ class MapMath {
 		return a < 0 == b < 0;
 	}
 
-	/**
-	 * Degree versions of trigonometric functions
-	 */
 	public static double sind(double v) {
 		return Math.sin(v * DTR);
 	}

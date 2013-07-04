@@ -8,23 +8,45 @@ package com.metservice.gallium.projection;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.metservice.gallium.GalliumPointD;
+
 /**
  * @author roach
  */
 public class TestUnit1ProjectionFactory {
 
+	private static final WktStructure Greenwich = new WktStructure("PRIMEM", "Greenwich");
+	private static final WktStructure Degrees = new WktStructure("UNIT", "degrees");
+	private static final WktStructure Metres = new WktStructure("UNIT", "metres");
+
+	private static WktStructure param(String name, double value) {
+		return new WktStructure("PARAMETER", name, value);
+	}
+
 	@Test
 	public void t10_mercator() {
 		final WktStructure spheroid = new WktStructure("SPHEROID", "Krassowski", 6378245.0, 298.3);
 		final WktStructure datum = new WktStructure("DATUM", "D_Krassowski", spheroid);
-		final WktStructure primem = new WktStructure("PRIMEM", "Greenwich");
-		final WktStructure degrees = new WktStructure("UNIT", "degrees");
-		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, primem, degrees);
+		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, Greenwich, Degrees);
 		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
-		final WktStructure p0 = new WktStructure("PARAMETER", "latitude_of_origin", 51.0);
-		final WktStructure p1 = new WktStructure("PARAMETER", "standard_parallel_1", 42.0);
-		final WktStructure pcs = new WktStructure("PROJCS", "Mercator Ref", gcs, p, p0, p1);
-		System.out.println(pcs.format());
+		final WktStructure[] params = { param("central_meridian", 51.0), param("standard_parallel_1", 42.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "Mercator Ref", gcs, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(53.0, -53.0);
+			Assert.assertEquals("Easting(m)", 165704.29, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", -5171848.07, pt.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
 	}
 
 	public void t90_transverseMercator() {

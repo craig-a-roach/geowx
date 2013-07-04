@@ -5,10 +5,19 @@
  */
 package com.metservice.gallium.projection;
 
+import com.metservice.argon.Ds;
+
 /**
  * @author roach
  */
 class ArgMercator {
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		ds.a("scaleFactor", scaleFactor);
+		return ds.s();
+	}
 
 	public ArgMercator(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
 			throws GalliumProjectionException {

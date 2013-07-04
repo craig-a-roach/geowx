@@ -19,11 +19,11 @@ import com.metservice.argon.ICodedEnum;
 class WktCoordinateSystemFactory {
 
 	private static final CodedEnumTable<Keyword> KeywordTable = new CodedEnumTable<Keyword>(Keyword.class, true, Keyword.values());
-	private static final int SyntaxPreLen = 20;
-	private static final int SyntaxPostLen = 20;
-	private static final int SyntaxPreCount = 5;
+	private static final int SyntaxPreLen = 25;
+	private static final int SyntaxPostLen = 25;
+	private static final int SyntaxPreCount = 10;
 	private static final int SyntaxPostCount = 5;
-	private static final String SyntaxMarker = "--->>";
+	private static final String SyntaxMarker = "<<--->>";
 
 	private static final char PuncQuote = '\"';
 	private static final char PuncPlus = '+';
