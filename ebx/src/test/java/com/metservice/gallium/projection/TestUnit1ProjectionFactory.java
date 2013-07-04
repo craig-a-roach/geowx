@@ -20,8 +20,11 @@ public class TestUnit1ProjectionFactory {
 		final WktStructure primem = new WktStructure("PRIMEM", "Greenwich");
 		final WktStructure degrees = new WktStructure("UNIT", "degrees");
 		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, primem, degrees);
-		System.out.println(gcs);
-
+		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
+		final WktStructure p0 = new WktStructure("PARAMETER", "latitude_of_origin", 51.0);
+		final WktStructure p1 = new WktStructure("PARAMETER", "standard_parallel_1", 42.0);
+		final WktStructure pcs = new WktStructure("PROJCS", "Mercator Ref", gcs, p, p0, p1);
+		System.out.println(pcs.format());
 	}
 
 	public void t90_transverseMercator() {
