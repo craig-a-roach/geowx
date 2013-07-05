@@ -38,6 +38,9 @@ public class TestUnit1ProjectionFactory {
 			final GalliumPointD pt = pj.transform(53.0, -53.0);
 			Assert.assertEquals("Easting(m)", 165704.29, pt.x, 1e-2);
 			Assert.assertEquals("Northing(m)", -5171848.07, pt.y, 1e-2);
+			final GalliumPointD pti = pj.inverseDegrees(pt.x, pt.y);
+			Assert.assertEquals("Lon", 53.0, pti.x, 1e-2);
+			Assert.assertEquals("Lat", -53.0, pti.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(spec.format());
 			System.err.println(ex.getMessage());

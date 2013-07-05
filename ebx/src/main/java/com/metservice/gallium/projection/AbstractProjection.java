@@ -27,7 +27,7 @@ abstract class AbstractProjection implements IGalliumProjection {
 			throws ProjectionException {
 		final double radsRef = argBase.projectionLongitudeRads;
 		if (radsRef == 0.0) return radsRel;
-		return MapMath.normalizeLongitude(radsRef - radsRel);
+		return MapMath.normalizeLongitude(radsRef + radsRel);
 	}
 
 	private double longitudeRelative(double radsAbs)
