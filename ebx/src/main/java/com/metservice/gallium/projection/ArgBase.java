@@ -26,27 +26,27 @@ class ArgBase {
 		return ds.s();
 	}
 
-	public ArgBase(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
+	public ArgBase(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
 		if (gcs == null) throw new IllegalArgumentException("object is null");
-		if (lu == null) throw new IllegalArgumentException("object is null");
+		if (pu == null) throw new IllegalArgumentException("object is null");
 		final Ellipsoid elp = gcs.datum.ellipsoid;
 		this.ellipsoid = elp;
-		this.projectedUnit = lu;
+		this.projectedUnit = pu;
 		this.spherical = elp.isSpherical;
-		this.totalScale = lu.fromBase(elp.equatorialRadiusMetres);
+		this.totalScale = pu.fromBase(elp.equatorialRadiusMetres);
 		this.e = elp.eccentricity;
 		this.es = elp.eccentricity2;
 		this.one_es = 1.0 - this.es;
 		this.rone_es = 1.0 / this.one_es;
 		final AccessorLinear aFalseEasting = pmap.select(ParameterDefinition.False_Easting, pmapDefault).linear();
 		this.falseEastingMetres = aFalseEasting.value();
-		this.totalFalseEasting = aFalseEasting.projectedUnitsFromMetres(lu);
+		this.totalFalseEasting = aFalseEasting.projectedUnitsFromMetres(pu);
 		final AccessorLinear aFalseNorthing = pmap.select(ParameterDefinition.False_Northing, pmapDefault).linear();
 		this.falseNorthingMetres = aFalseNorthing.value();
-		this.totalFalseNorthing = aFalseNorthing.projectedUnitsFromMetres(lu);
+		this.totalFalseNorthing = aFalseNorthing.projectedUnitsFromMetres(pu);
 		final AccessorAngle aCentralMeridian = pmap.select(ParameterDefinition.Central_Meridian, pmapDefault).angle();
 		this.projectionLongitudeRads = aCentralMeridian.normalizedLongitudeRadsFromDeg();
 	}

@@ -15,10 +15,9 @@ class ProjectionFactoryMercator extends AbstractProjectionFactory {
 			ParameterDefinition.Standard_Parallel_1, 60.0);
 
 	@Override
-	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
+	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
-
-		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, lu);
+		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, pu);
 		final ArgMercator arg = new ArgMercator(DefaultMap, pmap, gcs);
 		return new ProjectionMercator(oAuthority, title, argBase, arg);
 	}

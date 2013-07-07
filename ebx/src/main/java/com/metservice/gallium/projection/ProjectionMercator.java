@@ -20,7 +20,7 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 	@Override
 	protected boolean inside(double lam, double phi)
 			throws ProjectionException {
-		return clippingMinPhi <= lam && lam <= clippingMaxPhi;
+		return clippingMinPhi <= phi && phi <= clippingMaxPhi;
 	}
 
 	@Override

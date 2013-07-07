@@ -30,6 +30,8 @@ public interface IGalliumProjection {
 
 	public boolean isRectilinear();
 
+	public double totalScale();
+
 	public GalliumPointD transform(double lonDeg, double latDeg)
 			throws GalliumProjectionException;
 }

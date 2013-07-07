@@ -10,11 +10,16 @@ package com.metservice.gallium.projection;
  */
 class ProjectionFactoryTransverseMercator extends AbstractProjectionFactory {
 
+	public static final ParameterMap DefaultMap = ParameterMap.newDefault(ParameterDefinition.False_Easting, 0.0,
+			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0,
+			ParameterDefinition.Scale_Factor, 1.0, ParameterDefinition.Latitude_Of_Origin, 0.0);
+
 	@Override
-	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit lu)
+	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
-		// TODO Auto-generated method stub
-		return null;
+		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, pu);
+		final ArgTransverseMercator arg = new ArgTransverseMercator(DefaultMap, pmap, gcs);
+		return new ProjectionTransverseMercator(oAuthority, title, argBase, arg);
 	}
 
 	public ProjectionFactoryTransverseMercator() {

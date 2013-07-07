@@ -119,6 +119,10 @@ abstract class AbstractProjection implements IGalliumProjection {
 		return sb.toString();
 	}
 
+	public double totalScale() {
+		return argBase.totalScale;
+	}
+
 	@Override
 	public final GalliumPointD transform(double srcLonDeg, double srcLatDeg)
 			throws GalliumProjectionException {

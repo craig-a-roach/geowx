@@ -21,6 +21,7 @@ class ProjectionFactoryDictionary {
 		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", ProjectionFactoryMercator.class));
 		b.add(ProjectionSelector.newEsri(43004, "Mercator", ProjectionFactoryMercator.class));
 		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", ProjectionFactoryTransverseMercator.class));
+		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", ProjectionFactoryTransverseMercator.class));
 		return new ProjectionFactoryDictionary(b);
 	}
 

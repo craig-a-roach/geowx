@@ -18,6 +18,7 @@ public class TestUnit1ProjectionFactory {
 	private static final WktStructure Greenwich = new WktStructure("PRIMEM", "Greenwich");
 	private static final WktStructure Degrees = new WktStructure("UNIT", "degrees");
 	private static final WktStructure Metres = new WktStructure("UNIT", "metres");
+	private static final WktStructure Kilometres = new WktStructure("UNIT", "kilometres");
 
 	private static WktStructure param(String name, double value) {
 		return new WktStructure("PARAMETER", name, value);
@@ -30,28 +31,40 @@ public class TestUnit1ProjectionFactory {
 		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, Greenwich, Degrees);
 		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
 		final WktStructure[] params = { param("central_meridian", 51.0), param("standard_parallel_1", 42.0) };
-		final WktStructure spec = new WktStructure("PROJCS", "Mercator Ref", gcs, p, params, Metres);
+		final WktStructure specM = new WktStructure("PROJCS", "Mercator Ref", gcs, p, params, Metres);
+		final WktStructure specK = new WktStructure("PROJCS", "Mercator Ref", gcs, p, params, Kilometres);
 		try {
-			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
-			System.out.println(pcs.toWkt().format());
-			final IGalliumProjection pj = pcs.newProjection();
-			final GalliumPointD pt = pj.transform(53.0, -53.0);
-			Assert.assertEquals("Easting(m)", 165704.29, pt.x, 1e-2);
-			Assert.assertEquals("Northing(m)", -5171848.07, pt.y, 1e-2);
-			final GalliumPointD pti = pj.inverseDegrees(pt.x, pt.y);
-			Assert.assertEquals("Lon", 53.0, pti.x, 1e-2);
-			Assert.assertEquals("Lat", -53.0, pti.y, 1e-2);
+			final ProjectedCoordinateSystem pcsM = WktCoordinateSystemFactory.newCoordinateSystemProjected(specM.format());
+			System.out.println(pcsM.toWkt().format());
+			final ProjectedCoordinateSystem pcsK = WktCoordinateSystemFactory.newCoordinateSystemProjected(specK.format());
+			final IGalliumProjection pjM = pcsM.newProjection();
+			final IGalliumProjection pjK = pcsK.newProjection();
+			final GalliumPointD ptM = pjM.transform(53.0, -53.0);
+			final GalliumPointD ptK = pjK.transform(53.0, -53.0);
+			Assert.assertEquals("Easting(m)", 165704.29, ptM.x, 1e-2);
+			Assert.assertEquals("Northing(m)", -5171848.07, ptM.y, 1e-2);
+			Assert.assertEquals("Easting(km)", 165.70429, ptK.x, 1e-2);
+			Assert.assertEquals("Northing(km)", -5171.84807, ptK.y, 1e-2);
+			final GalliumPointD piM = pjM.inverseDegrees(ptM.x, ptM.y);
+			final GalliumPointD piK = pjK.inverseDegrees(ptK.x, ptK.y);
+			Assert.assertEquals("Lon", 53.0, piM.x, 1e-2);
+			Assert.assertEquals("Lat", -53.0, piM.y, 1e-2);
+			Assert.assertEquals("Lon", 53.0, piK.x, 1e-2);
+			Assert.assertEquals("Lat", -53.0, piK.y, 1e-2);
+			Assert.assertTrue("Inside", pjM.isInside(53.0, -53.0));
+			Assert.assertFalse("Outside", pjM.isInside(53.0, -87.0));
 		} catch (final GalliumSyntaxException ex) {
-			System.out.println(spec.format());
+			System.out.println(specM.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		} catch (final GalliumProjectionException ex) {
-			System.out.println(spec.format());
+			System.out.println(specM.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
 
+	@Test
 	public void t90_transverseMercator() {
 		final String spheroid = "  SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]]";
 		final String datum = " DATUM[\"OSGB_1936\",\n" + spheroid
@@ -69,10 +82,9 @@ public class TestUnit1ProjectionFactory {
 		final String pa = "AUTHORITY[\"EPSG\",\"27700\"]";
 		final String spec = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + pj + ",\n" + pp + ",\n" + pu
 				+ ",\n" + pax + ",\n" + pa + "\n]";
-		System.out.println(spec);
 		try {
 			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec);
-			System.out.println(pcs);
+			System.out.println(pcs.toWkt().format());
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}

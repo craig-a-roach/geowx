@@ -23,6 +23,10 @@ class ParameterValue implements IWktEmit, Comparable<ParameterValue> {
 		return new AccessorLinear(this);
 	}
 
+	public AccessorRatio ratio() {
+		return new AccessorRatio(this);
+	}
+
 	@Override
 	public String toString() {
 		return definition + "=" + value;

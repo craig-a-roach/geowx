@@ -13,18 +13,18 @@ import com.metservice.argon.Ds;
 class ProjectedCoordinateSystem implements IWktEmit {
 
 	public static ProjectedCoordinateSystem newInstance(String title, ProjectionSelector ps, ParameterMap pmap,
-			GeographicCoordinateSystem gcs, Unit linearUnit, Authority oAuthority) {
+			GeographicCoordinateSystem gcs, Unit projectionLinearUnit, Authority oAuthority) {
 		if (ps == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
 		if (gcs == null) throw new IllegalArgumentException("object is null");
-		if (linearUnit == null) throw new IllegalArgumentException("object is null");
-		return new ProjectedCoordinateSystem(oAuthority, Title.newInstance(title), ps, pmap, gcs, linearUnit);
+		if (projectionLinearUnit == null) throw new IllegalArgumentException("object is null");
+		return new ProjectedCoordinateSystem(oAuthority, Title.newInstance(title), ps, pmap, gcs, projectionLinearUnit);
 	}
 
 	public IGalliumProjection newProjection()
 			throws GalliumProjectionException {
 		final IProjectionFactory factory = selector.newFactory();
-		final IGalliumProjection prj = factory.newProjection(parameterMap, gcs, linearUnit);
+		final IGalliumProjection prj = factory.newProjection(parameterMap, gcs, projectionLinearUnit);
 		return prj;
 	}
 
@@ -36,28 +36,28 @@ class ProjectedCoordinateSystem implements IWktEmit {
 		ds.a("selector", selector);
 		ds.a("parameterMap", parameterMap);
 		ds.a("gcs", gcs);
-		ds.a("linearUnit", linearUnit);
+		ds.a("projectionLinearUnit", projectionLinearUnit);
 		return ds.s();
 	}
 
 	@Override
 	public WktStructure toWkt() {
-		return new WktStructure("PROJCS", title, gcs, selector, parameterMap, linearUnit);
+		return new WktStructure("PROJCS", title, gcs, selector, parameterMap, projectionLinearUnit, oAuthority);
 	}
 
 	private ProjectedCoordinateSystem(Authority oAuthority, Title title, ProjectionSelector ps, ParameterMap pmap,
-			GeographicCoordinateSystem gcs, Unit linearUnit) {
+			GeographicCoordinateSystem gcs, Unit plu) {
 		this.oAuthority = oAuthority;
 		this.title = title;
 		this.selector = ps;
 		this.parameterMap = pmap;
 		this.gcs = gcs;
-		this.linearUnit = linearUnit;
+		this.projectionLinearUnit = plu;
 	}
 	public final Authority oAuthority;
 	public final Title title;
 	public final ProjectionSelector selector;
 	public final ParameterMap parameterMap;
 	public final GeographicCoordinateSystem gcs;
-	public final Unit linearUnit;
+	public final Unit projectionLinearUnit;
 }
