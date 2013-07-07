@@ -65,7 +65,7 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t90_transverseMercator() {
+	public void t20_transverseMercator() {
 		final String spheroid = "  SPHEROID[\"Airy 1830\",6377563.396,299.3249646,AUTHORITY[\"EPSG\",\"7001\"]]";
 		final String datum = " DATUM[\"OSGB_1936\",\n" + spheroid
 				+ ",TOWGS84[375,-111,431,0,0,0,0],AUTHORITY[\"EPSG\",\"6277\"]]";
@@ -75,18 +75,31 @@ public class TestUnit1ProjectionFactory {
 		final String ga = " AUTHORITY[\"EPSG\",\"4277\"]";
 		final String gcs = "GEOGCS[\"OSGB 1936\"" + ",\n" + datum + ",\n" + pm + ",\n" + gu + ",\n" + gax + ",\n" + ga + "\n]";
 
-		final String pj = "PROJECTION[\"Transverse_Mercator\"]";
+		final String prj = "PROJECTION[\"Transverse_Mercator\"]";
 		final String pp = "PARAMETER[\"latitude_of_origin\",49],PARAMETER[\"central_meridian\",-2],PARAMETER[\"scale_factor\",0.999601272],PARAMETER[\"false_easting\",400000],PARAMETER[\"false_northing\",-100000]";
 		final String pu = "UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]]";
 		final String pax = "AXIS[\"X\",EAST],AXIS[\"Y\",NORTH]";
 		final String pa = "AUTHORITY[\"EPSG\",\"27700\"]";
-		final String spec = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + pj + ",\n" + pp + ",\n" + pu
-				+ ",\n" + pax + ",\n" + pa + "\n]";
+		final String spec = "PROJCS[\"OSGB 1936 / British National Grid\"" + ",\n" + gcs + ",\n" + prj + ",\n" + pp + ",\n"
+				+ pu + ",\n" + pax + ",\n" + pa + "\n]";
 		try {
 			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec);
 			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(0.5, 50.5);
+			Assert.assertEquals("Easting(m)", 577274.98, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", 69740.49, pt.y, 1e-2);
+			final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+			Assert.assertEquals("Lon", 0.5, pi.x, 1e-2);
+			Assert.assertEquals("Lat", 50.5, pi.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec);
+			System.err.println(ex.getMessage());
 			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec);
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
 }

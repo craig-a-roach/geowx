@@ -13,7 +13,7 @@ import com.metservice.gallium.GalliumPointD;
  */
 abstract class AbstractProjection implements IGalliumProjection {
 
-	protected static final double EPS10 = 1e-10;
+	protected static final double EPS10 = 1.0e-10;
 	protected static final double RTD = MapMath.RTD;
 	protected static final double DTR = MapMath.DTR;
 
@@ -119,6 +119,7 @@ abstract class AbstractProjection implements IGalliumProjection {
 		return sb.toString();
 	}
 
+	@Override
 	public double totalScale() {
 		return argBase.totalScale;
 	}
