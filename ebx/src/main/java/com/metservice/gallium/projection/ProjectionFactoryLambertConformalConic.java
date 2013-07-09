@@ -12,7 +12,8 @@ class ProjectionFactoryLambertConformalConic extends AbstractProjectionFactory {
 
 	public static final ParameterMap DefaultMap = ParameterMap.newDefault(ParameterDefinition.False_Easting, 0.0,
 			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0,
-			ParameterDefinition.Standard_Parallel_1, 60.0);
+			ParameterDefinition.Standard_Parallel_1, 60.0, ParameterDefinition.Standard_Parallel_2, 60.0,
+			ParameterDefinition.Scale_Factor, 1.0, ParameterDefinition.Latitude_Of_Origin, 0.0);
 
 	@Override
 	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
