@@ -21,41 +21,42 @@ import com.metservice.gallium.GalliumPointD;
 class MapMath {
 
 	private static final double PI = Math.PI;
-	public final static double HALFPI = Math.PI / 2.0;
-	public final static double QUARTERPI = Math.PI / 4.0;
-	public final static double TWOPI = Math.PI * 2.0;
-	public final static double RTD = 180.0 / Math.PI;
-	public final static double DTR = Math.PI / 180.0;
+	public static final double HALFPI = Math.PI / 2.0;
+	public static final double QUARTERPI = Math.PI / 4.0;
+	public static final double TWOPI = Math.PI * 2.0;
+	public static final double RTD = 180.0 / Math.PI;
+	public static final double DTR = Math.PI / 180.0;
+	public static final double EPS10 = 1.0e-10;
 
-	public final static GalliumBoundingBoxD WORLD_BOUNDS_RAD = GalliumBoundingBoxD.newDimensions(-HALFPI, -PI, PI, TWOPI);
-	public final static GalliumBoundingBoxD WORLD_BOUNDS_DEG = GalliumBoundingBoxD.newDimensions(-90.0, -180.0, 180.0, 360.0);
+	public static final GalliumBoundingBoxD WORLD_BOUNDS_RAD = GalliumBoundingBoxD.newDimensions(-HALFPI, -PI, PI, TWOPI);
+	public static final GalliumBoundingBoxD WORLD_BOUNDS_DEG = GalliumBoundingBoxD.newDimensions(-90.0, -180.0, 180.0, 360.0);
 
-	public final static int DONT_INTERSECT = 0;
-	public final static int DO_INTERSECT = 1;
-	public final static int COLLINEAR = 2;
+	public static final int DONT_INTERSECT = 0;
+	public static final int DO_INTERSECT = 1;
+	public static final int COLLINEAR = 2;
 
-	private final static int N_ITER = 15;
-	private final static double C00 = 1.0;
-	private final static double C02 = .25;
-	private final static double C04 = .046875;
-	private final static double C06 = .01953125;
-	private final static double C08 = .01068115234375;
-	private final static double C22 = .75;
-	private final static double C44 = .46875;
-	private final static double C46 = .01302083333333333333;
-	private final static double C48 = .00712076822916666666;
-	private final static double C66 = .36458333333333333333;
-	private final static double C68 = .00569661458333333333;
-	private final static double C88 = .3076171875;
+	private static final int N_ITER = 15;
+	private static final double C00 = 1.0;
+	private static final double C02 = .25;
+	private static final double C04 = .046875;
+	private static final double C06 = .01953125;
+	private static final double C08 = .01068115234375;
+	private static final double C22 = .75;
+	private static final double C44 = .46875;
+	private static final double C46 = .01302083333333333333;
+	private static final double C48 = .00712076822916666666;
+	private static final double C66 = .36458333333333333333;
+	private static final double C68 = .00569661458333333333;
+	private static final double C88 = .3076171875;
 
-	private final static int MAX_ITER = 10;
+	private static final int MAX_ITER = 10;
 
-	private final static double P00 = .33333333333333333333;
-	private final static double P01 = .17222222222222222222;
-	private final static double P02 = .10257936507936507936;
-	private final static double P10 = .06388888888888888888;
-	private final static double P11 = .06640211640211640211;
-	private final static double P20 = .01641501294219154443;
+	private static final double P00 = .33333333333333333333;
+	private static final double P01 = .17222222222222222222;
+	private static final double P02 = .10257936507936507936;
+	private static final double P10 = .06388888888888888888;
+	private static final double P11 = .06640211640211640211;
+	private static final double P20 = .01641501294219154443;
 
 	// avoid instable computations with very small numbers: if the
 	// angle is very close to the graticule boundary, return +/-PI.

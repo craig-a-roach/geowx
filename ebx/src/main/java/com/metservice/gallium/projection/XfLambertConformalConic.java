@@ -8,7 +8,7 @@ package com.metservice.gallium.projection;
 /**
  * @author roach
  */
-class ProjectionFactoryLambertConformalConic extends AbstractProjectionFactory {
+class XfLambertConformalConic extends AbstractProjectionFactory {
 
 	public static final ParameterMap DefaultMap = ParameterMap.newDefault(ParameterDefinition.False_Easting, 0.0,
 			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0,
@@ -19,10 +19,10 @@ class ProjectionFactoryLambertConformalConic extends AbstractProjectionFactory {
 	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
 		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, pu);
-		final ArgMercator arg = new ArgMercator(DefaultMap, pmap, gcs);
-		return new ProjectionMercator(oAuthority, title, argBase, arg);
+		final XaLambertConformalConic arg = new XaLambertConformalConic(DefaultMap, pmap, gcs);
+		return new XpLambertConformalConic(oAuthority, title, argBase, arg);
 	}
 
-	public ProjectionFactoryLambertConformalConic() {
+	public XfLambertConformalConic() {
 	}
 }

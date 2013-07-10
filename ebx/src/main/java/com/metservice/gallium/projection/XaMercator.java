@@ -10,7 +10,7 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-class ArgMercator {
+class XaMercator {
 
 	@Override
 	public String toString() {
@@ -19,7 +19,7 @@ class ArgMercator {
 		return ds.s();
 	}
 
-	public ArgMercator(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
+	public XaMercator(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
 			throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");

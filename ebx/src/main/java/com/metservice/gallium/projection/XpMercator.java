@@ -10,7 +10,7 @@ import com.metservice.gallium.GalliumPointD.Builder;
 /**
  * @author roach
  */
-class ProjectionMercator extends AbstractProjectionCylindrical {
+class XpMercator extends AbstractProjection {
 
 	private static final double clippingMaxLatDeg = 85.0;
 	private static final double clippingMaxPhi = MapMath.degToRad(clippingMaxLatDeg);
@@ -78,10 +78,10 @@ class ProjectionMercator extends AbstractProjectionCylindrical {
 		}
 	}
 
-	public ProjectionMercator(Authority oAuthority, Title title, ArgBase argBase, ArgMercator arg) {
+	public XpMercator(Authority oAuthority, Title title, ArgBase argBase, XaMercator arg) {
 		super(oAuthority, title, argBase);
 		m_arg = arg;
 	}
 
-	private final ArgMercator m_arg;
+	private final XaMercator m_arg;
 }

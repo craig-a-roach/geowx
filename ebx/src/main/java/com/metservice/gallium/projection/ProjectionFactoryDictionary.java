@@ -17,11 +17,14 @@ class ProjectionFactoryDictionary {
 
 	private static ProjectionFactoryDictionary newInstance() {
 		final Builder b = new Builder(128);
-		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", ProjectionFactoryMercator.class));
-		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", ProjectionFactoryMercator.class));
-		b.add(ProjectionSelector.newEsri(43004, "Mercator", ProjectionFactoryMercator.class));
-		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", ProjectionFactoryTransverseMercator.class));
-		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", ProjectionFactoryTransverseMercator.class));
+		b.add(ProjectionSelector.newEpsg(9801, "Lambert_Conformal_Conic_1SP", XfLambertConformalConic.class));
+		b.add(ProjectionSelector.newEpsg(9802, "Lambert_Conformal_Conic_2SP", XfLambertConformalConic.class));
+		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", XfMercator.class));
+		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", XfMercator.class));
+		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", XfTransverseMercator.class));
+		b.add(ProjectionSelector.newEsri(43004, "Mercator", XfMercator.class));
+		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", XfTransverseMercator.class));
+		b.add(ProjectionSelector.newEsri(43020, "Lambert_Conformal_Conic", XfLambertConformalConic.class));
 		return new ProjectionFactoryDictionary(b);
 	}
 

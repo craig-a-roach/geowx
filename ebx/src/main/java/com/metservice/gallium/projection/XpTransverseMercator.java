@@ -10,7 +10,7 @@ import com.metservice.gallium.GalliumPointD.Builder;
 /**
  * @author roach
  */
-class ProjectionTransverseMercator extends AbstractProjectionCylindrical {
+class XpTransverseMercator extends AbstractProjection {
 
 	private final static double FC1 = 1.0;
 	private final static double FC2 = 0.5;
@@ -25,7 +25,7 @@ class ProjectionTransverseMercator extends AbstractProjectionCylindrical {
 	private static final double clippingMinLatDeg = -90.0;
 
 	private static String pair(double lam, double phi) {
-		return "(lambda=" + lam + ", phi=" + phi + ")";
+		return "(lambda=" + lam + ", phi=" + phi + " rads)";
 	}
 
 	private void projectEllipsoid(double lam, double phi, Builder dst)
@@ -172,7 +172,7 @@ class ProjectionTransverseMercator extends AbstractProjectionCylindrical {
 		return false;
 	}
 
-	public ProjectionTransverseMercator(Authority oAuthority, Title title, ArgBase argBase, ArgTransverseMercator arg) {
+	public XpTransverseMercator(Authority oAuthority, Title title, ArgBase argBase, XaTransverseMercator arg) {
 		super(oAuthority, title, argBase);
 		m_arg = arg;
 		if (argBase.spherical) {
@@ -187,7 +187,7 @@ class ProjectionTransverseMercator extends AbstractProjectionCylindrical {
 		}
 	}
 
-	private final ArgTransverseMercator m_arg;
+	private final XaTransverseMercator m_arg;
 	private final double m_esp;
 	private final double m_ml0;
 	private final double[] m_oen;

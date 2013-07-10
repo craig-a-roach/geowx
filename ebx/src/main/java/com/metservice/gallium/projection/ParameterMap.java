@@ -42,6 +42,11 @@ class ParameterMap implements IWktList {
 		return m_mapDefinition.put(neo.definition, neo) == null;
 	}
 
+	public boolean contains(ParameterDefinition def) {
+		if (def == null) throw new IllegalArgumentException("object is null");
+		return m_mapDefinition.containsKey(def);
+	}
+
 	public ParameterValue find(ParameterDefinition def) {
 		if (def == null) throw new IllegalArgumentException("object is null");
 		return m_mapDefinition.get(def);
