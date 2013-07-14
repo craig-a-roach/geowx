@@ -52,7 +52,25 @@ class XpLambertConformalConic extends AbstractProjection {
 	}
 
 	@Override
-	public void project(double lam, double phi, Builder dst) {
+	public void project(final double lam, final double phi, Builder dst) {
+		final double rho;
+		if (Math.abs(Math.abs(phi) - MapMath.HALFPI) < EPS10) {
+			rho = 0.0;
+		} else {
+			double t;
+			double n;
+			if (argBase.spherical) {
+				t = Math.tan(MapMath.QUARTERPI + 0.5 * phi);
+				n = -m_n;
+			} else {
+				t = MapMath.tsfn(phi, Math.sin(phi), argBase.e);
+				n = m_n;
+			}
+			rho = m_c * Math.pow(t, n);
+		}
+		final double lamn = lam * m_n;
+		dst.x = m_arg.scaleFactor * (rho * Math.sin(lamn));
+		dst.y = m_arg.scaleFactor * (m_rho - (rho * Math.cos(lamn)));
 	}
 
 	@Override

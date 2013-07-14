@@ -28,9 +28,27 @@ class Authority implements IWktEmit, Comparable<Authority> {
 
 	public static final Authority createInstance(Title t) {
 		if (t == null) throw new IllegalArgumentException("object is null");
+		Authority oMatch = null;
+		oMatch = createNS(t, NamespaceEPSG);
+		if (oMatch != null) return oMatch;
+		oMatch = createNS(t, NamespaceESRI);
+		if (oMatch != null) return oMatch;
 		final int code = ArgonText.parse(t.quctwKey(), 0);
 		if (code == 0) return null;
 		return createWKID(code);
+	}
+
+	public static final Authority createNS(Title t, String qucNS) {
+		if (t == null) throw new IllegalArgumentException("object is null");
+		if (qucNS == null || qucNS.length() == 0) throw new IllegalArgumentException("string is null or empty");
+		final String quctwKey = t.quctwKey();
+		final int lenKey = quctwKey.length();
+		final int lenNS = qucNS.length();
+		if (lenKey <= lenNS) return null;
+		if (!quctwKey.startsWith(qucNS)) return null;
+		final String qtwCode = quctwKey.substring(lenNS);
+		final int code = ArgonText.parse(qtwCode, 0);
+		return (code == 0) ? null : newInstance(qucNS, code);
 	}
 
 	public static final Authority createWKID(int code) {

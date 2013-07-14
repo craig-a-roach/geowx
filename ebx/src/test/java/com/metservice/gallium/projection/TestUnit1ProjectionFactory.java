@@ -19,16 +19,45 @@ public class TestUnit1ProjectionFactory {
 	private static final WktStructure Degrees = new WktStructure("UNIT", "degrees");
 	private static final WktStructure Metres = new WktStructure("UNIT", "metres");
 	private static final WktStructure Kilometres = new WktStructure("UNIT", "kilometres");
+	private static final WktStructure USFeet = new WktStructure("UNIT", "US feet");
+
+	private static WktStructure geogcs(String spheroidName, double a, double invf) {
+		final WktStructure spheroid = new WktStructure("SPHEROID", spheroidName, a, invf);
+		final WktStructure datum = new WktStructure("DATUM", "D_" + spheroidName, spheroid);
+		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_" + spheroidName, datum, Greenwich, Degrees);
+		return gcs;
+	}
 
 	private static WktStructure param(String name, double value) {
 		return new WktStructure("PARAMETER", name, value);
 	}
 
 	@Test
+	public void t05_lambertConformalConical2SP() {
+		final WktStructure gcs = geogcs("Clarke_1866", 6378206.4, 294.9787);
+		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9802");
+		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", 28.38333),
+				param("standardParallel2", 30.28333), param("latitudeOfOrigin", 27.8333), param("longitudeOfCenter", 99.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", gcs, p, params, USFeet);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(-96.0, 28.5);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
 	public void t10_mercator() {
-		final WktStructure spheroid = new WktStructure("SPHEROID", "Krassowski", 6378245.0, 298.3);
-		final WktStructure datum = new WktStructure("DATUM", "D_Krassowski", spheroid);
-		final WktStructure gcs = new WktStructure("GEOGCS", "GCS_Krassowski", datum, Greenwich, Degrees);
+		final WktStructure gcs = geogcs("Krassowski", 6378245.0, 298.3);
 		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
 		final WktStructure[] params = { param("central_meridian", 51.0), param("standard_parallel_1", 42.0) };
 		final WktStructure specM = new WktStructure("PROJCS", "Mercator Ref", gcs, p, params, Metres);

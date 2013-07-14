@@ -45,11 +45,21 @@ public class TestUnit1GcsFactory {
 	}
 
 	@Test
-	public void t40_gcs_byAuth() {
+	public void t40_gcs_byAuthCode() {
 		final String spec = "GEOGCS[\"4326\"]";
 		try {
 			final GeographicCoordinateSystem gcs = WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
 			System.out.println("byAuth\n" + gcs.toWkt().format());
+		} catch (final GalliumSyntaxException ex) {
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t50_gcs_byAuthNS() {
+		final String spec = "GEOGCS[\"epsg:4326\"]";
+		try {
+			WktCoordinateSystemFactory.newCoordinateSystemGeographic(spec);
 		} catch (final GalliumSyntaxException ex) {
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
