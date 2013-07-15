@@ -20,9 +20,16 @@ public class TestUnit1ProjectionFactory {
 	private static final WktStructure Metres = new WktStructure("UNIT", "metres");
 	private static final WktStructure Kilometres = new WktStructure("UNIT", "kilometres");
 	private static final WktStructure USFeet = new WktStructure("UNIT", "US feet");
+	private static final WktStructure GCS_Sphere = new WktStructure("GEOGCS", "EPSG:4035");
 
-	private static double dm(int deg, int min) {
-		return (deg * 60.0 + min) / 60.0;
+	private static double deg(char h, int deg, int min) {
+		final double sgn = (h == 'S' || h == 'W') ? -1.0 : 1.0;
+		return sgn * (deg * 60.0 + min) / 60.0;
+	}
+
+	private static double deg(char h, int deg, int min, double sec) {
+		final double sgn = (h == 'S' || h == 'W') ? -1.0 : 1.0;
+		return sgn * (deg * 3600.0 + min * 60.0 + sec) / 3600.0;
 	}
 
 	private static WktStructure geogcs(String spheroidName, double a, double invf) {
@@ -37,20 +44,94 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t05_lambertConformalConical2SP() {
+	public void t05_lambertConformalConical2SP_Clarke() {
 		final WktStructure gcs = geogcs("Clarke_1866", 6378206.4, 294.9787);
 		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9802");
-		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", dm(28, 23)),
-				param("standardParallel2", dm(30, 17)), param("latitudeOfOrigin", dm(27, 50)),
-				param("longitudeOfCenter", -99.0) };
+		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", deg('N', 28, 23)),
+				param("standardParallel2", deg('N', 30, 17)), param("latitudeOfOrigin", deg('N', 27, 50)),
+				param("longitudeOfCenter", deg('W', 99, 0)) };
 		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", gcs, p, params, USFeet);
 		try {
 			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
 			System.out.println(pcs.toWkt().format());
 			final IGalliumProjection pj = pcs.newProjection();
-			final GalliumPointD pt = pj.transform(-96.0, 28.5);
+			final GalliumPointD pt = pj.transform(deg('W', 96, 0), deg('N', 28, 30));
 			Assert.assertEquals("Easting(us-ft)", 2963503.91, pt.x, 1e-2);
 			Assert.assertEquals("Northing(us-ft)", 254759.80, pt.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t06_lambertConformalConical2SP_Sphere() {
+		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9802");
+		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", deg('N', 28, 23)),
+				param("standardParallel2", deg('N', 30, 17)), param("latitudeOfOrigin", deg('N', 27, 50)),
+				param("longitudeOfCenter", deg('W', 99, 0)) };
+		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", GCS_Sphere, p, params, USFeet);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(deg('W', 96, 0), deg('N', 28, 30));
+			Assert.assertEquals("Easting(us-ft)", 2961673.0, pt.x, 1.0);
+			Assert.assertEquals("Northing(us-ft)", 255561.0, pt.y, 1.0);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t07_lambertConformalConical1SP_Clarke() {
+		final WktStructure gcs = geogcs("Clarke_1866", 6378206.4, 294.9787);
+		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9801");
+		final WktStructure[] params = { param("falseEasting", 250000.0), param("falseNorthing", 150000.0),
+				param("latitudeOfOrigin", deg('N', 18, 0)), param("longitudeOfCenter", deg('W', 77, 0)) };
+		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", gcs, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(deg('W', 76, 56, 37.26), deg('N', 17, 55, 55.8));
+			Assert.assertEquals("Easting(m)", 255966.58, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", 142493.51, pt.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t08_lambertConformalConical1SP_Sphere() {
+		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9801");
+		final WktStructure[] params = { param("falseEasting", 250000.0), param("falseNorthing", 150000.0),
+				param("latitudeOfOrigin", deg('N', 18, 0)), param("longitudeOfCenter", deg('W', 77, 0)) };
+		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(deg('W', 76, 56, 37.26), deg('N', 17, 55, 55.8));
+			Assert.assertEquals("Easting(m)", 255958.0, pt.x, 1.0);
+			Assert.assertEquals("Northing(m)", 142458.0, pt.y, 1.0);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(spec.format());
 			System.err.println(ex.getMessage());
