@@ -15,8 +15,6 @@ class ArgBase {
 	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
-		ds.a("falseEasting(m)", falseEastingMetres);
-		ds.a("falseNorthing(m)", falseNorthingMetres);
 		ds.a("pu", projectedUnit);
 		ds.a("totalScale(pu)", totalScale);
 		ds.a("totalFalseEasting(pu)", totalFalseEasting);
@@ -41,12 +39,8 @@ class ArgBase {
 		this.es = elp.eccentricity2;
 		this.one_es = 1.0 - this.es;
 		this.rone_es = 1.0 / this.one_es;
-		final AccessorLinear aFalseEasting = pmap.select(ParameterDefinition.False_Easting, pmapDefault).linear();
-		this.falseEastingMetres = aFalseEasting.value();
-		this.totalFalseEasting = aFalseEasting.projectedUnitsFromMetres(pu);
-		final AccessorLinear aFalseNorthing = pmap.select(ParameterDefinition.False_Northing, pmapDefault).linear();
-		this.falseNorthingMetres = aFalseNorthing.value();
-		this.totalFalseNorthing = aFalseNorthing.projectedUnitsFromMetres(pu);
+		this.totalFalseEasting = pmap.select(ParameterDefinition.False_Easting, pmapDefault).linear().value();
+		this.totalFalseNorthing = pmap.select(ParameterDefinition.False_Northing, pmapDefault).linear().value();
 		final AccessorAngle aCentralMeridian = pmap.select(ParameterDefinition.Central_Meridian, pmapDefault).angle();
 		this.projectionLongitudeRads = aCentralMeridian.normalizedLongitudeRadsFromDeg();
 	}
@@ -83,16 +77,6 @@ class ArgBase {
 	 * 1 / (1 - (Eccentricity squared))
 	 */
 	public final double rone_es;
-
-	/**
-	 * False easting in metres
-	 */
-	public final double falseEastingMetres;
-
-	/**
-	 * False northing in metres
-	 */
-	public final double falseNorthingMetres;
 
 	/**
 	 * False easting in projected units

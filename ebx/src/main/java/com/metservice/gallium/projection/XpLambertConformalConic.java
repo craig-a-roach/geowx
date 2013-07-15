@@ -53,9 +53,9 @@ class XpLambertConformalConic extends AbstractProjection {
 
 	@Override
 	public void project(final double lam, final double phi, Builder dst) {
-		final double rho;
+		final double r;
 		if (Math.abs(Math.abs(phi) - MapMath.HALFPI) < EPS10) {
-			rho = 0.0;
+			r = 0.0;
 		} else {
 			double t;
 			double n;
@@ -66,11 +66,11 @@ class XpLambertConformalConic extends AbstractProjection {
 				t = MapMath.tsfn(phi, Math.sin(phi), argBase.e);
 				n = m_n;
 			}
-			rho = m_c * Math.pow(t, n);
+			r = m_c * Math.pow(t, n);
 		}
-		final double lamn = lam * m_n;
-		dst.x = m_arg.scaleFactor * (rho * Math.sin(lamn));
-		dst.y = m_arg.scaleFactor * (m_rho - (rho * Math.cos(lamn)));
+		final double theta = lam * m_n;
+		dst.x = m_arg.scaleFactor * (r * Math.sin(theta));
+		dst.y = m_arg.scaleFactor * (m_r - (r * Math.cos(theta)));
 	}
 
 	@Override
@@ -89,7 +89,7 @@ class XpLambertConformalConic extends AbstractProjection {
 		final boolean secant = Math.abs(phi1 - phi2) >= EPS10;
 		final double n;
 		final double c;
-		final double rho;
+		final double r;
 		if (argBase.spherical) {
 			final double t1 = Math.tan(MapMath.QUARTERPI + 0.5 * phi1);
 			if (secant) {
@@ -101,10 +101,10 @@ class XpLambertConformalConic extends AbstractProjection {
 			}
 			c = cosphi1 * Math.pow(t1, n) / n;
 			if (Math.abs(Math.abs(phi0) - MapMath.HALFPI) < EPS10) {
-				rho = 0.0;
+				r = 0.0;
 			} else {
 				final double t0 = Math.tan(MapMath.QUARTERPI + 0.5 * phi0);
-				rho = c * Math.pow(t0, -n);
+				r = c * Math.pow(t0, -n);
 			}
 		} else {
 			final double t1 = MapMath.tsfn(phi1, sinphi1, argBase.e);
@@ -120,20 +120,20 @@ class XpLambertConformalConic extends AbstractProjection {
 			}
 			c = m1 * Math.pow(t1, -n) / n;
 			if (Math.abs(Math.abs(phi0) - MapMath.HALFPI) < EPS10) {
-				rho = 0.0;
+				r = 0.0;
 			} else {
 				final double sinphi0 = Math.sin(phi0);
 				final double t0 = MapMath.tsfn(phi0, sinphi0, argBase.e);
-				rho = c * Math.pow(t0, n);
+				r = c * Math.pow(t0, n);
 			}
 		}
 		m_n = n;
 		m_c = c;
-		m_rho = rho;
+		m_r = r;
 	}
 
 	private final XaLambertConformalConic m_arg;
 	private final double m_n;
-	private final double m_rho;
+	private final double m_r;
 	private final double m_c;
 }

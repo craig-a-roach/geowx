@@ -17,10 +17,6 @@ class AccessorLinear {
 		throw new IllegalArgumentException(m);
 	}
 
-	public double projectedUnitsFromMetres(Unit lu) {
-		return lu.fromBase(m_src.value);
-	}
-
 	@Override
 	public String toString() {
 		return m_src.toString();

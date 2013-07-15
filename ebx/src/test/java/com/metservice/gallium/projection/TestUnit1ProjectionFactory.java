@@ -21,6 +21,10 @@ public class TestUnit1ProjectionFactory {
 	private static final WktStructure Kilometres = new WktStructure("UNIT", "kilometres");
 	private static final WktStructure USFeet = new WktStructure("UNIT", "US feet");
 
+	private static double dm(int deg, int min) {
+		return (deg * 60.0 + min) / 60.0;
+	}
+
 	private static WktStructure geogcs(String spheroidName, double a, double invf) {
 		final WktStructure spheroid = new WktStructure("SPHEROID", spheroidName, a, invf);
 		final WktStructure datum = new WktStructure("DATUM", "D_" + spheroidName, spheroid);
@@ -36,14 +40,17 @@ public class TestUnit1ProjectionFactory {
 	public void t05_lambertConformalConical2SP() {
 		final WktStructure gcs = geogcs("Clarke_1866", 6378206.4, 294.9787);
 		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9802");
-		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", 28.38333),
-				param("standardParallel2", 30.28333), param("latitudeOfOrigin", 27.8333), param("longitudeOfCenter", 99.0) };
+		final WktStructure[] params = { param("falseEasting", 2000000.0), param("standardParallel1", dm(28, 23)),
+				param("standardParallel2", dm(30, 17)), param("latitudeOfOrigin", dm(27, 50)),
+				param("longitudeOfCenter", -99.0) };
 		final WktStructure spec = new WktStructure("PROJCS", "Lambert Conical Conformal Ref", gcs, p, params, USFeet);
 		try {
 			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
 			System.out.println(pcs.toWkt().format());
 			final IGalliumProjection pj = pcs.newProjection();
 			final GalliumPointD pt = pj.transform(-96.0, 28.5);
+			Assert.assertEquals("Easting(us-ft)", 2963503.91, pt.x, 1e-2);
+			Assert.assertEquals("Northing(us-ft)", 254759.80, pt.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(spec.format());
 			System.err.println(ex.getMessage());
