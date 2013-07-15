@@ -30,6 +30,7 @@ class XpTransverseMercator extends AbstractProjection {
 
 	private void projectEllipsoid(double lam, double phi, Builder dst)
 			throws ProjectionException {
+		final double k = m_arg.scaleFactor;
 		final double sinphi = Math.sin(phi);
 		final double cosphi = Math.cos(phi);
 		final double t = Math.abs(cosphi) > EPS10 ? sinphi / cosphi : 0.0;
@@ -42,18 +43,19 @@ class XpTransverseMercator extends AbstractProjection {
 		final double xC = 5.0 + ts * (ts - 18.0) + n * (14.0 - 58.0 * ts) + FC7 * als * xD;
 		final double xB = 1.0 - ts + n + FC5 * als * xC;
 		final double xA = FC1 + FC3 * als * xB;
-		dst.x = m_arg.scaleFactor * aly * xA;
+		dst.x = k * aly * xA;
 
 		final double yE = 1385.0 + ts * (ts * (543.0 - ts) - 3111.0);
 		final double yD = 61.0 + ts * (ts - 58.0) + n * (270.0 - 330.0 * ts) + FC8 * als * yE;
 		final double yC = 5.0 - ts + n * (9.0 + 4.0 * n) + FC6 * als * yD;
 		final double yB = 1.0 + FC4 * als * yC;
 		final double yA = MapMath.mlfn(phi, sinphi, cosphi, m_oen) - m_ml0 + sinphi * aly * lam * FC2 * yB;
-		dst.y = m_arg.scaleFactor * yA;
+		dst.y = k * yA;
 	}
 
 	private void projectInverseEllipsoid(double x, double y, Builder dst) {
-		final double dy = MapMath.inv_mlfn(m_ml0 + y / m_arg.scaleFactor, argBase.es, m_oen);
+		final double k = m_arg.scaleFactor;
+		final double dy = MapMath.inv_mlfn(m_ml0 + (y / k), argBase.es, m_oen);
 		if (Math.abs(y) >= MapMath.HALFPI) {
 			dst.y = y < 0. ? -MapMath.HALFPI : MapMath.HALFPI;
 			dst.x = 0.0;
@@ -63,7 +65,7 @@ class XpTransverseMercator extends AbstractProjection {
 			final double t = Math.abs(cosphi) > EPS10 ? sinphi / cosphi : 0.0;
 			final double n = m_esp * cosphi * cosphi;
 			final double con = 1.0 - argBase.es * sinphi * sinphi;
-			final double d = x * Math.sqrt(con) / m_arg.scaleFactor;
+			final double d = x * Math.sqrt(con) / k;
 			final double cont = con * t;
 			final double ts = t * t;
 			final double ds = d * d;
@@ -82,8 +84,9 @@ class XpTransverseMercator extends AbstractProjection {
 	}
 
 	private void projectInverseSpherical(double x, double y, Builder dst) {
-		final double D = y / m_arg.scaleFactor + m_arg.projectionLatitudeRads;
-		final double xp = x / m_arg.scaleFactor;
+		final double k = m_arg.scaleFactor;
+		final double D = (y / k) + m_arg.projectionLatitudeRads;
+		final double xp = x / k;
 		dst.y = Math.asin(Math.sin(D) / Math.cosh(xp));
 		dst.x = Math.atan2(Math.sinh(xp), Math.cos(D));
 	}
@@ -123,7 +126,7 @@ class XpTransverseMercator extends AbstractProjection {
 	}
 
 	@Override
-	protected void project(double lam, double phi, Builder dst)
+	protected void project(final double lam, final double phi, Builder dst)
 			throws ProjectionException {
 		if (m_oen == null) {
 			projectSpherical(lam, phi, dst);
@@ -133,7 +136,7 @@ class XpTransverseMercator extends AbstractProjection {
 	}
 
 	@Override
-	protected void projectInverse(double x, double y, Builder dst)
+	protected void projectInverse(final double x, final double y, Builder dst)
 			throws ProjectionException {
 		if (m_oen == null) {
 			projectInverseSpherical(x, y, dst);

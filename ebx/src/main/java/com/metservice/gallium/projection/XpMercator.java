@@ -54,7 +54,7 @@ class XpMercator extends AbstractProjection {
 	}
 
 	@Override
-	public void project(double lam, double phi, Builder dst) {
+	public void project(final double lam, final double phi, Builder dst) {
 		final double k0 = m_arg.scaleFactor;
 		if (argBase.spherical) {
 			dst.x = k0 * lam;
@@ -66,7 +66,7 @@ class XpMercator extends AbstractProjection {
 	}
 
 	@Override
-	public void projectInverse(double x, double y, Builder dst)
+	public void projectInverse(final double x, final double y, Builder dst)
 			throws ProjectionException {
 		final double k0 = m_arg.scaleFactor;
 		if (argBase.spherical) {

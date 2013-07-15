@@ -69,13 +69,41 @@ class XpLambertConformalConic extends AbstractProjection {
 			r = m_c * Math.pow(t, n);
 		}
 		final double theta = lam * m_n;
-		dst.x = m_arg.scaleFactor * (r * Math.sin(theta));
-		dst.y = m_arg.scaleFactor * (m_r - (r * Math.cos(theta)));
+		final double k = m_arg.scaleFactor;
+		dst.x = k * (r * Math.sin(theta));
+		dst.y = k * (m_r - (r * Math.cos(theta)));
 	}
 
 	@Override
-	public void projectInverse(double x, double y, Builder dst)
+	public void projectInverse(final double x, final double y, Builder dst)
 			throws ProjectionException {
+		final double k = m_arg.scaleFactor;
+		final double xk = x / k;
+		final double yk = m_r - (y / k);
+		final double r = MapMath.distance(xk, yk);
+		if (r < EPS10) {
+			dst.x = 0.0;
+			dst.y = m_n > 0.0 ? MapMath.HALFPI : -MapMath.HALFPI;
+		} else {
+			double xn;
+			double yn;
+			double rn;
+			if (m_n < 0.0) {
+				rn = -r;
+				xn = -xk;
+				yn = -yk;
+			} else {
+				rn = r;
+				xn = xk;
+				yn = yk;
+			}
+			if (argBase.spherical) {
+				dst.y = 2.0 * Math.atan(Math.pow(m_c / rn, 1.0 / m_n)) - MapMath.HALFPI;
+			} else {
+				dst.y = MapMath.phi2(Math.pow(rn / m_c, 1.0 / m_n), argBase.e);
+			}
+			dst.x = Math.atan2(xn, yn) / m_n;
+		}
 	}
 
 	public XpLambertConformalConic(Authority oAuthority, Title title, ArgBase argBase, XaLambertConformalConic arg) {

@@ -27,6 +27,7 @@ class MapMath {
 	public static final double RTD = 180.0 / Math.PI;
 	public static final double DTR = Math.PI / 180.0;
 	public static final double EPS10 = 1.0e-10;
+	public static final double EPS11 = 1.0e-11;
 
 	public static final GalliumBoundingBoxD WORLD_BOUNDS_RAD = GalliumBoundingBoxD.newDimensions(-HALFPI, -PI, PI, TWOPI);
 	public static final GalliumBoundingBoxD WORLD_BOUNDS_DEG = GalliumBoundingBoxD.newDimensions(-90.0, -180.0, 180.0, 360.0);
@@ -35,7 +36,9 @@ class MapMath {
 	public static final int DO_INTERSECT = 1;
 	public static final int COLLINEAR = 2;
 
-	private static final int N_ITER = 15;
+	private static final int MAX_ITER_PHI2 = 15;
+	private static final int MAX_ITER_MLFN = 10;
+
 	private static final double C00 = 1.0;
 	private static final double C02 = .25;
 	private static final double C04 = .046875;
@@ -48,8 +51,6 @@ class MapMath {
 	private static final double C66 = .36458333333333333333;
 	private static final double C68 = .00569661458333333333;
 	private static final double C88 = .3076171875;
-
-	private static final int MAX_ITER = 10;
 
 	private static final double P00 = .33333333333333333333;
 	private static final double P01 = .17222222222222222222;
@@ -266,16 +267,15 @@ class MapMath {
 		return DO_INTERSECT;
 	}
 
-	public static double inv_mlfn(double arg, double es, double[] en) {
-		double s, t, phi;
+	public static double inv_mlfn(final double arg, final double es, final double[] en) {
 		final double k = 1.0 / (1.0 - es);
-
-		phi = arg;
-		for (int i = MAX_ITER; i != 0; i--) {
-			s = Math.sin(phi);
-			t = 1.0 - es * s * s;
-			phi -= t = (mlfn(phi, s, Math.cos(phi), en) - arg) * (t * Math.sqrt(t)) * k;
-			if (Math.abs(t) < 1e-11) return phi;
+		double phi = arg;
+		for (int i = MAX_ITER_MLFN; i > 0; i--) {
+			final double s = Math.sin(phi);
+			final double t = 1.0 - es * s * s;
+			final double tt = (mlfn(phi, s, Math.cos(phi), en) - arg) * (t * Math.sqrt(t)) * k;
+			if (Math.abs(tt) < EPS11) return phi;
+			phi -= tt;
 		}
 		return phi;
 	}
@@ -358,18 +358,22 @@ class MapMath {
 
 	public static double phi2(final double ts, final double e)
 			throws ProjectionException {
-		double eccnth, phi, con, dphi;
-		int i;
-
-		eccnth = 0.5 * e;
-		phi = HALFPI - 2. * Math.atan(ts);
-		i = N_ITER;
-		do {
-			con = e * Math.sin(phi);
-			dphi = HALFPI - 2.0 * Math.atan(ts * Math.pow((1. - con) / (1. + con), eccnth)) - phi;
-			phi += dphi;
-		} while (Math.abs(dphi) > 1e-10 && --i != 0);
-		if (i <= 0) throw new ProjectionException("phi2 did not converge");
+		final double eccnth = 0.5 * e;
+		double phi = HALFPI - 2.0 * Math.atan(ts);
+		for (int i = 0; i <= MAX_ITER_PHI2; i++) {
+			final double con = e * Math.sin(phi);
+			final double tsf = Math.pow((1.0 - con) / (1.0 + con), eccnth);
+			final double phicon = HALFPI - 2.0 * Math.atan(ts * tsf);
+			final double dphi = phicon - phi;
+			if (Math.abs(dphi) <= EPS10) {
+				break;
+			}
+			if (i == MAX_ITER_PHI2) {
+				final String m = "Could not converge to " + phi + " ...currently " + phicon + " after " + i + " iterations";
+				throw new ProjectionException(m);
+			}
+			phi = phicon;
+		}
 		return phi;
 	}
 
