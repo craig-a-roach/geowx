@@ -109,9 +109,9 @@ class XpLambertConformalConic extends AbstractProjection {
 	public XpLambertConformalConic(Authority oAuthority, Title title, ArgBase argBase, XaLambertConformalConic arg) {
 		super(oAuthority, title, argBase);
 		m_arg = arg;
-		final double phi0 = arg.projectionLatitude0;
-		final double phi1 = arg.projectionLatitude1;
-		final double phi2 = arg.projectionLatitude2;
+		final double phi0 = arg.projectionLatitudeRads0;
+		final double phi1 = arg.projectionLatitudeRads1;
+		final double phi2 = arg.projectionLatitudeRads2;
 		final double sinphi1 = Math.sin(phi1);
 		final double cosphi1 = Math.cos(phi1);
 		final boolean secant = Math.abs(phi1 - phi2) >= EPS10;

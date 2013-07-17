@@ -17,6 +17,5 @@ public interface IProjectionFactory {
 
 	public void setTitle(Title t);
 
-	public void setZone(int id)
-			throws ProjectionException;
+	public void setZone(Zone zone);
 }

@@ -10,6 +10,9 @@ package com.metservice.gallium.projection;
  */
 class XfStereographic extends AbstractProjectionFactory {
 
+	public static final Zone NorthPole = Zone.newLatitudeDegrees(90.0, "NORTH");
+	public static final Zone SouthPole = Zone.newLatitudeDegrees(-90.0, "SOUTH");
+
 	public static final ParameterMap DefaultMap = ParameterMap.newDefault(ParameterDefinition.False_Easting, 0.0,
 			ParameterDefinition.False_Northing, 0.0, ParameterDefinition.Central_Meridian, 0.0,
 			ParameterDefinition.Scale_Factor, 1.0);
@@ -18,18 +21,10 @@ class XfStereographic extends AbstractProjectionFactory {
 	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
 		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, pu);
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public final void setZone(int id)
-			throws ProjectionException {
+		final XaStereographic arg = new XaStereographic(DefaultMap, pmap, oZone);
+		return new XpStereographic(oAuthority, title, argBase, arg);
 	}
 
 	public XfStereographic() {
 	}
-	
-	private final double m_
-
 }

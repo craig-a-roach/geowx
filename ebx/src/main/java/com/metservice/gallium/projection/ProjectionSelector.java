@@ -16,8 +16,7 @@ class ProjectionSelector implements IWktEmit {
 		return newEpsg(code, title, factoryClass, null);
 	}
 
-	public static ProjectionSelector newEpsg(int code, String title, Class<? extends IProjectionFactory> factoryClass,
-			Integer oZone) {
+	public static ProjectionSelector newEpsg(int code, String title, Class<? extends IProjectionFactory> factoryClass, Zone oZone) {
 		return new ProjectionSelector(Authority.newEPSG(code), Title.newInstance(title), factoryClass, oZone);
 	}
 
@@ -25,13 +24,16 @@ class ProjectionSelector implements IWktEmit {
 		return newEsri(code, title, factoryClass, null);
 	}
 
-	public static ProjectionSelector newEsri(int code, String title, Class<? extends IProjectionFactory> factoryClass,
-			Integer oZone) {
+	public static ProjectionSelector newEsri(int code, String title, Class<? extends IProjectionFactory> factoryClass, Zone oZone) {
 		return new ProjectionSelector(Authority.newESRI(code), Title.newInstance(title), factoryClass, oZone);
 	}
 
 	public Authority getAuthority() {
 		return m_oAuthority;
+	}
+
+	public Zone getZone() {
+		return m_oZone;
 	}
 
 	public IProjectionFactory newFactory()
@@ -43,12 +45,9 @@ class ProjectionSelector implements IWktEmit {
 			}
 			neo.setTitle(m_title);
 			if (m_oZone != null) {
-				neo.setZone(m_oZone.intValue());
+				neo.setZone(m_oZone);
 			}
 			return neo;
-		} catch (final ProjectionException ex) {
-			final String m = "Invalid factory configuration for " + m_title + "..." + ex.getMessage();
-			throw new GalliumProjectionException(m);
 		} catch (InstantiationException | IllegalAccessException ex) {
 			final String m = "Invalid factory class for " + m_title + "..." + Ds.message(ex);
 			throw new GalliumProjectionException(m);
@@ -78,7 +77,7 @@ class ProjectionSelector implements IWktEmit {
 		return new WktStructure("PROJECTION", m_title, m_oAuthority);
 	}
 
-	private ProjectionSelector(Authority oAuthority, Title title, Class<? extends IProjectionFactory> factoryClass, Integer oZone) {
+	private ProjectionSelector(Authority oAuthority, Title title, Class<? extends IProjectionFactory> factoryClass, Zone oZone) {
 		assert title != null;
 		assert factoryClass != null;
 		m_oAuthority = oAuthority;
@@ -89,5 +88,5 @@ class ProjectionSelector implements IWktEmit {
 	private final Authority m_oAuthority;
 	private final Title m_title;
 	private final Class<? extends IProjectionFactory> m_factoryClass;
-	private final Integer m_oZone;
+	private final Zone m_oZone;
 }

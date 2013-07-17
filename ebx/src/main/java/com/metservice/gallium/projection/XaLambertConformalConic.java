@@ -15,15 +15,14 @@ class XaLambertConformalConic {
 	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
-		ds.a("projectionLatitude0", projectionLatitude0);
-		ds.a("projectionLatitude1", projectionLatitude1);
-		ds.a("projectionLatitude2", projectionLatitude2);
+		ds.a("projectionLatitude0(deg)", MapMath.radToDeg(projectionLatitudeRads0));
+		ds.a("projectionLatitude1(deg)", MapMath.radToDeg(projectionLatitudeRads1));
+		ds.a("projectionLatitude2(deg)", MapMath.radToDeg(projectionLatitudeRads2));
 		ds.a("scaleFactor", scaleFactor);
 		return ds.s();
 	}
 
-	public XaLambertConformalConic(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
-			throws GalliumProjectionException {
+	public XaLambertConformalConic(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
 
@@ -46,13 +45,13 @@ class XaLambertConformalConic {
 			throw new GalliumProjectionException(m);
 		}
 
-		this.projectionLatitude0 = phi0;
-		this.projectionLatitude1 = phi1;
-		this.projectionLatitude2 = phi2;
+		this.projectionLatitudeRads0 = phi0;
+		this.projectionLatitudeRads1 = phi1;
+		this.projectionLatitudeRads2 = phi2;
 		this.scaleFactor = pmap.select(ParameterDefinition.Scale_Factor, pmapDefault).ratio().clampedValue(0.01, 1.0);
 	}
-	public final double projectionLatitude0;
-	public final double projectionLatitude1;
-	public final double projectionLatitude2;
+	public final double projectionLatitudeRads0;
+	public final double projectionLatitudeRads1;
+	public final double projectionLatitudeRads2;
 	public final double scaleFactor;
 }

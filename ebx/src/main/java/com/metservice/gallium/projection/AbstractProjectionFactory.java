@@ -25,9 +25,9 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 	}
 
 	@Override
-	public void setZone(int id)
-			throws ProjectionException {
-		throw new ProjectionException("Unsupported zone: " + id);
+	public void setZone(Zone zone) {
+		if (zone == null) throw new IllegalArgumentException("object is null");
+		oZone = zone;
 	}
 
 	@Override
@@ -39,6 +39,10 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 			sb.append(oAuthority);
 			sb.append(")");
 		}
+		if (oZone != null) {
+			sb.append(" zone ");
+			sb.append(oZone);
+		}
 		return sb.toString();
 	}
 
@@ -46,4 +50,5 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 	}
 	protected Authority oAuthority;
 	protected Title title = TitlePending;
+	protected Zone oZone;
 }

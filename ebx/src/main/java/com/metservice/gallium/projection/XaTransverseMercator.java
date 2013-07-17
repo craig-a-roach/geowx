@@ -27,8 +27,8 @@ class XaTransverseMercator {
 
 		final AccessorRatio aScaleFactor = pmap.select(ParameterDefinition.Scale_Factor, pmapDefault).ratio();
 		this.scaleFactor = aScaleFactor.clampedValue(0.01, 1.0);
-		final AccessorAngle aLatitideOfOrigin = pmap.select(ParameterDefinition.Latitude_Of_Origin, pmapDefault).angle();
-		this.projectionLatitudeRads = aLatitideOfOrigin.normalizedLatitudeRadsFromDeg();
+		final AccessorAngle aLatitudeOfOrigin = pmap.select(ParameterDefinition.Latitude_Of_Origin, pmapDefault).angle();
+		this.projectionLatitudeRads = aLatitudeOfOrigin.normalizedLatitudeRadsFromDeg();
 	}
 	public final double scaleFactor;
 	public final double projectionLatitudeRads;

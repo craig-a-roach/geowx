@@ -19,7 +19,7 @@ class XfLambertConformalConic extends AbstractProjectionFactory {
 	public IGalliumProjection newProjection(ParameterMap pmap, GeographicCoordinateSystem gcs, Unit pu)
 			throws GalliumProjectionException {
 		final ArgBase argBase = new ArgBase(DefaultMap, pmap, gcs, pu);
-		final XaLambertConformalConic arg = new XaLambertConformalConic(DefaultMap, pmap, gcs);
+		final XaLambertConformalConic arg = new XaLambertConformalConic(DefaultMap, pmap);
 		return new XpLambertConformalConic(oAuthority, title, argBase, arg);
 	}
 

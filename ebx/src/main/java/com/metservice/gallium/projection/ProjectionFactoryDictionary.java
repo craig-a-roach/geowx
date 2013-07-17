@@ -27,8 +27,8 @@ class ProjectionFactoryDictionary {
 		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", XfTransverseMercator.class));
 		b.add(ProjectionSelector.newEsri(43020, "Lambert_Conformal_Conic", XfLambertConformalConic.class));
 		b.add(ProjectionSelector.newEsri(43026, "Stereographic", XfStereographic.class));
-		b.add(ProjectionSelector.newEsri(43050, "Stereographic_North_Pole", XfStereographic.class, 90));
-		b.add(ProjectionSelector.newEsri(43051, "Stereographic_South_Pole", XfStereographic.class, -90));
+		b.add(ProjectionSelector.newEsri(43050, "Stereographic_North_Pole", XfStereographic.class, XfStereographic.NorthPole));
+		b.add(ProjectionSelector.newEsri(43051, "Stereographic_South_Pole", XfStereographic.class, XfStereographic.SouthPole));
 
 		return new ProjectionFactoryDictionary(b);
 	}
