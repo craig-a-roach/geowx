@@ -13,15 +13,21 @@ abstract class AbstractProjectionFactory implements IProjectionFactory {
 	private static final Title TitlePending = Title.newInstance("pending");
 
 	@Override
-	public void setAuthority(Authority a) {
+	public final void setAuthority(Authority a) {
 		if (a == null) throw new IllegalArgumentException("object is null");
 		oAuthority = a;
 	}
 
 	@Override
-	public void setTitle(Title t) {
+	public final void setTitle(Title t) {
 		if (t == null) throw new IllegalArgumentException("object is null");
 		title = t;
+	}
+
+	@Override
+	public void setZone(int id)
+			throws ProjectionException {
+		throw new ProjectionException("Unsupported zone: " + id);
 	}
 
 	@Override

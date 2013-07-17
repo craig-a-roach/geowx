@@ -22,9 +22,14 @@ class ProjectionFactoryDictionary {
 		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", XfMercator.class));
 		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", XfMercator.class));
 		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", XfTransverseMercator.class));
+		b.add(ProjectionSelector.newEpsg(9809, "Oblique_Stereographic", XfStereographic.class));
 		b.add(ProjectionSelector.newEsri(43004, "Mercator", XfMercator.class));
 		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", XfTransverseMercator.class));
 		b.add(ProjectionSelector.newEsri(43020, "Lambert_Conformal_Conic", XfLambertConformalConic.class));
+		b.add(ProjectionSelector.newEsri(43026, "Stereographic", XfStereographic.class));
+		b.add(ProjectionSelector.newEsri(43050, "Stereographic_North_Pole", XfStereographic.class, 90));
+		b.add(ProjectionSelector.newEsri(43051, "Stereographic_South_Pole", XfStereographic.class, -90));
+
 		return new ProjectionFactoryDictionary(b);
 	}
 
@@ -61,10 +66,11 @@ class ProjectionFactoryDictionary {
 
 		void add(ProjectionSelector s) {
 			assert s != null;
-			if (titleMap.put(s.title, s) != null) throw new IllegalStateException("ambiguous title..." + s);
-			if (s.oAuthority != null) {
-				if (authorityMap.put(s.oAuthority, s) != null)
-					throw new IllegalStateException("ambiguous authority..." + s);
+			final Title title = s.title();
+			final Authority oAuthority = s.getAuthority();
+			if (titleMap.put(title, s) != null) throw new IllegalStateException("ambiguous title..." + s);
+			if (oAuthority != null) {
+				if (authorityMap.put(oAuthority, s) != null) throw new IllegalStateException("ambiguous authority..." + s);
 			}
 		}
 
