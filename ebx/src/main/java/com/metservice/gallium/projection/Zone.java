@@ -10,16 +10,34 @@ package com.metservice.gallium.projection;
  */
 class Zone {
 
-	public static Zone newDegrees(double degLon, double degLat, String qncId) {
-		return new Zone(MapMath.degToRad(degLon), MapMath.degToRad(degLat), qncId);
+	public static Zone newDegrees(String qncId, double degLon, double degLat) {
+		return new Zone(qncId, MapMath.degToRad(degLon), MapMath.degToRad(degLat));
 	}
 
-	public static Zone newLatitudeDegrees(double deg, String qncId) {
-		return new Zone(0.0, MapMath.degToRad(deg), qncId);
+	public static Zone newLatitudeDegrees(String qncId, double deg) {
+		return new Zone(qncId, 0.0, MapMath.degToRad(deg));
 	}
 
-	public static Zone newLongitudeDegrees(double deg, String qncId) {
-		return new Zone(MapMath.degToRad(deg), 0.0, qncId);
+	public static Zone newLongitudeDegrees(String qncId, double deg) {
+		return new Zone(qncId, MapMath.degToRad(deg), 0.0);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (o == this) return true;
+		if (o == null || !(o instanceof Zone)) return false;
+		return equals((Zone) o);
+	}
+
+	public boolean equals(Zone rhs) {
+		if (rhs == this) return true;
+		if (rhs == null) return false;
+		return m_qucId.equals(rhs.m_qucId);
+	}
+
+	@Override
+	public int hashCode() {
+		return m_qucId.hashCode();
 	}
 
 	public double radsLatitude() {
@@ -35,13 +53,13 @@ class Zone {
 		return m_qucId;
 	}
 
-	private Zone(double radsLon, double radsLat, String qncId) {
+	private Zone(String qncId, double radsLon, double radsLat) {
 		if (qncId == null || qncId.length() == 0) throw new IllegalArgumentException("string is null or empty");
+		m_qucId = qncId.toUpperCase();
 		m_radsLon = radsLon;
 		m_radsLat = radsLat;
-		m_qucId = qncId.toUpperCase();
 	}
+	private final String m_qucId;
 	private final double m_radsLon;
 	private final double m_radsLat;
-	private final String m_qucId;
 }

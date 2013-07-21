@@ -10,15 +10,16 @@ import com.metservice.argon.Ds;
 /**
  * @author roach
  */
-abstract class XaStereographic {
+class XaStereographicEquator extends XaStereographic {
 
-	public void describe(Ds ds) {
-		ds.a("scaleFactor", scaleFactor);
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		super.describe(ds);
+		return ds.s();
 	}
 
-	public XaStereographic(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
-		this.scaleFactor = pmap.select(ParameterDefinition.Scale_Factor, pmapDefault).ratio().clampedValue(0.01, 1.0);
+	public XaStereographicEquator(ParameterMap pmapBaseDefault, ParameterMap pmap) throws GalliumProjectionException {
+		super(pmapBaseDefault, pmap);
 	}
-
-	public final double scaleFactor;
 }
