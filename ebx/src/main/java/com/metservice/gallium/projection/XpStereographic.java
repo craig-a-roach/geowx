@@ -12,13 +12,19 @@ import com.metservice.gallium.GalliumPointD.Builder;
  */
 class XpStereographic extends AbstractProjection {
 
-	private static Mode modeEquator(ArgBase argBase, XaStereographicEquator argEquator) {
+	private static String msgOutside(double lam, double phi) {
+		final double lon = MapMath.radToDeg(lam);
+		final double lat = MapMath.radToDeg(phi);
+		return "Lat/Lon " + lat + "," + lon + " deg is outside projection bounds";
+	}
+
+	private static Mode newModeEquator(ArgBase argBase, XaStereographicEquator argEquator) {
 		final double scaleFactor = argEquator.scaleFactor;
 		final double akm1 = 2.0 * scaleFactor;
 		return new ModeEquator(argBase, akm1);
 	}
 
-	private static Mode modeOblique(ArgBase argBase, XaStereographicOblique argOblique) {
+	private static Mode newModeOblique(ArgBase argBase, XaStereographicOblique argOblique) {
 		final double e = argBase.e;
 		final double scaleFactor = argOblique.scaleFactor;
 		final boolean spherical = argBase.spherical;
@@ -42,7 +48,7 @@ class XpStereographic extends AbstractProjection {
 		return new ModeOblique(argBase, akm1, sinphi0, cosphi0);
 	}
 
-	private static Mode modePolar(ArgBase argBase, XaStereographicPolar argPolar) {
+	private static Mode newModePolar(ArgBase argBase, XaStereographicPolar argPolar) {
 		final double e = argBase.e;
 		final double scaleFactor = argPolar.scaleFactor;
 		final boolean spherical = argBase.spherical;
@@ -67,12 +73,6 @@ class XpStereographic extends AbstractProjection {
 			}
 		}
 		return new ModePolar(argBase, argPolar.north, akm1);
-	}
-
-	private static String msgOutside(double lam, double phi) {
-		final double lon = MapMath.radToDeg(lam);
-		final double lat = MapMath.radToDeg(phi);
-		return "Lat/Lon " + lat + "," + lon + " deg is outside projection bounds";
 	}
 
 	private static double ssfn(final double phit, final double sinphi, double e) {
@@ -141,11 +141,11 @@ class XpStereographic extends AbstractProjection {
 		super(oAuthority, title, argBase);
 		final Mode mode;
 		if (arg instanceof XaStereographicPolar) {
-			mode = modePolar(argBase, (XaStereographicPolar) arg);
+			mode = newModePolar(argBase, (XaStereographicPolar) arg);
 		} else if (arg instanceof XaStereographicEquator) {
-			mode = modeEquator(argBase, (XaStereographicEquator) arg);
+			mode = newModeEquator(argBase, (XaStereographicEquator) arg);
 		} else if (arg instanceof XaStereographicOblique) {
-			mode = modeOblique(argBase, (XaStereographicOblique) arg);
+			mode = newModeOblique(argBase, (XaStereographicOblique) arg);
 		} else {
 			final String m = "Unsupported projection mode " + arg.getClass().getName();
 			throw new IllegalStateException(m);

@@ -44,6 +44,31 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
+	public void t10_stereographic() {
+		final WktStructure gcs = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
+		final WktStructure[] params = { param("central_meridian", deg('E', 5, 23, 15.5)),
+				param("latitude_of_origin", deg('N', 52, 9, 22.178)), param("scaleFactor", 0.9999079),
+				param("falseEasting", 155000.0), param("falseNorthing", 463000.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "Stereo Oblique Ref", gcs, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			System.out.println(pcs.toWkt().format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(53.0, 6.0);
+			System.out.println(pt);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
 	public void t100_mercator() {
 		final WktStructure gcs = geogcs("Krassowski", 6378245.0, 298.3);
 		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
