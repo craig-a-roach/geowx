@@ -13,6 +13,7 @@ import com.metservice.gallium.GalliumPointD;
  */
 abstract class AbstractProjection implements IGalliumProjection {
 
+	protected static final double EPS8 = MapMath.EPS8;
 	protected static final double EPS10 = MapMath.EPS10;
 	protected static final double RTD = MapMath.RTD;
 	protected static final double DTR = MapMath.DTR;

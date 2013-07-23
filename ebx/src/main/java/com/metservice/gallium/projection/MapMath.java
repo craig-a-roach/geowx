@@ -26,6 +26,7 @@ class MapMath {
 	public static final double TWOPI = Math.PI * 2.0;
 	public static final double RTD = 180.0 / Math.PI;
 	public static final double DTR = Math.PI / 180.0;
+	public static final double EPS8 = 1.0e-8;
 	public static final double EPS10 = 1.0e-10;
 	public static final double EPS11 = 1.0e-11;
 
