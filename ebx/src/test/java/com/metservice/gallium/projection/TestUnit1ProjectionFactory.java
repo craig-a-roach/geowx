@@ -45,24 +45,28 @@ public class TestUnit1ProjectionFactory {
 
 	@Test
 	public void t10_stereographic() {
-		final WktStructure gcs = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
 		final WktStructure[] params = { param("central_meridian", deg('E', 5, 23, 15.5)),
 				param("latitude_of_origin", deg('N', 52, 9, 22.178)), param("scaleFactor", 0.9999079),
 				param("falseEasting", 155000.0), param("falseNorthing", 463000.0) };
-		final WktStructure spec = new WktStructure("PROJCS", "Stereo Oblique Ref", gcs, p, params, Metres);
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo Oblique Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo Oblique Ref", GCS_Sphere, p, params, Metres);
 		try {
-			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
-			System.out.println(pcs.toWkt().format());
-			final IGalliumProjection pj = pcs.newProjection();
-			final GalliumPointD pt = pj.transform(53.0, 6.0);
-			System.out.println(pt);
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			final IGalliumProjection pjE = pcsE.newProjection();
+			final IGalliumProjection pjS = pcsS.newProjection();
+			final GalliumPointD ptE = pjE.transform(53.0, 6.0);
+			// E = 196105.283 m N = 557057.739 m
+			final GalliumPointD ptS = pjS.transform(53.0, 6.0);
+			System.out.println(ptE);
 		} catch (final GalliumSyntaxException ex) {
-			System.out.println(spec.format());
+			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Syntax Exception: " + ex.getMessage());
 		} catch (final GalliumProjectionException ex) {
-			System.out.println(spec.format());
+			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Projection Exception: " + ex.getMessage());
 		}

@@ -32,6 +32,7 @@ class XpStereographic extends AbstractProjection {
 		final double sinphi0;
 		final double cosphi0;
 		final double projectionLatitude = argOblique.projectionLatitudeRads;
+		final double t = Math.abs(projectionLatitude);
 		if (spherical) {
 			akm1 = 2.0 * scaleFactor;
 			sinphi0 = Math.sin(projectionLatitude);
