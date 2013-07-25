@@ -51,16 +51,21 @@ public class TestUnit1ProjectionFactory {
 				param("latitude_of_origin", deg('N', 52, 9, 22.178)), param("scaleFactor", 0.9999079),
 				param("falseEasting", 155000.0), param("falseNorthing", 463000.0) };
 		final WktStructure specE = new WktStructure("PROJCS", "Stereo Oblique Ref", gcsE, p, params, Metres);
+		System.out.println(specE.format());
 		final WktStructure specS = new WktStructure("PROJCS", "Stereo Oblique Ref", GCS_Sphere, p, params, Metres);
 		try {
 			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
 			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
 			final IGalliumProjection pjE = pcsE.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptE = pjE.transform(53.0, 6.0);
-			// E = 196105.283 m N = 557057.739 m
-			final GalliumPointD ptS = pjS.transform(53.0, 6.0);
+			final GalliumPointD ptE = pjE.transform(6.0, 53.0);
 			System.out.println(ptE);
+			// E=196107.26 N=557059.56
+			final GalliumPointD ptS = pjS.transform(6.0, 53.0);
+			final GalliumPointD ptS1 = pjS.transform(10.0, 50.0);
+			System.out.println(ptS1);
+			// 0 E=195976.56 N=556997.63
+			// 1 E=484608.10 N=233568.74
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
@@ -71,6 +76,9 @@ public class TestUnit1ProjectionFactory {
 			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
+
+	// proj -V +proj=stere +a=6371000 +e=0 +lat_0=52d9'22.178N +lon_0=5d23'15.5E +x_0=155000 +y_0=463000
+	// +k_0=0.9999079
 
 	@Test
 	public void t100_mercator() {

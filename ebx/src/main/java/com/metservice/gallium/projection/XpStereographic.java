@@ -18,64 +18,6 @@ class XpStereographic extends AbstractProjection {
 		return "Lat/Lon " + lat + "," + lon + " deg is outside projection bounds";
 	}
 
-	private static Mode newModeEquator(ArgBase argBase, XaStereographicEquator argEquator) {
-		final double scaleFactor = argEquator.scaleFactor;
-		final double akm1 = 2.0 * scaleFactor;
-		return new ModeEquator(argBase, akm1);
-	}
-
-	private static Mode newModeOblique(ArgBase argBase, XaStereographicOblique argOblique) {
-		final double e = argBase.e;
-		final double scaleFactor = argOblique.scaleFactor;
-		final boolean spherical = argBase.spherical;
-		final double akm1;
-		final double sinphi0;
-		final double cosphi0;
-		final double projectionLatitude = argOblique.projectionLatitudeRads;
-		final double t = Math.abs(projectionLatitude);
-		if (spherical) {
-			akm1 = 2.0 * scaleFactor;
-			sinphi0 = Math.sin(projectionLatitude);
-			cosphi0 = Math.cos(projectionLatitude);
-		} else {
-			final double sint = Math.sin(projectionLatitude);
-			final double cost = Math.cos(projectionLatitude);
-			final double X = 2.0 * Math.atan(ssfn(projectionLatitude, sint, e)) - MapMath.HALFPI;
-			final double sinte = sint * e;
-			akm1 = 2.0 * scaleFactor * cost / Math.sqrt(1.0 - sinte * sinte);
-			sinphi0 = Math.sin(X);
-			cosphi0 = Math.cos(X);
-		}
-		return new ModeOblique(argBase, akm1, sinphi0, cosphi0);
-	}
-
-	private static Mode newModePolar(ArgBase argBase, XaStereographicPolar argPolar) {
-		final double e = argBase.e;
-		final double scaleFactor = argPolar.scaleFactor;
-		final boolean spherical = argBase.spherical;
-		final double trueScaleLatitude = argPolar.trueScaleLatitudeAbsRads;
-		final double akm1;
-		if (Math.abs(trueScaleLatitude - MapMath.HALFPI) < EPS10) {
-			if (spherical) {
-				akm1 = 2.0 * scaleFactor;
-			} else {
-				akm1 = 2.0 * scaleFactor / Math.sqrt(Math.pow(1 + e, 1 + e) * Math.pow(1 - e, 1 - e));
-			}
-		} else {
-			final double cost = Math.cos(trueScaleLatitude);
-			if (spherical) {
-				final double t = Math.tan(MapMath.QUARTERPI - (0.5 * trueScaleLatitude));
-				akm1 = cost / t;
-			} else {
-				final double sint = Math.sin(trueScaleLatitude);
-				final double ts = MapMath.tsfn(trueScaleLatitude, sint, e);
-				final double sinte = sint * e;
-				akm1 = cost / ts / Math.sqrt(1.0 - (sinte * sinte));
-			}
-		}
-		return new ModePolar(argBase, argPolar.north, akm1);
-	}
-
 	private static double ssfn(final double phit, final double sinphi, double e) {
 		final double sinphie = sinphi * e;
 		final double sinphier = (1.0 - sinphie) / (1.0 + sinphie);
@@ -92,11 +34,7 @@ class XpStereographic extends AbstractProjection {
 	@Override
 	protected void project(final double lam, final double phi, Builder dst)
 			throws ProjectionException {
-		if (argBase.spherical) {
-			m_mode.projectSpherical(lam, phi, dst);
-		} else {
-			m_mode.projectEllipsoid(lam, phi, dst);
-		}
+		m_mode.project(lam, phi, dst);
 	}
 
 	@Override
@@ -140,13 +78,29 @@ class XpStereographic extends AbstractProjection {
 
 	public XpStereographic(Authority oAuthority, Title title, ArgBase argBase, XaStereographic arg) {
 		super(oAuthority, title, argBase);
+		final boolean spherical = argBase.spherical;
 		final Mode mode;
 		if (arg instanceof XaStereographicPolar) {
-			mode = newModePolar(argBase, (XaStereographicPolar) arg);
+			final XaStereographicPolar xa = (XaStereographicPolar) arg;
+			if (spherical) {
+				mode = new ModeSphericalPolar(argBase, xa);
+			} else {
+				mode = new ModeEllipsoidPolar(argBase, xa);
+			}
 		} else if (arg instanceof XaStereographicEquator) {
-			mode = newModeEquator(argBase, (XaStereographicEquator) arg);
+			final XaStereographicEquator xa = (XaStereographicEquator) arg;
+			if (spherical) {
+				mode = new ModeSphericalEquator(argBase, xa);
+			} else {
+				mode = new ModeEllipsoidEquator(argBase, xa);
+			}
 		} else if (arg instanceof XaStereographicOblique) {
-			mode = newModeOblique(argBase, (XaStereographicOblique) arg);
+			final XaStereographicOblique xa = (XaStereographicOblique) arg;
+			if (spherical) {
+				mode = new ModeSphericalOblique(argBase, xa);
+			} else {
+				mode = new ModeEllipsoidOblique(argBase, xa);
+			}
 		} else {
 			final String m = "Unsupported projection mode " + arg.getClass().getName();
 			throw new IllegalStateException(m);
@@ -155,38 +109,123 @@ class XpStereographic extends AbstractProjection {
 	}
 	private final Mode m_mode;
 
-	private static abstract class Mode {
+	private static interface Mode {
 
-		abstract void projectEllipsoid(final double lam, final double phi, Builder dst)
+		void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException;
+	}
 
-		abstract void projectSpherical(final double lam, final double phi, Builder dst)
-				throws ProjectionException;
+	private static abstract class ModeEllipsoid implements Mode {
 
-		protected Mode(ArgBase argBase) {
+		protected ModeEllipsoid(ArgBase argBase) {
 			assert argBase != null;
 			m_e = argBase.e;
 		}
 		protected final double m_e;
 	}
 
-	private static class ModeEquator extends Mode {
+	private static class ModeEllipsoidEquator extends ModeEllipsoid {
 
 		@Override
-		void projectEllipsoid(final double lam, final double phi, Builder dst)
+		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
+			final double sinlam = Math.sin(lam);
 			final double coslam = Math.cos(lam);
 			final double sinphi = Math.sin(phi);
 			final double X = 2.0 * Math.atan(ssfn(phi, sinphi, m_e)) - MapMath.HALFPI;
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
-			final double A = 2.0 * m_akm1 / (1.0 + cosX * coslam);
+			final double A = 2.0 * m_akm1 / (1.0 + (cosX * coslam));
 			dst.y = A * sinX;
-			dst.x = A * cosX;
+			dst.x = A * cosX * sinlam;
 		}
 
+		public ModeEllipsoidEquator(ArgBase argBase, XaStereographicEquator argEquator) {
+			super(argBase);
+			final double scaleFactor = argEquator.scaleFactor;
+			m_akm1 = 2.0 * scaleFactor;
+		}
+		private final double m_akm1;
+	}
+
+	private static class ModeEllipsoidOblique extends ModeEllipsoid {
+
 		@Override
-		void projectSpherical(final double lam, final double phi, Builder dst)
+		public void project(final double lam, final double phi, Builder dst)
+				throws ProjectionException {
+			final double sinlam = Math.sin(lam);
+			final double coslam = Math.cos(lam);
+			final double sinphi = Math.sin(phi);
+			final double X = 2.0 * Math.atan(ssfn(phi, sinphi, m_e)) - MapMath.HALFPI;
+			final double sinX = Math.sin(X);
+			final double cosX = Math.cos(X);
+			final double A = m_akm1 / (m_cosX * (1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam)));
+			dst.y = A * ((m_cosX * sinX) - (m_sinX * cosX * coslam));
+			dst.x = A * cosX * sinlam;
+		}
+
+		public ModeEllipsoidOblique(ArgBase argBase, XaStereographicOblique xa) {
+			super(argBase);
+			final double e = argBase.e;
+			final double phi0 = xa.projectionLatitudeRads;
+			final double t = Math.sin(phi0);
+			final double ct = Math.cos(phi0);
+			final double X = 2.0 * Math.atan(ssfn(phi0, t, e)) - MapMath.HALFPI;
+			final double te = t * e;
+			m_akm1 = 2.0 * xa.scaleFactor * ct / Math.sqrt(1.0 - te * te);
+			m_sinX = Math.sin(X);
+			m_cosX = Math.cos(X);
+		}
+		private final double m_akm1;
+		private final double m_sinX;
+		private final double m_cosX;
+	}
+
+	private static class ModeEllipsoidPolar extends ModeEllipsoid {
+
+		@Override
+		public void project(double lam, double phi, Builder dst)
+				throws ProjectionException {
+			final double sgn = m_north ? -1.0 : 1.0;
+			final double sinlam = Math.sin(lam);
+			final double coslam = sgn * Math.cos(lam);
+			final double sinphi = sgn * Math.sin(phi);
+			final double sphi = sgn * phi;
+			final double x = m_akm1 * MapMath.tsfn(sphi, sinphi, m_e);
+			dst.x = x * sinlam;
+			dst.y = -x * coslam;
+		}
+
+		public ModeEllipsoidPolar(ArgBase argBase, XaStereographicPolar xa) {
+			super(argBase);
+			final double e = argBase.e;
+			final double scaleFactor = xa.scaleFactor;
+			final double trueScaleLatitude = xa.trueScaleLatitudeAbsRads;
+			if (Math.abs(trueScaleLatitude - MapMath.HALFPI) < EPS10) {
+				m_akm1 = 2.0 * scaleFactor / Math.sqrt(Math.pow(1 + e, 1 + e) * Math.pow(1 - e, 1 - e));
+			} else {
+				final double cost = Math.cos(trueScaleLatitude);
+				final double sint = Math.sin(trueScaleLatitude);
+				final double ts = MapMath.tsfn(trueScaleLatitude, sint, e);
+				final double sinte = sint * e;
+				m_akm1 = cost / ts / Math.sqrt(1.0 - (sinte * sinte));
+			}
+			m_north = xa.north;
+		}
+		private final boolean m_north;
+		private final double m_akm1;
+	}
+
+	private static abstract class ModeSpherical implements Mode {
+
+		protected ModeSpherical() {
+		}
+	}
+
+	private static class ModeSphericalEquator extends ModeSpherical {
+
+		@Override
+		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
 			final double sinlam = Math.sin(lam);
 			final double coslam = Math.cos(lam);
@@ -202,30 +241,16 @@ class XpStereographic extends AbstractProjection {
 			dst.y = ay * sinphi;
 		}
 
-		public ModeEquator(ArgBase argBase, double akm1) {
-			super(argBase);
-			m_akm1 = akm1;
+		public ModeSphericalEquator(ArgBase argBase, XaStereographicEquator xa) {
+			m_akm1 = 2.0 * xa.scaleFactor;
 		}
 		private final double m_akm1;
 	}
 
-	private static class ModeOblique extends Mode {
+	private static class ModeSphericalOblique extends ModeSpherical {
 
 		@Override
-		void projectEllipsoid(final double lam, final double phi, Builder dst)
-				throws ProjectionException {
-			final double coslam = Math.cos(lam);
-			final double sinphi = Math.sin(phi);
-			final double X = 2.0 * Math.atan(ssfn(phi, sinphi, m_e)) - MapMath.HALFPI;
-			final double sinX = Math.sin(X);
-			final double cosX = Math.cos(X);
-			final double A = m_akm1 / (m_cosphi0 * (1.0 + (m_sinphi0 * sinX) + (m_cosphi0 * cosX * coslam)));
-			dst.y = A * ((m_cosphi0 * sinX) - (m_sinphi0 * cosX * coslam));
-			dst.x = A * cosX;
-		}
-
-		@Override
-		void projectSpherical(final double lam, final double phi, Builder dst)
+		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
 			final double sinlam = Math.sin(lam);
 			final double coslam = Math.cos(lam);
@@ -241,33 +266,21 @@ class XpStereographic extends AbstractProjection {
 			dst.y = ay * (m_cosphi0 * sinphi) - (m_sinphi0 * cosphi * coslam);
 		}
 
-		public ModeOblique(ArgBase argBase, double akm1, double sinphi0, double cosphi0) {
-			super(argBase);
-			m_akm1 = akm1;
-			m_sinphi0 = sinphi0;
-			m_cosphi0 = cosphi0;
+		public ModeSphericalOblique(ArgBase argBase, XaStereographicOblique xa) {
+			final double phi0 = xa.projectionLatitudeRads;
+			m_akm1 = 2.0 * xa.scaleFactor;
+			m_sinphi0 = Math.sin(phi0);
+			m_cosphi0 = Math.cos(phi0);
 		}
 		private final double m_akm1;
 		private final double m_sinphi0;
 		private final double m_cosphi0;
 	}
 
-	private static class ModePolar extends Mode {
+	private static class ModeSphericalPolar extends ModeSpherical {
 
 		@Override
-		void projectEllipsoid(double lam, double phi, Builder dst)
-				throws ProjectionException {
-			final double sgn = m_north ? -1.0 : 1.0;
-			final double coslam = sgn * Math.cos(lam);
-			final double sinphi = sgn * Math.sin(phi);
-			final double sphi = sgn * phi;
-			final double x = m_akm1 * MapMath.tsfn(sphi, sinphi, m_e);
-			dst.x = x;
-			dst.y = -x * coslam;
-		}
-
-		@Override
-		void projectSpherical(double lam, double phi, Builder dst)
+		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
 			if (Math.abs(phi - MapMath.HALFPI) < EPS8) {
 				final String m = msgOutside(lam, phi);
@@ -282,10 +295,17 @@ class XpStereographic extends AbstractProjection {
 			dst.y = coslam * y;
 		}
 
-		public ModePolar(ArgBase argBase, boolean north, double akm1) {
-			super(argBase);
-			m_north = north;
-			m_akm1 = akm1;
+		public ModeSphericalPolar(ArgBase argBase, XaStereographicPolar xa) {
+			final double scaleFactor = xa.scaleFactor;
+			final double trueScaleLatitude = xa.trueScaleLatitudeAbsRads;
+			if (Math.abs(trueScaleLatitude - MapMath.HALFPI) < EPS10) {
+				m_akm1 = 2.0 * scaleFactor;
+			} else {
+				final double cost = Math.cos(trueScaleLatitude);
+				final double t = Math.tan(MapMath.QUARTERPI - (0.5 * trueScaleLatitude));
+				m_akm1 = cost / t;
+			}
+			m_north = xa.north;
 		}
 		private final boolean m_north;
 		private final double m_akm1;
