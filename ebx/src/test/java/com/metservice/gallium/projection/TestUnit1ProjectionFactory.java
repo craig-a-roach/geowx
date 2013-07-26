@@ -59,13 +59,11 @@ public class TestUnit1ProjectionFactory {
 			final IGalliumProjection pjE = pcsE.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
 			final GalliumPointD ptE = pjE.transform(6.0, 53.0);
-			System.out.println(ptE);
-			// E=196107.26 N=557059.56
+			Assert.assertEquals("Ellipse Easting(m)", 196107.26, ptE.x, 1e-2);
+			Assert.assertEquals("Ellipse Northing(m)", 557059.56, ptE.y, 1e-2);
 			final GalliumPointD ptS = pjS.transform(6.0, 53.0);
-			final GalliumPointD ptS1 = pjS.transform(10.0, 50.0);
-			System.out.println(ptS1);
-			// 0 E=195976.56 N=556997.63
-			// 1 E=484608.10 N=233568.74
+			Assert.assertEquals("Sphere Easting(m)", 195976.56, ptS.x, 1e-2);
+			Assert.assertEquals("Sphere Northing(m)", 556997.63, ptS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
@@ -76,9 +74,6 @@ public class TestUnit1ProjectionFactory {
 			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
-
-	// proj -V +proj=stere +a=6371000 +e=0 +lat_0=52d9'22.178N +lon_0=5d23'15.5E +x_0=155000 +y_0=463000
-	// +k_0=0.9999079
 
 	@Test
 	public void t100_mercator() {

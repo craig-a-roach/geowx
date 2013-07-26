@@ -156,23 +156,26 @@ class XpStereographic extends AbstractProjection {
 			final double sinlam = Math.sin(lam);
 			final double coslam = Math.cos(lam);
 			final double sinphi = Math.sin(phi);
-			final double X = 2.0 * Math.atan(ssfn(phi, sinphi, m_e)) - MapMath.HALFPI;
+			final double ssfn = ssfn(phi, sinphi, m_e);
+			final double X = 2.0 * Math.atan(ssfn) - MapMath.HALFPI;
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
-			final double A = m_akm1 / (m_cosX * (1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam)));
-			dst.y = A * ((m_cosX * sinX) - (m_sinX * cosX * coslam));
+			final double aa = 1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam);
+			final double A = m_akm1 / (m_cosX * aa);
 			dst.x = A * cosX * sinlam;
+			dst.y = A * ((m_cosX * sinX) - (m_sinX * cosX * coslam));
 		}
 
 		public ModeEllipsoidOblique(ArgBase argBase, XaStereographicOblique xa) {
 			super(argBase);
 			final double e = argBase.e;
 			final double phi0 = xa.projectionLatitudeRads;
-			final double t = Math.sin(phi0);
-			final double ct = Math.cos(phi0);
-			final double X = 2.0 * Math.atan(ssfn(phi0, t, e)) - MapMath.HALFPI;
-			final double te = t * e;
-			m_akm1 = 2.0 * xa.scaleFactor * ct / Math.sqrt(1.0 - te * te);
+			final double sinphi0 = Math.sin(phi0);
+			final double cosphi0 = Math.cos(phi0);
+			final double ssfn = ssfn(phi0, sinphi0, e);
+			final double X = 2.0 * Math.atan(ssfn) - MapMath.HALFPI;
+			final double te = sinphi0 * e;
+			m_akm1 = 2.0 * xa.scaleFactor * cosphi0 / Math.sqrt(1.0 - te * te);
 			m_sinX = Math.sin(X);
 			m_cosX = Math.cos(X);
 		}
@@ -256,25 +259,25 @@ class XpStereographic extends AbstractProjection {
 			final double coslam = Math.cos(lam);
 			final double sinphi = Math.sin(phi);
 			final double cosphi = Math.cos(phi);
-			final double y = 1.0 + (m_sinphi0 * sinphi) + (m_cosphi0 * cosphi * coslam);
-			if (y <= EPS10) {
+			final double aa = 1.0 + (m_sinX * sinphi) + (m_cosX * cosphi * coslam);
+			if (aa <= EPS10) {
 				final String m = msgOutside(lam, phi);
 				throw new ProjectionException(m);
 			}
-			final double ay = m_akm1 / y;
-			dst.x = ay * cosphi * sinlam;
-			dst.y = ay * (m_cosphi0 * sinphi) - (m_sinphi0 * cosphi * coslam);
+			final double A = m_akm1 / aa;
+			dst.x = A * cosphi * sinlam;
+			dst.y = A * ((m_cosX * sinphi) - (m_sinX * cosphi * coslam));
 		}
 
 		public ModeSphericalOblique(ArgBase argBase, XaStereographicOblique xa) {
 			final double phi0 = xa.projectionLatitudeRads;
 			m_akm1 = 2.0 * xa.scaleFactor;
-			m_sinphi0 = Math.sin(phi0);
-			m_cosphi0 = Math.cos(phi0);
+			m_sinX = Math.sin(phi0);
+			m_cosX = Math.cos(phi0);
 		}
 		private final double m_akm1;
-		private final double m_sinphi0;
-		private final double m_cosphi0;
+		private final double m_sinX;
+		private final double m_cosX;
 	}
 
 	private static class ModeSphericalPolar extends ModeSpherical {
