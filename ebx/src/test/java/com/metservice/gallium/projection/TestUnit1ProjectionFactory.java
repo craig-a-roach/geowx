@@ -44,7 +44,38 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t10_stereographic() {
+	public void t010_stereoEquator() {
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Stereographic");
+		final WktStructure[] params = { param("central_meridian", deg('E', 170, 0)), param("scaleFactor", 0.995) };
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo Equator Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo Equator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			final IGalliumProjection pjE = pcsE.newProjection();
+			final IGalliumProjection pjS = pcsS.newProjection();
+			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
+			System.out.println("E " + ptE);
+			// Assert.assertEquals("Ellipse Easting(m)", 381719.37, ptE.x, 1e-2);
+			// Assert.assertEquals("Ellipse Northing(m)", -9444546.80, ptE.y, 1e-2);
+			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
+			System.out.println("S " + ptS);
+			// Assert.assertEquals("Sphere Easting(m)", 195976.56, ptS.x, 1e-2);
+			// Assert.assertEquals("Sphere Northing(m)", 556997.63, ptS.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t020_stereoOblique() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
 		final WktStructure[] params = { param("central_meridian", deg('E', 5, 23, 15.5)),

@@ -132,12 +132,13 @@ class XpStereographic extends AbstractProjection {
 			final double sinlam = Math.sin(lam);
 			final double coslam = Math.cos(lam);
 			final double sinphi = Math.sin(phi);
-			final double X = 2.0 * Math.atan(ssfn(phi, sinphi, m_e)) - MapMath.HALFPI;
+			final double ssfn = ssfn(phi, sinphi, m_e);
+			final double X = 2.0 * Math.atan(ssfn) - MapMath.HALFPI;
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
 			final double A = 2.0 * m_akm1 / (1.0 + (cosX * coslam));
-			dst.y = A * sinX;
 			dst.x = A * cosX * sinlam;
+			dst.y = A * sinX;
 		}
 
 		public ModeEllipsoidEquator(ArgBase argBase, XaStereographicEquator argEquator) {
