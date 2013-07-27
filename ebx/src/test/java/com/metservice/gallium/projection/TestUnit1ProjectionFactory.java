@@ -56,13 +56,11 @@ public class TestUnit1ProjectionFactory {
 			final IGalliumProjection pjE = pcsE.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
 			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
-			System.out.println("E " + ptE);
-			// Assert.assertEquals("Ellipse Easting(m)", 381719.37, ptE.x, 1e-2);
-			// Assert.assertEquals("Ellipse Northing(m)", -9444546.80, ptE.y, 1e-2);
+			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
+			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
 			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
-			System.out.println("S " + ptS);
-			// Assert.assertEquals("Sphere Easting(m)", 195976.56, ptS.x, 1e-2);
-			// Assert.assertEquals("Sphere Northing(m)", 556997.63, ptS.y, 1e-2);
+			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
+			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());

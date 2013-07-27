@@ -136,15 +136,15 @@ class XpStereographic extends AbstractProjection {
 			final double X = 2.0 * Math.atan(ssfn) - MapMath.HALFPI;
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
-			final double A = 2.0 * m_akm1 / (1.0 + (cosX * coslam));
+			final double aa = 1.0 + (cosX * coslam);
+			final double A = m_akm1 / aa;
 			dst.x = A * cosX * sinlam;
 			dst.y = A * sinX;
 		}
 
-		public ModeEllipsoidEquator(ArgBase argBase, XaStereographicEquator argEquator) {
+		public ModeEllipsoidEquator(ArgBase argBase, XaStereographicEquator xa) {
 			super(argBase);
-			final double scaleFactor = argEquator.scaleFactor;
-			m_akm1 = 2.0 * scaleFactor;
+			m_akm1 = 2.0 * xa.scaleFactor;
 		}
 		private final double m_akm1;
 	}
@@ -240,9 +240,9 @@ class XpStereographic extends AbstractProjection {
 				final String m = msgOutside(lam, phi);
 				throw new ProjectionException(m);
 			}
-			final double ay = m_akm1 / y;
-			dst.x = ay * cosphi * sinlam;
-			dst.y = ay * sinphi;
+			final double A = m_akm1 / y;
+			dst.x = A * cosphi * sinlam;
+			dst.y = A * sinphi;
 		}
 
 		public ModeSphericalEquator(ArgBase argBase, XaStereographicEquator xa) {
