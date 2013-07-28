@@ -12,16 +12,16 @@ import com.metservice.gallium.GalliumPointD.Builder;
  */
 class XpStereographic extends AbstractProjection {
 
-	private static String msgOutside(double lam, double phi) {
-		final double lon = MapMath.radToDeg(lam);
-		final double lat = MapMath.radToDeg(phi);
-		return "Lat/Lon " + lat + "," + lon + " deg is outside projection bounds";
-	}
-
 	private static double ssfn(final double phit, final double sinphi, double e) {
 		final double sinphie = sinphi * e;
 		final double sinphier = (1.0 - sinphie) / (1.0 + sinphie);
 		return Math.tan(0.5 * (MapMath.HALFPI + phit)) * Math.pow(sinphier, 0.5 * e);
+	}
+
+	private static double validateDivisor(double v)
+			throws ProjectionException {
+		if (v > EPS8) return v;
+		throw new ProjectionException("Coordinate outside proejection bounds");
 	}
 
 	@Override
@@ -137,6 +137,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
 			final double aa = 1.0 + (cosX * coslam);
+			validateDivisor(aa);
 			final double A = m_akm1 / aa;
 			dst.x = A * cosX * sinlam;
 			dst.y = A * sinX;
@@ -161,8 +162,9 @@ class XpStereographic extends AbstractProjection {
 			final double X = 2.0 * Math.atan(ssfn) - MapMath.HALFPI;
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
-			final double aa = 1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam);
-			final double A = m_akm1 / (m_cosX * aa);
+			final double aa = m_cosX * (1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam));
+			validateDivisor(aa);
+			final double A = m_akm1 / aa;
 			dst.x = A * cosX * sinlam;
 			dst.y = A * ((m_cosX * sinX) - (m_sinX * cosX * coslam));
 		}
@@ -235,12 +237,9 @@ class XpStereographic extends AbstractProjection {
 			final double coslam = Math.cos(lam);
 			final double sinphi = Math.sin(phi);
 			final double cosphi = Math.cos(phi);
-			final double y = 1.0 + (cosphi * coslam);
-			if (y <= EPS10) {
-				final String m = msgOutside(lam, phi);
-				throw new ProjectionException(m);
-			}
-			final double A = m_akm1 / y;
+			final double aa = 1.0 + (cosphi * coslam);
+			validateDivisor(aa);
+			final double A = m_akm1 / aa;
 			dst.x = A * cosphi * sinlam;
 			dst.y = A * sinphi;
 		}
@@ -261,10 +260,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinphi = Math.sin(phi);
 			final double cosphi = Math.cos(phi);
 			final double aa = 1.0 + (m_sinX * sinphi) + (m_cosX * cosphi * coslam);
-			if (aa <= EPS10) {
-				final String m = msgOutside(lam, phi);
-				throw new ProjectionException(m);
-			}
+			validateDivisor(aa);
 			final double A = m_akm1 / aa;
 			dst.x = A * cosphi * sinlam;
 			dst.y = A * ((m_cosX * sinphi) - (m_sinX * cosphi * coslam));
@@ -286,10 +282,7 @@ class XpStereographic extends AbstractProjection {
 		@Override
 		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
-			if (Math.abs(phi - MapMath.HALFPI) < EPS8) {
-				final String m = msgOutside(lam, phi);
-				throw new ProjectionException(m);
-			}
+			if (Math.abs(phi - MapMath.HALFPI) < EPS8) throw new ProjectionException("Outside projection bounds");
 			final double sgn = m_north ? -1.0 : 1.0;
 			final double coslam = sgn * Math.cos(lam);
 			final double sinlam = Math.sin(lam);

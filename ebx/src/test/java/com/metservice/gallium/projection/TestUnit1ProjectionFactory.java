@@ -44,7 +44,7 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t010_stereoEquator() {
+	public void t010_stereoEquator_Fail() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Stereographic");
 		final WktStructure[] params = { param("central_meridian", deg('E', 170, 0)), param("scaleFactor", 0.995) };
@@ -53,22 +53,27 @@ public class TestUnit1ProjectionFactory {
 		try {
 			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
 			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
-			final IGalliumProjection pjE = pcsE.newProjection();
-			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
-			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
-			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
-			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
-			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
-			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
+			try {
+				final IGalliumProjection pjE = pcsE.newProjection();
+				pjE.transform(-10.0, 0.0);
+				Assert.assertTrue("Expecting failure: Outside bounds", false);
+			} catch (final GalliumProjectionException ex) {
+				System.out.println(specE.format());
+				System.out.println("Good exception: " + ex.getMessage());
+				Assert.assertTrue("Outside bounds", true);
+			}
+			try {
+				final IGalliumProjection pjS = pcsS.newProjection();
+				pjS.transform(-10.0, 0.0);
+			} catch (final GalliumProjectionException ex) {
+				System.out.println(specS.format());
+				System.out.println("Good exception: " + ex.getMessage());
+				Assert.assertTrue("Outside bounds", true);
+			}
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Syntax Exception: " + ex.getMessage());
-		} catch (final GalliumProjectionException ex) {
-			System.out.println(specE.format());
-			System.err.println(ex.getMessage());
-			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
 
@@ -104,6 +109,35 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
+	public void t030_stereoEquator() {
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Stereographic");
+		final WktStructure[] params = { param("central_meridian", deg('E', 170, 0)), param("scaleFactor", 0.995) };
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo Equator Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo Equator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			final IGalliumProjection pjE = pcsE.newProjection();
+			final IGalliumProjection pjS = pcsS.newProjection();
+			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
+			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
+			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
+			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
+			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
+			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
 	public void t100_mercator() {
 		final WktStructure gcs = geogcs("Krassowski", 6378245.0, 298.3);
 		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
@@ -119,7 +153,7 @@ public class TestUnit1ProjectionFactory {
 			final IGalliumProjection pjM = pcsM.newProjection();
 			final IGalliumProjection pjK = pcsK.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptM = pjM.transform(53.0, -53.0);
+			final GalliumPointD ptM = pjM.transform(53.0, -53);
 			final GalliumPointD ptK = pjK.transform(53.0, -53.0);
 			final GalliumPointD ptS = pjS.transform(53.0, -53.0);
 			Assert.assertEquals("Easting(m)", 165704.29, ptM.x, 1e-2);
