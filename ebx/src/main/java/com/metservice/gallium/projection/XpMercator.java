@@ -12,25 +12,21 @@ import com.metservice.gallium.GalliumPointD.Builder;
  */
 class XpMercator extends AbstractProjection {
 
-	private static final double clippingMaxLatDeg = 85.0;
-	private static final double clippingMaxPhi = MapMath.degToRad(clippingMaxLatDeg);
-	private static final double clippingMinLatDeg = -85.0;
-	private static final double clippingMinPhi = MapMath.degToRad(clippingMinLatDeg);
+	private static final double MaxLatDeg = 85.0;
+	private static final double MaxPhi = MapMath.degToRad(MaxLatDeg);
+	private static final double MinLatDeg = -85.0;
+	private static final double MinPhi = MapMath.degToRad(MinLatDeg);
+
+	private static double validateLatitude(double phi)
+			throws ProjectionException {
+		if (phi >= MinPhi && phi <= MaxPhi) return phi;
+		throw ProjectionException.latitudeOutsideBounds();
+	}
 
 	@Override
 	protected boolean inside(double lam, double phi)
 			throws ProjectionException {
-		return clippingMinPhi <= phi && phi <= clippingMaxPhi;
-	}
-
-	@Override
-	public double clippingMaxLatitudeDegrees() {
-		return clippingMaxLatDeg;
-	}
-
-	@Override
-	public double clippingMinLatitudeDegrees() {
-		return clippingMinLatDeg;
+		return MinPhi <= phi && phi <= MaxPhi;
 	}
 
 	@Override
@@ -54,7 +50,9 @@ class XpMercator extends AbstractProjection {
 	}
 
 	@Override
-	public void project(final double lam, final double phi, Builder dst) {
+	public void project(final double lam, final double phi, Builder dst)
+			throws ProjectionException {
+		validateLatitude(phi);
 		final double k0 = m_arg.scaleFactor;
 		if (argBase.spherical) {
 			dst.x = k0 * lam;

@@ -317,7 +317,7 @@ class MapMath {
 
 	public static double normalizeAngle(double angle)
 			throws ProjectionException {
-		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw new ProjectionException("Infinite angle");
+		if (Double.isInfinite(angle) || Double.isNaN(angle)) throw ProjectionException.infiniteAngle();
 		while (angle > TWOPI) {
 			angle -= TWOPI;
 		}
@@ -329,7 +329,7 @@ class MapMath {
 
 	public static double normalizeLatitude(final double rads)
 			throws ProjectionException {
-		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw new ProjectionException("Infinite latitude");
+		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw ProjectionException.infiniteLatitude();
 		double na = rads;
 		while (na > HALFPI) {
 			na -= PI;
@@ -342,7 +342,7 @@ class MapMath {
 
 	public static double normalizeLongitude(final double rads)
 			throws ProjectionException {
-		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw new ProjectionException("Infinite longitude");
+		if (Double.isInfinite(rads) || Double.isNaN(rads)) throw ProjectionException.infiniteAngle();
 		double na = snapLongitude(rads);
 		while (na > PI) {
 			na -= TWOPI;
@@ -369,10 +369,7 @@ class MapMath {
 			if (Math.abs(dphi) <= EPS10) {
 				break;
 			}
-			if (i == MAX_ITER_PHI2) {
-				final String m = "Could not converge to " + phi + " ...currently " + phicon + " after " + i + " iterations";
-				throw new ProjectionException(m);
-			}
+			if (i == MAX_ITER_PHI2) throw ProjectionException.noConverge(i, dphi);
 			phi = phicon;
 		}
 		return phi;
@@ -440,5 +437,17 @@ class MapMath {
 	public static double tsfn(double phi_in, double sinphi_in, double e_in) {
 		final double sinphi = sinphi_in * e_in;
 		return (Math.tan(0.5 * (HALFPI - phi_in)) / Math.pow((1.0 - sinphi) / (1.0 + sinphi), 0.5 * e_in));
+	}
+
+	public static double validDivisorEPS10(double v)
+			throws ProjectionException {
+		if (Math.abs(v) > EPS10) return v;
+		throw ProjectionException.coordinateOutsideBounds();
+	}
+
+	public static double validDivisorEPS8(double v)
+			throws ProjectionException {
+		if (Math.abs(v) > EPS8) return v;
+		throw ProjectionException.coordinateOutsideBounds();
 	}
 }

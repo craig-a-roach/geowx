@@ -21,15 +21,20 @@ class XpTransverseMercator extends AbstractProjection {
 	private final static double FC7 = 0.02380952380952380952;
 	private final static double FC8 = 0.01785714285714285714;
 
-	private static final double clippingMaxLatDeg = 90.0;
-	private static final double clippingMinLatDeg = -90.0;
+	private static final double MaxLonDeg = 89.9;
+	private static final double MaxLam = MapMath.degToRad(MaxLonDeg);
+	private static final double MinLonDeg = -89.9;
+	private static final double MinLam = MapMath.degToRad(MinLonDeg);
 
-	private static String pair(double lam, double phi) {
-		return "(lambda=" + lam + ", phi=" + phi + " rads)";
+	private static double validateLongitude(double lam)
+			throws ProjectionException {
+		if (MinLam <= lam && lam <= MaxLam) return lam;
+		throw ProjectionException.longitudeOutsideBounds();
 	}
 
 	private void projectEllipsoid(double lam, double phi, Builder dst)
 			throws ProjectionException {
+		validateLongitude(lam);
 		final double k = m_arg.scaleFactor;
 		final double sinphi = Math.sin(phi);
 		final double cosphi = Math.cos(phi);
@@ -93,36 +98,28 @@ class XpTransverseMercator extends AbstractProjection {
 
 	private void projectSpherical(double lam, double phi, Builder dst)
 			throws ProjectionException {
+		validateLongitude(lam);
 		final double cosphi = Math.cos(phi);
-		double b = cosphi * Math.sin(lam);
-		if (Math.abs(Math.abs(b) - 1.0) <= EPS10) {
-			final String m = "Invalid coordinates " + pair(lam, phi);
-			throw new ProjectionException(m);
-		}
-		final double dx = m_ml0 * m_arg.scaleFactor * Math.log((1.0 + b) / (1.0 - b));
-		double dy = cosphi * Math.cos(lam) / Math.sqrt(1.0 - b * b);
-		b = Math.abs(dy);
-		if (b >= 1.0) {
-			if ((b - 1.0) > EPS10) {
-				final String m = "Invalid coordinates " + pair(lam, phi);
-				throw new ProjectionException(m);
-			}
-			dy = 0.0;
+		final double b = cosphi * Math.sin(lam);
+		MapMath.validDivisorEPS10(Math.abs(b) - 1.0);
+		final double c = cosphi * Math.cos(lam) / Math.sqrt(1.0 - b * b);
+		final double ac = Math.abs(c);
+		double d;
+		if (ac >= 1.0) {
+			MapMath.validDivisorEPS10(ac - 1.0);
+			d = 0.0;
 		} else {
-			dy = MapMath.acos(dy);
+			d = MapMath.acos(c);
 		}
-		if (phi < 0.0) {
-			dy = -dy;
-		}
-		dy = m_esp * (dy - m_arg.projectionLatitudeRads);
-		dst.x = dx;
-		dst.y = dy;
+		final double sy = phi < 0.0 ? -d : d;
+		dst.x = m_ml0 * m_arg.scaleFactor * Math.log((1.0 + b) / (1.0 - b));
+		dst.y = m_esp * (sy - m_arg.projectionLatitudeRads);
 	}
 
 	@Override
 	protected boolean inside(double lam, double phi)
 			throws ProjectionException {
-		return true;
+		return MinLam <= lam && lam <= MaxLam;
 	}
 
 	@Override
@@ -143,16 +140,6 @@ class XpTransverseMercator extends AbstractProjection {
 		} else {
 			projectInverseEllipsoid(x, y, dst);
 		}
-	}
-
-	@Override
-	public double clippingMaxLatitudeDegrees() {
-		return clippingMaxLatDeg;
-	}
-
-	@Override
-	public double clippingMinLatitudeDegrees() {
-		return clippingMinLatDeg;
 	}
 
 	@Override

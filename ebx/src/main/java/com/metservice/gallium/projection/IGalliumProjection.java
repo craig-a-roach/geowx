@@ -12,10 +12,6 @@ import com.metservice.gallium.GalliumPointD;
  */
 public interface IGalliumProjection {
 
-	public double clippingMaxLatitudeDegrees();
-
-	public double clippingMinLatitudeDegrees();
-
 	public boolean hasInverse();
 
 	public GalliumPointD inverseDegrees(double xMetres, double yMetres)

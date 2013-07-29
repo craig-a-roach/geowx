@@ -185,6 +185,27 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
+	public void t110_mercator_Fail() {
+		final WktStructure p = new WktStructure("PROJECTION", "Mercator");
+		final WktStructure[] params = { param("central_meridian", 51.0), param("standard_parallel_1", 42.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "Mercator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			pj.transform(0.0, -87.0);
+			Assert.assertTrue("Expecting failure: Bounds", false);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.out.println("Good exception: " + ex.getMessage());
+			Assert.assertTrue("Bounds", true);
+		}
+	}
+
+	@Test
 	public void t210_lambertConformalConical2SP_Clarke() {
 		final WktStructure gcs = geogcs("Clarke_1866", 6378206.4, 294.9787);
 		final WktStructure p = new WktStructure("PROJECTION", "EPSG:9802");

@@ -12,23 +12,10 @@ import com.metservice.gallium.GalliumPointD.Builder;
  */
 class XpLambertConformalConic extends AbstractProjection {
 
-	private static final double clippingMaxLatDeg = 90.0;
-	private static final double clippingMinLatDeg = -90.0;
-
 	@Override
 	protected boolean inside(double lam, double phi)
 			throws ProjectionException {
 		return true;
-	}
-
-	@Override
-	public double clippingMaxLatitudeDegrees() {
-		return clippingMaxLatDeg;
-	}
-
-	@Override
-	public double clippingMinLatitudeDegrees() {
-		return clippingMinLatDeg;
 	}
 
 	@Override
