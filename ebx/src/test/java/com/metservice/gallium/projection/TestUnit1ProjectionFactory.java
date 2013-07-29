@@ -44,40 +44,6 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t010_stereoEquator_Fail() {
-		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
-		final WktStructure p = new WktStructure("PROJECTION", "Stereographic");
-		final WktStructure[] params = { param("central_meridian", deg('E', 170, 0)), param("scaleFactor", 0.995) };
-		final WktStructure specE = new WktStructure("PROJCS", "Stereo Equator Ref", gcsE, p, params, Metres);
-		final WktStructure specS = new WktStructure("PROJCS", "Stereo Equator Ref", GCS_Sphere, p, params, Metres);
-		try {
-			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
-			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
-			try {
-				final IGalliumProjection pjE = pcsE.newProjection();
-				pjE.transform(-10.0, 0.0);
-				Assert.assertTrue("Expecting failure: Outside bounds", false);
-			} catch (final GalliumProjectionException ex) {
-				System.out.println(specE.format());
-				System.out.println("Good exception: " + ex.getMessage());
-				Assert.assertTrue("Outside bounds", true);
-			}
-			try {
-				final IGalliumProjection pjS = pcsS.newProjection();
-				pjS.transform(-10.0, 0.0);
-			} catch (final GalliumProjectionException ex) {
-				System.out.println(specS.format());
-				System.out.println("Good exception: " + ex.getMessage());
-				Assert.assertTrue("Outside bounds", true);
-			}
-		} catch (final GalliumSyntaxException ex) {
-			System.out.println(specE.format());
-			System.err.println(ex.getMessage());
-			Assert.fail("Syntax Exception: " + ex.getMessage());
-		}
-	}
-
-	@Test
 	public void t020_stereoOblique() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
@@ -134,6 +100,40 @@ public class TestUnit1ProjectionFactory {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t040_stereoEquator_Fail() {
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Stereographic");
+		final WktStructure[] params = { param("central_meridian", deg('E', 170, 0)), param("scaleFactor", 0.995) };
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo Equator Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo Equator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			try {
+				final IGalliumProjection pjE = pcsE.newProjection();
+				pjE.transform(-10.0, 0.0);
+				Assert.assertTrue("Expecting failure: Outside bounds", false);
+			} catch (final GalliumProjectionException ex) {
+				System.out.println(specE.format());
+				System.out.println("Good exception: " + ex.getMessage());
+				Assert.assertTrue("Outside bounds", true);
+			}
+			try {
+				final IGalliumProjection pjS = pcsS.newProjection();
+				pjS.transform(-10.0, 0.0);
+			} catch (final GalliumProjectionException ex) {
+				System.out.println(specS.format());
+				System.out.println("Good exception: " + ex.getMessage());
+				Assert.assertTrue("Outside bounds", true);
+			}
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
 		}
 	}
 
@@ -382,6 +382,86 @@ public class TestUnit1ProjectionFactory {
 			System.out.println(spec);
 			System.err.println(ex.getMessage());
 			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t410_transverseMercator_SphereEquator() {
+		final WktStructure p = new WktStructure("PROJECTION", "Transverse Mercator");
+		final WktStructure[] params = { param("latitudeOfOrigin", deg('N', 0, 0)), param("centralMeridian", deg('W', 2, 0)),
+				param("scaleFactor", 0.999601272) };
+		final WktStructure spec = new WktStructure("PROJCS", "Transverse Mercator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD ptN = pj.transform(0.5, 50.5);
+			final GalliumPointD ptS = pj.transform(0.5, -50.5);
+			Assert.assertEquals("N Easting(m)", 176740.46, ptN.x, 1e-2);
+			Assert.assertEquals("N Northing(m)", 5616080.95, ptN.y, 1e-2);
+			Assert.assertEquals("S Easting(m)", 176740.46, ptS.x, 1e-2);
+			Assert.assertEquals("S Northing(m)", -5616080.95, ptS.y, 1e-2);
+			final GalliumPointD piN = pj.inverseDegrees(ptN.x, ptN.y);
+			final GalliumPointD piS = pj.inverseDegrees(ptS.x, ptS.y);
+			Assert.assertEquals("Lon", 0.5, piN.x, 1e-2);
+			Assert.assertEquals("Lat", 50.5, piN.y, 1e-2);
+			Assert.assertEquals("Lon", 0.5, piS.x, 1e-2);
+			Assert.assertEquals("Lat", -50.5, piS.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t420_transverseMercator_SphereGB() {
+		final WktStructure p = new WktStructure("PROJECTION", "Transverse Mercator");
+		final WktStructure[] params = { param("latitudeOfOrigin", deg('N', 49, 0)), param("centralMeridian", deg('W', 2, 0)),
+				param("scaleFactor", 0.999601272), param("falseEasting", 400000), param("falseNorthing", -100000) };
+		final WktStructure spec = new WktStructure("PROJCS", "Transverse Mercator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final GalliumPointD pt = pj.transform(0.5, 50.5);
+			Assert.assertEquals("Easting(m)", 576740.46, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", 69702.03, pt.y, 1e-2);
+			final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+			Assert.assertEquals("Lon", 0.5, pi.x, 1e-2);
+			Assert.assertEquals("Lat", 50.5, pi.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t430_transverseMercator_Fail() {
+		final WktStructure p = new WktStructure("PROJECTION", "Transverse Mercator");
+		final WktStructure[] params = { param("latitudeOfOrigin", deg('N', 49, 0)), param("centralMeridian", deg('W', 2, 0)),
+				param("scaleFactor", 0.999601272), param("falseEasting", 400000), param("falseNorthing", -100000) };
+		final WktStructure spec = new WktStructure("PROJCS", "Transverse Mercator Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			pj.transform(88, 50.5);
+			Assert.assertTrue("Expecting failure: Bounds", false);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.out.println("Good exception: " + ex.getMessage());
+			Assert.assertTrue("Bounds", true);
 		}
 	}
 }

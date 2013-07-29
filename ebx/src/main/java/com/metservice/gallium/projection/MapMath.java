@@ -70,7 +70,7 @@ class MapMath {
 	}
 
 	public static double acos(double v) {
-		if (Math.abs(v) > 1.) return v < 0.0 ? PI : 0.0;
+		if (Math.abs(v) > 1.0) return v < 0.0 ? PI : 0.0;
 		return Math.acos(v);
 	}
 
