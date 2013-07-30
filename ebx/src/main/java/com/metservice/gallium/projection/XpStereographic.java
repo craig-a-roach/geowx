@@ -174,29 +174,28 @@ class XpStereographic extends AbstractProjection {
 		@Override
 		public void project(double lam, double phi, Builder dst)
 				throws ProjectionException {
-			final double sgn = m_north ? -1.0 : 1.0;
 			final double sinlam = Math.sin(lam);
-			final double coslam = sgn * Math.cos(lam);
-			final double sinphi = sgn * Math.sin(phi);
-			final double sphi = sgn * phi;
-			final double x = m_akm1 * MapMath.tsfn(sphi, sinphi, m_e);
-			dst.x = x * sinlam;
-			dst.y = -x * coslam;
+			final double coslam = m_north ? Math.cos(lam) : -Math.cos(lam);
+			final double sinphi = m_north ? Math.sin(phi) : -Math.sin(phi);
+			final double sphi = m_north ? phi : -phi;
+			final double t = m_akm1 * MapMath.tsfn(sphi, sinphi, m_e);
+			dst.x = t * sinlam;
+			dst.y = -t * coslam;
 		}
 
 		public ModeEllipsoidPolar(ArgBase argBase, XaStereographicPolar xa) {
 			super(argBase);
 			final double e = argBase.e;
 			final double scaleFactor = xa.scaleFactor;
-			final double trueScaleLatitude = xa.trueScaleLatitudeAbsRads;
-			if (Math.abs(trueScaleLatitude - MapMath.HALFPI) < EPS10) {
+			final double phits = Math.abs(xa.trueScaleLatitudeAbsRads);
+			if (Math.abs(phits - MapMath.HALFPI) < EPS10) {
 				m_akm1 = 2.0 * scaleFactor / Math.sqrt(Math.pow(1 + e, 1 + e) * Math.pow(1 - e, 1 - e));
 			} else {
-				final double cost = Math.cos(trueScaleLatitude);
-				final double sint = Math.sin(trueScaleLatitude);
-				final double ts = MapMath.tsfn(trueScaleLatitude, sint, e);
-				final double sinte = sint * e;
-				m_akm1 = cost / ts / Math.sqrt(1.0 - (sinte * sinte));
+				final double costs = Math.cos(phits);
+				final double sints = Math.sin(phits);
+				final double tsfn = MapMath.tsfn(phits, sints, e);
+				final double sinte = sints * e;
+				m_akm1 = costs / tsfn / Math.sqrt(1.0 - (sinte * sinte));
 			}
 			m_north = xa.north;
 		}
@@ -264,25 +263,23 @@ class XpStereographic extends AbstractProjection {
 		@Override
 		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
-			if (Math.abs(phi - MapMath.HALFPI) < EPS8) throw ProjectionException.coordinateOutsideBounds();
-			final double sgn = m_north ? -1.0 : 1.0;
-			final double coslam = sgn * Math.cos(lam);
 			final double sinlam = Math.sin(lam);
-			final double sphi = sgn * phi;
-			final double y = m_akm1 * Math.tan(MapMath.QUARTERPI + (0.5 * sphi));
-			dst.x = sinlam * y;
-			dst.y = coslam * y;
+			final double coslam = m_north ? Math.cos(lam) : -Math.cos(lam);
+			final double sphi = m_north ? phi : -phi;
+			final double t = m_akm1 * Math.tan(MapMath.QUARTERPI + (0.5 * -sphi));
+			dst.x = t * sinlam;
+			dst.y = -t * coslam;
 		}
 
 		public ModeSphericalPolar(ArgBase argBase, XaStereographicPolar xa) {
 			final double scaleFactor = xa.scaleFactor;
-			final double trueScaleLatitude = xa.trueScaleLatitudeAbsRads;
-			if (Math.abs(trueScaleLatitude - MapMath.HALFPI) < EPS10) {
+			final double phits = Math.abs(xa.trueScaleLatitudeAbsRads);
+			if (Math.abs(phits - MapMath.HALFPI) < EPS10) {
 				m_akm1 = 2.0 * scaleFactor;
 			} else {
-				final double cost = Math.cos(trueScaleLatitude);
-				final double t = Math.tan(MapMath.QUARTERPI - (0.5 * trueScaleLatitude));
-				m_akm1 = cost / t;
+				final double costs = Math.cos(phits);
+				final double tn = Math.tan(MapMath.QUARTERPI - (0.5 * phits));
+				m_akm1 = costs / tn;
 			}
 			m_north = xa.north;
 		}

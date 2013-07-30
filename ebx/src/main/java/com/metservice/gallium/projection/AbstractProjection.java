@@ -42,7 +42,7 @@ abstract class AbstractProjection implements IGalliumProjection {
 			throws ProjectionException {
 		if (dst == null) throw new IllegalArgumentException("object is null");
 		final double xRads = longitudeRelative(srcXdeg * DTR);
-		final double yRads = srcYdeg * DTR;
+		final double yRads = MapMath.normalizeLatitude(srcYdeg * DTR);
 		project(xRads, yRads, dst);
 		dst.x = (argBase.totalScale * dst.x) + argBase.totalFalseEasting;
 		dst.y = (argBase.totalScale * dst.y) + argBase.totalFalseNorthing;

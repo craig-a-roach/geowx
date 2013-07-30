@@ -44,36 +44,6 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void t030_stereoPolar() {
-		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
-		final WktStructure p = new WktStructure("PROJECTION", "Stereographic North Pole");
-		final WktStructure[] params = { param("central_meridian", deg('W', 96, 0)),
-				param("standard_parallel_1", deg('N', 71, 0)) };
-		final WktStructure specE = new WktStructure("PROJCS", "Stereo NPolar Ref", gcsE, p, params, Metres);
-		final WktStructure specS = new WktStructure("PROJCS", "Stereo NPolar Ref", GCS_Sphere, p, params, Metres);
-		try {
-			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
-			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
-			final IGalliumProjection pjE = pcsE.newProjection();
-			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
-			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
-			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
-			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
-			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
-			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
-		} catch (final GalliumSyntaxException ex) {
-			System.out.println(specE.format());
-			System.err.println(ex.getMessage());
-			Assert.fail("Syntax Exception: " + ex.getMessage());
-		} catch (final GalliumProjectionException ex) {
-			System.out.println(specE.format());
-			System.err.println(ex.getMessage());
-			Assert.fail("Projection Exception: " + ex.getMessage());
-		}
-	}
-
-	@Test
 	public void t120_stereoOblique() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
@@ -164,6 +134,70 @@ public class TestUnit1ProjectionFactory {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Syntax Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t150_stereoPolarNorth() {
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Stereographic North Pole");
+		final WktStructure[] params = { param("central_meridian", deg('W', 96, 0)),
+				param("standard_parallel_1", deg('N', 71, 0)) };
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo NPolar Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo NPolar Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			final IGalliumProjection pjE = pcsE.newProjection();
+			final IGalliumProjection pjS = pcsS.newProjection();
+			final double lon = deg('W', 121, 20, 22.38);
+			final double lat = deg('N', 39, 6, 4.508);
+			final GalliumPointD ptE = pjE.transform(lon, lat);
+			Assert.assertEquals("Ellipse Easting(m)", -2529269.89, ptE.x, 1e-2);
+			Assert.assertEquals("Ellipse Northing(m)", -5341166.25, ptE.y, 1e-2);
+			final GalliumPointD ptS = pjS.transform(lon, lat);
+			Assert.assertEquals("Sphere Easting(m)", -2524504.51, ptS.x, 1e-2);
+			Assert.assertEquals("Sphere Northing(m)", -5331103.00, ptS.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t160_stereoPolarSouth() {
+		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
+		final WktStructure p = new WktStructure("PROJECTION", "Stereographic South Pole");
+		final WktStructure[] params = { param("central_meridian", deg('E', 96, 0)),
+				param("standard_parallel_1", deg('S', 71, 0)) };
+		final WktStructure specE = new WktStructure("PROJCS", "Stereo SPolar Ref", gcsE, p, params, Metres);
+		final WktStructure specS = new WktStructure("PROJCS", "Stereo SPolar Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcsE = WktCoordinateSystemFactory.newCoordinateSystemProjected(specE.format());
+			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
+			final IGalliumProjection pjE = pcsE.newProjection();
+			final IGalliumProjection pjS = pcsS.newProjection();
+			final double lon = deg('E', 121, 20, 22.38);
+			final double lat = deg('S', 39, 6, 4.508);
+			final GalliumPointD ptE = pjE.transform(lon, lat);
+			Assert.assertEquals("Ellipse Easting(m)", 2529269.89, ptE.x, 1e-2);
+			Assert.assertEquals("Ellipse Northing(m)", 5341166.25, ptE.y, 1e-2);
+			final GalliumPointD ptS = pjS.transform(lon, lat);
+			Assert.assertEquals("Sphere Easting(m)", 2524504.51, ptS.x, 1e-2);
+			Assert.assertEquals("Sphere Northing(m)", 5331103.00, ptS.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(specE.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
 

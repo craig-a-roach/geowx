@@ -434,9 +434,9 @@ class MapMath {
 		return v < 0.0 ? Math.ceil(v) : Math.floor(v);
 	}
 
-	public static double tsfn(double phi_in, double sinphi_in, double e_in) {
+	public static double tsfn(final double phi_in, final double sinphi_in, final double e_in) {
 		final double sinphi = sinphi_in * e_in;
-		return (Math.tan(0.5 * (HALFPI - phi_in)) / Math.pow((1.0 - sinphi) / (1.0 + sinphi), 0.5 * e_in));
+		return Math.tan(0.5 * (HALFPI - phi_in)) / Math.pow((1.0 - sinphi) / (1.0 + sinphi), 0.5 * e_in);
 	}
 
 	public static double validDivisorEPS10(double v)
