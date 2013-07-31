@@ -209,7 +209,7 @@ class MapMath {
 		return 2.0 * Math.asin(r);
 	}
 
-	public static double hypot(double xin, final double yin) {
+	public static double hypot(final double xin, final double yin) {
 		double x = xin;
 		double y = yin;
 		if (x < 0.0) {
