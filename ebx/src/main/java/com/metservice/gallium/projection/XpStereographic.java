@@ -34,8 +34,7 @@ class XpStereographic extends AbstractProjection {
 	@Override
 	protected void projectInverse(double x, double y, Builder dst)
 			throws ProjectionException {
-		// TODO Auto-generated method stub
-
+		m_mode.projectInverse(x, y, dst);
 	}
 
 	@Override
@@ -95,6 +94,8 @@ class XpStereographic extends AbstractProjection {
 
 		void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException;
+
+		void projectInverse(double x, double y, Builder dst);
 	}
 
 	private static abstract class ModeEllipsoid implements Mode {
@@ -181,6 +182,12 @@ class XpStereographic extends AbstractProjection {
 			final double t = m_akm1 * MapMath.tsfn(sphi, sinphi, m_e);
 			dst.x = t * sinlam;
 			dst.y = -t * coslam;
+		}
+
+		@Override
+		public void projectInverse(double x, double y, Builder dst) {
+			final double rho = MapMath.hypot(x, y);
+
 		}
 
 		public ModeEllipsoidPolar(ArgBase argBase, XaStereographicPolar xa) {
