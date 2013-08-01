@@ -269,8 +269,6 @@ class XpStereographic extends AbstractProjection {
 
 		@Override
 		public void projectInverse(double x, double y, Builder dst) {
-			// TODO Auto-generated method stub
-
 		}
 
 		public ModeSphericalEquator(ArgBase argBase, XaStereographicEquator xa) {
@@ -327,8 +325,16 @@ class XpStereographic extends AbstractProjection {
 
 		@Override
 		public void projectInverse(double x, double y, Builder dst) {
-			// TODO Auto-generated method stub
-
+			 final double rh = MapMath.hypot(x, y);
+			 final double c = 2.0 * Math.atan(rh / m_akm1);
+			final double sinc = Math.sin(c);
+			final double cosc = Math.cos(c);
+			dst.x = (x == 0.0 && y == 0.0) ? 0.0 : Math.atan2(x, m_north ? -y : y);
+if   (Math.abs(rh) <= EPS10) {
+	dst.y = P->phi0;
+} else {
+	dst.y = MapMath.asin(m_north ?  cosc : -cosc);
+}
 		}
 
 		public ModeSphericalPolar(ArgBase argBase, XaStereographicPolar xa) {
