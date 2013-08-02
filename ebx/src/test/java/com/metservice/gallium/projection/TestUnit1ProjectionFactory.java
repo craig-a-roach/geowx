@@ -57,12 +57,17 @@ public class TestUnit1ProjectionFactory {
 			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
 			final IGalliumProjection pjE = pcsE.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptE = pjE.transform(6.0, 53.0);
+			final double lon = 6.0;
+			final double lat = 53.0;
+			final GalliumPointD ptE = pjE.transform(lon, lat);
 			Assert.assertEquals("Ellipse Easting(m)", 196107.26, ptE.x, 1e-2);
 			Assert.assertEquals("Ellipse Northing(m)", 557059.56, ptE.y, 1e-2);
-			final GalliumPointD ptS = pjS.transform(6.0, 53.0);
+			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", 195976.56, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", 556997.63, ptS.y, 1e-2);
+			final GalliumPointD piS = pjS.inverseDegrees(ptS.x, ptS.y);
+			Assert.assertEquals("Lon", lon, piS.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
@@ -86,12 +91,17 @@ public class TestUnit1ProjectionFactory {
 			final ProjectedCoordinateSystem pcsS = WktCoordinateSystemFactory.newCoordinateSystemProjected(specS.format());
 			final IGalliumProjection pjE = pcsE.newProjection();
 			final IGalliumProjection pjS = pcsS.newProjection();
-			final GalliumPointD ptE = pjE.transform(172.0, -41.0);
+			final double lon = 172.0;
+			final double lat = -41.0;
+			final GalliumPointD ptE = pjE.transform(lon, lat);
 			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
 			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
-			final GalliumPointD ptS = pjS.transform(172.0, -41.0);
+			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
+			final GalliumPointD piS = pjS.inverseDegrees(ptS.x, ptS.y);
+			Assert.assertEquals("Lon", lon, piS.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
@@ -161,6 +171,9 @@ public class TestUnit1ProjectionFactory {
 			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", -2524504.51, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", -5331103.00, ptS.y, 1e-2);
+			final GalliumPointD piS = pjS.inverseDegrees(ptS.x, ptS.y);
+			Assert.assertEquals("Lon", lon, piS.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
@@ -196,6 +209,9 @@ public class TestUnit1ProjectionFactory {
 			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", 2524504.51, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", 5331103.00, ptS.y, 1e-2);
+			final GalliumPointD piS = pjS.inverseDegrees(ptS.x, ptS.y);
+			Assert.assertEquals("Lon", lon, piS.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piS.y, 1e-2);
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specE.format());
 			System.err.println(ex.getMessage());
