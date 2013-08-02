@@ -24,12 +24,6 @@ class XpMercator extends AbstractProjection {
 	}
 
 	@Override
-	protected boolean inside(double lam, double phi)
-			throws ProjectionException {
-		return MinPhi <= phi && phi <= MaxPhi;
-	}
-
-	@Override
 	public boolean hasInverse() {
 		return true;
 	}

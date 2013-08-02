@@ -22,13 +22,6 @@ class XpStereographic extends AbstractProjection {
 	}
 
 	@Override
-	protected boolean inside(double lam, double phi)
-			throws ProjectionException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	protected void project(final double lam, final double phi, Builder dst)
 			throws ProjectionException {
 		m_mode.project(lam, phi, dst);
@@ -104,22 +97,23 @@ class XpStereographic extends AbstractProjection {
 
 	private static abstract class ModeEllipsoid implements Mode {
 
-		public final void solveInverse(double x, double y, Builder dst, double rho, double tp, double phi, double halfe,
-				double halfpi, boolean posphi)
+		protected final void solveInverse(final double x, final double y, Builder dst, final double rho, final double tp,
+				final double phi, final double halfe, double halfpi, boolean posphi)
 				throws ProjectionException {
+			double phiEx = phi;
 			double delta = Double.NaN;
 			int iter = 0;
 			while (iter < NITER) {
-				final double sinphi = m_e * Math.sin(phi);
+				final double sinphi = m_e * Math.sin(phiEx);
 				final double rsinphi = (1.0 + sinphi) / (1.0 - sinphi);
-				final double phiNeo = (2.0 * Math.atan(tp * Math.pow(rsinphi, -halfe))) - halfpi;
-				delta = Math.abs(phiNeo - phi);
+				final double phiNeo = (2.0 * Math.atan(tp * Math.pow(rsinphi, halfe))) - halfpi;
+				delta = Math.abs(phiNeo - phiEx);
 				if (delta < CONV) {
-					dst.x = (x == 0.0 && y == 0.0) ? 0.0 : Math.atan2(x, y);
+					dst.x = (x == 0.0 && y == 0.0) ? 0.0 : MapMath.atan2(x, y);
 					dst.y = posphi ? phiNeo : -phiNeo;
 					return;
 				}
-				phi = phiNeo;
+				phiEx = phiNeo;
 				iter++;
 			}
 			throw ProjectionException.noConverge(iter, delta);
@@ -152,9 +146,25 @@ class XpStereographic extends AbstractProjection {
 		}
 
 		@Override
-		public void projectInverse(double x, double y, Builder dst) {
-			// TODO Auto-generated method stub
-
+		public void projectInverse(double x, double y, Builder dst)
+				throws ProjectionException {
+			final double rho = MapMath.hypot(x, y);
+			final double atr = 2.0 * MapMath.atan2(rho, m_akm1);
+			final double cosatr = Math.cos(atr);
+			final double sinatr = Math.sin(atr);
+			final double sinphi;
+			if (rho == 0.0) {
+				sinphi = 0.0;
+			} else {
+				sinphi = y * sinatr / rho;
+			}
+			final double phi = MapMath.asin(sinphi);
+			final double tp = Math.tan(0.5 * (MapMath.HALFPI + phi));
+			final double xs = x * sinatr;
+			final double ys = rho * cosatr;
+			final double halfe = 0.5 * m_e;
+			final double halfpi = MapMath.HALFPI;
+			solveInverse(xs, ys, dst, rho, tp, phi, halfe, halfpi, true);
 		}
 
 		public ModeEllipsoidEquator(ArgBase argBase, XaStereographicEquator xa) {
@@ -184,9 +194,25 @@ class XpStereographic extends AbstractProjection {
 		}
 
 		@Override
-		public void projectInverse(double x, double y, Builder dst) {
-			// TODO Auto-generated method stub
-
+		public void projectInverse(final double x, final double y, Builder dst)
+				throws ProjectionException {
+			final double rho = MapMath.hypot(x, y);
+			final double atr = 2.0 * MapMath.atan2(rho * m_cosX, m_akm1);
+			final double cosatr = Math.cos(atr);
+			final double sinatr = Math.sin(atr);
+			final double sinphi;
+			if (rho == 0.0) {
+				sinphi = cosatr * m_sinX;
+			} else {
+				sinphi = (cosatr * m_sinX) + (y * sinatr * m_cosX / rho);
+			}
+			final double phi = MapMath.asin(sinphi);
+			final double tp = Math.tan(0.5 * (MapMath.HALFPI + phi));
+			final double xs = x * sinatr;
+			final double ys = (rho * m_cosX * cosatr) - (y * m_sinX * sinatr);
+			final double halfe = 0.5 * m_e;
+			final double halfpi = MapMath.HALFPI;
+			solveInverse(xs, ys, dst, rho, tp, phi, halfe, halfpi, true);
 		}
 
 		public ModeEllipsoidOblique(ArgBase argBase, XaStereographicOblique xa) {
@@ -228,7 +254,7 @@ class XpStereographic extends AbstractProjection {
 			final double rho = MapMath.hypot(x, y);
 			final double tp = -rho / m_akm1;
 			final double phi = MapMath.HALFPI - (2.0 * Math.atan(tp));
-			final double halfe = 0.5 * m_e;
+			final double halfe = -0.5 * m_e;
 			final double halfpi = -MapMath.HALFPI;
 			final boolean posphi = m_north;
 			solveInverse(x, sy, dst, rho, tp, phi, halfe, halfpi, posphi);
@@ -290,7 +316,7 @@ class XpStereographic extends AbstractProjection {
 			if (x == 0.0 && cosc == 0.0) {
 				dst.x = 0.0;
 			} else {
-				dst.x = Math.atan2(x * sinc, cosc * rh);
+				dst.x = MapMath.atan2(x * sinc, cosc * rh);
 			}
 		}
 
@@ -334,7 +360,7 @@ class XpStereographic extends AbstractProjection {
 			if (x == 0.0 && c1 == 0.0) {
 				dst.x = 0.0;
 			} else {
-				dst.x = Math.atan2(x * sinc * m_cosph0, c1 * rh);
+				dst.x = MapMath.atan2(x * sinc * m_cosph0, c1 * rh);
 			}
 		}
 
@@ -351,10 +377,6 @@ class XpStereographic extends AbstractProjection {
 	}
 
 	private static class ModeSphericalPolar extends ModeSpherical {
-
-		private double phi0() {
-			return m_north ? MapMath.HALFPI : -MapMath.HALFPI;
-		}
 
 		@Override
 		public void project(final double lam, final double phi, Builder dst)
@@ -373,14 +395,14 @@ class XpStereographic extends AbstractProjection {
 			final double c = 2.0 * Math.atan(rh / m_akm1);
 			final double cosc = Math.cos(c);
 			if (Math.abs(rh) <= EPS10) {
-				dst.y = phi0();
+				dst.y = m_phi0;
 			} else {
 				dst.y = MapMath.asin(m_north ? cosc : -cosc);
 			}
 			if (x == 0.0 && y == 0.0) {
 				dst.x = 0.0;
 			} else {
-				dst.x = Math.atan2(x, m_north ? -y : y);
+				dst.x = MapMath.atan2(x, m_north ? -y : y);
 			}
 		}
 
@@ -395,9 +417,11 @@ class XpStereographic extends AbstractProjection {
 				m_akm1 = costs / tn;
 			}
 			m_north = xa.north;
+			m_phi0 = xa.projectionLatitudeRads();
 		}
 		private final boolean m_north;
 		private final double m_akm1;
+		private final double m_phi0;
 	}
 
 }

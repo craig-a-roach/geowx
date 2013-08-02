@@ -13,6 +13,11 @@ import com.metservice.argon.Ds;
 class XaStereographicEquator extends XaStereographic {
 
 	@Override
+	public double projectionLatitudeRads() {
+		return 0.0;
+	}
+
+	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
 		super.describe(ds);

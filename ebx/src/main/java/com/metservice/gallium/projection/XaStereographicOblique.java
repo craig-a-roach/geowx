@@ -13,6 +13,11 @@ import com.metservice.argon.Ds;
 class XaStereographicOblique extends XaStereographic {
 
 	@Override
+	public double projectionLatitudeRads() {
+		return projectionLatitudeRads;
+	}
+
+	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
 		ds.a("projectionLatitude(deg)", MapMath.radToDeg(projectionLatitudeRads));

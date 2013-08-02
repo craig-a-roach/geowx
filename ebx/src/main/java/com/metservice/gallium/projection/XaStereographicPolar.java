@@ -13,6 +13,11 @@ import com.metservice.argon.Ds;
 class XaStereographicPolar extends XaStereographic {
 
 	@Override
+	public double projectionLatitudeRads() {
+		return north ? MapMath.HALFPI : -MapMath.HALFPI;
+	}
+
+	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
 		ds.a("pole", (north ? "NORTH" : "SOUTH"));

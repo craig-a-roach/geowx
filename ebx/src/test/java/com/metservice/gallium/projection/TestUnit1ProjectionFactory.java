@@ -62,6 +62,9 @@ public class TestUnit1ProjectionFactory {
 			final GalliumPointD ptE = pjE.transform(lon, lat);
 			Assert.assertEquals("Ellipse Easting(m)", 196107.26, ptE.x, 1e-2);
 			Assert.assertEquals("Ellipse Northing(m)", 557059.56, ptE.y, 1e-2);
+			final GalliumPointD piE = pjE.inverseDegrees(ptE.x, ptE.y);
+			Assert.assertEquals("Lon", lon, piE.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piE.y, 1e-2);
 			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", 195976.56, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", 556997.63, ptS.y, 1e-2);
@@ -96,6 +99,9 @@ public class TestUnit1ProjectionFactory {
 			final GalliumPointD ptE = pjE.transform(lon, lat);
 			Assert.assertEquals("Ellipse Easting(m)", 190859.69, ptE.x, 1e-2);
 			Assert.assertEquals("Ellipse Northing(m)", -4722273.40, ptE.y, 1e-2);
+			final GalliumPointD piE = pjE.inverseDegrees(ptE.x, ptE.y);
+			Assert.assertEquals("Lon", lon, piE.x, 1e-2);
+			Assert.assertEquals("Lat", lat, piE.y, 1e-2);
 			final GalliumPointD ptS = pjS.transform(lon, lat);
 			Assert.assertEquals("Sphere Easting(m)", 190356.74, ptS.x, 1e-2);
 			Assert.assertEquals("Sphere Northing(m)", -4741460.70, ptS.y, 1e-2);
@@ -398,8 +404,6 @@ public class TestUnit1ProjectionFactory {
 			Assert.assertEquals("Lat", -53.0, piK.y, 1e-2);
 			Assert.assertEquals("Lon", 53.0, piS.x, 1e-2);
 			Assert.assertEquals("Lat", -53.0, piS.y, 1e-2);
-			Assert.assertTrue("Inside", pjM.isInside(53.0, -53.0));
-			Assert.assertFalse("Outside", pjM.isInside(53.0, -87.0));
 		} catch (final GalliumSyntaxException ex) {
 			System.out.println(specM.format());
 			System.err.println(ex.getMessage());

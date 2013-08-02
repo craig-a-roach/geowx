@@ -21,9 +21,6 @@ public interface IGalliumProjection {
 
 	public boolean isEqualArea();
 
-	public boolean isInside(double lonDeg, double latDeg)
-			throws GalliumProjectionException;
-
 	public boolean isRectilinear();
 
 	public double totalScale();

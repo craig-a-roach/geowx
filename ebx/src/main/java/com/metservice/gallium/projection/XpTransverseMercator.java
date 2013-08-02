@@ -33,12 +33,6 @@ class XpTransverseMercator extends AbstractProjection {
 	}
 
 	@Override
-	protected boolean inside(double lam, double phi)
-			throws ProjectionException {
-		return MinLam <= lam && lam <= MaxLam;
-	}
-
-	@Override
 	protected void project(final double lam, final double phi, Builder dst)
 			throws ProjectionException {
 		m_imp.project(lam, phi, dst);

@@ -60,9 +60,6 @@ abstract class AbstractProjection implements IGalliumProjection {
 		dst.y = yRads;
 	}
 
-	protected abstract boolean inside(double lam, double phi)
-			throws ProjectionException;
-
 	protected abstract void project(double lam, double phi, GalliumPointD.Builder dst)
 			throws ProjectionException;
 
@@ -84,22 +81,6 @@ abstract class AbstractProjection implements IGalliumProjection {
 		} catch (final ProjectionException ex) {
 			final Unit pu = argBase.projectedUnit;
 			final String m = "Failed to determine inverse of x=" + xPU + ", y=" + yPU + " (" + pu + ")..." + ex.getMessage();
-			throw new GalliumProjectionException(m);
-		}
-	}
-
-	@Override
-	public boolean isInside(double srcLonDeg, double srcLatDeg)
-			throws GalliumProjectionException {
-		try {
-			final double yRads = srcLatDeg * DTR;
-			if (yRads < -MapMath.HALFPI) return false;
-			if (yRads > MapMath.HALFPI) return false;
-			final double xRads = longitudeRelative(srcLonDeg * DTR);
-			return inside(xRads, yRads);
-		} catch (final ProjectionException ex) {
-			final String m = "Failed to determine inside lon " + srcLonDeg + ", lat " + srcLatDeg + " (deg)..."
-					+ ex.getMessage();
 			throw new GalliumProjectionException(m);
 		}
 	}

@@ -13,12 +13,6 @@ import com.metservice.gallium.GalliumPointD.Builder;
 class XpLambertConformalConic extends AbstractProjection {
 
 	@Override
-	protected boolean inside(double lam, double phi)
-			throws ProjectionException {
-		return true;
-	}
-
-	@Override
 	public boolean hasInverse() {
 		return true;
 	}
