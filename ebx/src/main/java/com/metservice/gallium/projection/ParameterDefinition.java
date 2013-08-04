@@ -13,7 +13,7 @@ enum ParameterDefinition {
 	Central_Meridian(UnitType.Angle, "Central_Meridian", "Longitude_Of_Center"),
 	False_Easting(UnitType.Length, "False_Easting"),
 	False_Northing(UnitType.Length, "False_Northing"),
-	Latitude_Of_Origin(UnitType.Angle, "Latitude_Of_Origin"),
+	Latitude_Of_Origin(UnitType.Angle, "Latitude_Of_Origin", "Latitude_Of_Center"),
 	Scale_Factor(UnitType.Ratio, "Scale_Factor"),
 	Standard_Parallel_1(UnitType.Angle, "Standard_Parallel_1"),
 	Standard_Parallel_2(UnitType.Angle, "Standard_Parallel_2");
