@@ -62,7 +62,7 @@ class XpOrthographic extends AbstractProjection {
 		final Mode mode;
 		if (arg instanceof XaOrthographicPolar) {
 			final XaOrthographicPolar xa = (XaOrthographicPolar) arg;
-			mode = new ModePolar(argBase, xa);
+			mode = new ModePolar(xa);
 		} else if (arg instanceof XaOrthographicEquator) {
 			mode = new ModeEquator();
 		} else if (arg instanceof XaOrthographicOblique) {
@@ -79,19 +79,19 @@ class XpOrthographic extends AbstractProjection {
 
 	private static abstract class Mode {
 
+		protected final void setObliqueX(double rx, double ry, Builder dst) {
+			if (ry == 0.0) {
+				dst.x = rx == 0.0 ? 0.0 : (rx < 0.0 ? -MapMath.HALFPI : MapMath.HALFPI);
+			} else {
+				dst.x = MapMath.atan2(rx, ry);
+			}
+		}
+
 		protected final void setObliqueY(double siny, Builder dst) {
 			if (Math.abs(siny) >= 1.0) {
 				dst.y = siny < 0.0 ? -MapMath.HALFPI : MapMath.HALFPI;
 			} else {
 				dst.y = MapMath.asin(siny);
-			}
-		}
-
-		protected final void setX(double rx, double ry, Builder dst) {
-			if (ry == 0.0) {
-				dst.x = rx == 0.0 ? 0.0 : (rx < 0.0 ? -MapMath.HALFPI : MapMath.HALFPI);
-			} else {
-				dst.x = MapMath.atan2(rx, ry);
 			}
 		}
 
@@ -126,7 +126,7 @@ class XpOrthographic extends AbstractProjection {
 			final double ry = cosc * rh;
 			final double rx = x * sinc;
 			setObliqueY(siny, dst);
-			setX(rx, ry, dst);
+			setObliqueX(rx, ry, dst);
 		}
 
 		public ModeEquator() {
@@ -156,7 +156,7 @@ class XpOrthographic extends AbstractProjection {
 			final double ry = (cosc - m_sinph0 * siny) * rh;
 			final double rx = x * sinc * m_cosph0;
 			setObliqueY(siny, dst);
-			setX(rx, ry, dst);
+			setObliqueX(rx, ry, dst);
 		}
 
 		public ModeOblique(XaOrthographicOblique xa) {
@@ -173,13 +173,27 @@ class XpOrthographic extends AbstractProjection {
 		@Override
 		public void project(final double lam, final double phi, Builder dst)
 				throws ProjectionException {
+			final double bc = Math.abs(phi - m_phi0) - EPS10;
+			if (bc > MapMath.HALFPI) throw ProjectionException.coordinateOutsideBounds();
+			final double sinlam = Math.sin(lam);
+			final double coslam = m_north ? -Math.cos(lam) : Math.cos(lam);
+			final double cosphi = Math.cos(phi);
+			dst.y = cosphi * coslam;
+			dst.x = cosphi * sinlam;
 		}
 
 		@Override
 		public void projectInverse(double x, double y, Builder dst, double rh, double sinc, double cosc) {
+			if (m_north) {
+				dst.y = MapMath.acos(sinc);
+				dst.x = MapMath.atan2(x, -y);
+			} else {
+				dst.y = -MapMath.acos(sinc);
+				dst.x = MapMath.atan2(x, y);
+			}
 		}
 
-		public ModePolar(ArgBase argBase, XaOrthographicPolar xa) {
+		public ModePolar(XaOrthographicPolar xa) {
 			m_north = xa.north;
 			m_phi0 = xa.projectionLatitudeRads();
 		}
