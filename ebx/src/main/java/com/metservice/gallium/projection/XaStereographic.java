@@ -18,7 +18,7 @@ abstract class XaStereographic {
 
 	public abstract double projectionLatitudeRads();
 
-	public XaStereographic(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
+	protected XaStereographic(ParameterMap pmapDefault, ParameterMap pmap) throws GalliumProjectionException {
 		this.scaleFactor = pmap.select(ParameterDefinition.Scale_Factor, pmapDefault).ratio().clampedValue(0.01, 1.0);
 	}
 
