@@ -15,17 +15,18 @@ class XaEquidistantCylindrical {
 	@Override
 	public String toString() {
 		final Ds ds = Ds.o(getClass());
-		ds.a("rc", rc);
+		ds.a("cosphits", cosphits);
+		ds.a("projectionLatitudeRads", projectionLatitudeRads);
 		return ds.s();
 	}
 
-	public XaEquidistantCylindrical(ParameterMap pmapDefault, ParameterMap pmap, GeographicCoordinateSystem gcs)
-			throws GalliumProjectionException {
+	public XaEquidistantCylindrical(ParameterMap pmapDefault, ParameterMap pmap, double phits) throws GalliumProjectionException {
 		if (pmapDefault == null) throw new IllegalArgumentException("object is null");
 		if (pmap == null) throw new IllegalArgumentException("object is null");
-
-		final double phits = pmap.select(ParameterDefinition.Standard_Parallel_1, pmapDefault).angle().radsFromDeg();
-		this.rc = Math.cos(phits);
+		this.cosphits = Math.cos(phits);
+		final AccessorAngle aLatitudeOfOrigin = pmap.select(ParameterDefinition.Latitude_Of_Origin, pmapDefault).angle();
+		this.projectionLatitudeRads = aLatitudeOfOrigin.validLatitudeRadsFromDeg(true);
 	}
-	public final double rc;
+	public final double cosphits;
+	public final double projectionLatitudeRads;
 }

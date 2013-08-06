@@ -44,6 +44,26 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
+	public void a690_eqc_Fail() {
+		final WktStructure p = new WktStructure("PROJECTION", "Equidistant Cylindrical");
+		final WktStructure[] params = { param("standard_parallel_1", -90.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "EQC Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			pcs.newProjection();
+			Assert.assertTrue("Expecting failure: true latitude", false);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.out.println("Good exception: " + ex.getMessage());
+			Assert.assertTrue("True Latitude", true);
+		}
+	}
+
+	@Test
 	public void t120_stereoOblique() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
@@ -727,6 +747,60 @@ public class TestUnit1ProjectionFactory {
 			System.out.println(spec.format());
 			System.out.println("Good exception: " + ex.getMessage());
 			Assert.assertTrue("Bounds", true);
+		}
+	}
+
+	@Test
+	public void t610_eqc() {
+		final WktStructure p = new WktStructure("PROJECTION", "Equidistant Cylindrical");
+		final WktStructure[] params = { param("central_meridian", 170.0), param("standard_parallel_1", -42.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "EQC Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final double lon = 165.0;
+			final double lat = -45.0;
+			final GalliumPointD pt = pj.transform(lon, lat);
+			Assert.assertEquals("Easting(m)", -413_169.67, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", -5_003_771.70, pt.y, 1e-2);
+			final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+			Assert.assertEquals("Lon", lon, pi.x, 1e-2);
+			Assert.assertEquals("Lat", lat, pi.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t620_eqc() {
+		final WktStructure p = new WktStructure("PROJECTION", "Plate Carree");
+		final WktStructure[] params = {};
+		final WktStructure spec = new WktStructure("PROJCS", "EQC Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			final double lon = 165.0;
+			final double lat = -45.0;
+			final GalliumPointD pt = pj.transform(lon, lat);
+			Assert.assertEquals("Easting(m)", 18_347_162.90, pt.x, 1e-2);
+			Assert.assertEquals("Northing(m)", -5_003_771.70, pt.y, 1e-2);
+			final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+			Assert.assertEquals("Lon", lon, pi.x, 1e-2);
+			Assert.assertEquals("Lat", lat, pi.y, 1e-2);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
 		}
 	}
 }

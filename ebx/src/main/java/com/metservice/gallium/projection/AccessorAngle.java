@@ -21,6 +21,10 @@ class AccessorAngle {
 		return "Failed to " + op + " " + m_src + "..." + ex.getMessage();
 	}
 
+	private String invalid(String reason) {
+		return "Invalid " + m_src + "..." + reason;
+	}
+
 	public double normalizedLatitudeRadsFromDeg()
 			throws GalliumProjectionException {
 		try {
@@ -48,6 +52,24 @@ class AccessorAngle {
 	@Override
 	public String toString() {
 		return m_src.toString();
+	}
+
+	public double validLatitudeRadsFromDeg(boolean allowPoles)
+			throws GalliumProjectionException {
+		final double rads = radsFromDeg();
+		final double arads = Math.abs(rads);
+		if (allowPoles) {
+			if (arads > MapMath.HALFPI) {
+				final String m = invalid("magnitude > 90 degrees");
+				throw new GalliumProjectionException(m);
+			}
+		} else {
+			if ((arads + MapMath.EPS10) >= MapMath.HALFPI) {
+				final String m = invalid("magnitude >= 90 degrees");
+				throw new GalliumProjectionException(m);
+			}
+		}
+		return rads;
 	}
 
 	public double value() {

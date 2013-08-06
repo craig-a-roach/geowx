@@ -17,16 +17,17 @@ class ProjectionFactoryDictionary {
 
 	private static ProjectionFactoryDictionary newInstance() {
 		final Builder b = new Builder(128);
-		b.add(ProjectionSelector.newEpsg(1028, "Equidistant_Cylindrical", XfEquidistantCylindrical.class));
 		b.add(ProjectionSelector.newEpsg(9801, "Lambert_Conformal_Conic_1SP", XfLambertConformalConic.class));
 		b.add(ProjectionSelector.newEpsg(9802, "Lambert_Conformal_Conic_2SP", XfLambertConformalConic.class));
 		b.add(ProjectionSelector.newEpsg(9804, "Mercator_1SP", XfMercator.class));
 		b.add(ProjectionSelector.newEpsg(9805, "Mercator_2SP", XfMercator.class));
 		b.add(ProjectionSelector.newEpsg(9807, "Transverse_Mercator", XfTransverseMercator.class));
 		b.add(ProjectionSelector.newEpsg(9809, "Oblique_Stereographic", XfStereographic.class));
-		b.add(ProjectionSelector.newEpsg(9823, "Equirectangular", XfEquidistantCylindrical.class));
-		b.add(ProjectionSelector.newEpsg(9825, "Pseudo_Plate_Carree", XfEquidistantCylindrical.class));
-		b.add(ProjectionSelector.newEsri(43001, "Plate_Carree", XfEquidistantCylindrical.class));
+		b.add(ProjectionSelector.newEpsg(9823, "Equirectangular", XfEquidistantCylindrical.class, XfEquidistantCylindrical.EQ));
+		b.add(ProjectionSelector.newEpsg(9825, "Pseudo_Plate_Carree", XfEquidistantCylindrical.class,
+				XfEquidistantCylindrical.EQ));
+		b.add(ProjectionSelector.newEsri(43001, "Plate_Carree", XfEquidistantCylindrical.class, XfEquidistantCylindrical.EQ));
+		b.add(ProjectionSelector.newEsri(43002, "Equidistant_Cylindrical", XfEquidistantCylindrical.class));
 		b.add(ProjectionSelector.newEsri(43004, "Mercator", XfMercator.class));
 		b.add(ProjectionSelector.newEsri(43005, "Gauss_Kruger", XfTransverseMercator.class));
 		b.add(ProjectionSelector.newEsri(43020, "Lambert_Conformal_Conic", XfLambertConformalConic.class));
