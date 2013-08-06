@@ -439,15 +439,11 @@ class MapMath {
 		return Math.tan(0.5 * (HALFPI - phi_in)) / Math.pow((1.0 - sinphi) / (1.0 + sinphi), 0.5 * e_in);
 	}
 
-	public static double validDivisorEPS10(double v)
-			throws ProjectionException {
-		if (Math.abs(v) > EPS10) return v;
-		throw ProjectionException.coordinateOutsideBounds();
+	public static boolean validDivisorEPS10(double v) {
+		return Math.abs(v) > EPS10;
 	}
 
-	public static double validDivisorEPS8(double v)
-			throws ProjectionException {
-		if (Math.abs(v) > EPS8) return v;
-		throw ProjectionException.coordinateOutsideBounds();
+	public static boolean validDivisorEPS8(double v) {
+		return Math.abs(v) > EPS8;
 	}
 }

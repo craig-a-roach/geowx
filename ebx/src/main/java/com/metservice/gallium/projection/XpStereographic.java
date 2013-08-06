@@ -139,7 +139,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
 			final double aa = 1.0 + (cosX * coslam);
-			MapMath.validDivisorEPS8(aa);
+			if (!MapMath.validDivisorEPS8(aa)) throw ProjectionException.coordinateOutsideBounds();
 			final double A = m_akm1 / aa;
 			dst.x = A * cosX * sinlam;
 			dst.y = A * sinX;
@@ -187,7 +187,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinX = Math.sin(X);
 			final double cosX = Math.cos(X);
 			final double aa = m_cosX * (1.0 + (m_sinX * sinX) + (m_cosX * cosX * coslam));
-			MapMath.validDivisorEPS8(aa);
+			if (!MapMath.validDivisorEPS8(aa)) throw ProjectionException.coordinateOutsideBounds();
 			final double A = m_akm1 / aa;
 			dst.x = A * cosX * sinlam;
 			dst.y = A * ((m_cosX * sinX) - (m_sinX * cosX * coslam));
@@ -296,7 +296,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinphi = Math.sin(phi);
 			final double cosphi = Math.cos(phi);
 			final double aa = 1.0 + (cosphi * coslam);
-			MapMath.validDivisorEPS8(aa);
+			if (!MapMath.validDivisorEPS8(aa)) throw ProjectionException.coordinateOutsideBounds();
 			final double A = m_akm1 / aa;
 			dst.x = A * cosphi * sinlam;
 			dst.y = A * sinphi;
@@ -336,7 +336,7 @@ class XpStereographic extends AbstractProjection {
 			final double sinphi = Math.sin(phi);
 			final double cosphi = Math.cos(phi);
 			final double aa = 1.0 + (m_sinph0 * sinphi) + (m_cosph0 * cosphi * coslam);
-			MapMath.validDivisorEPS8(aa);
+			if (!MapMath.validDivisorEPS8(aa)) throw ProjectionException.coordinateOutsideBounds();
 			final double A = m_akm1 / aa;
 			dst.x = A * cosphi * sinlam;
 			dst.y = A * ((m_cosph0 * sinphi) - (m_sinph0 * cosphi * coslam));

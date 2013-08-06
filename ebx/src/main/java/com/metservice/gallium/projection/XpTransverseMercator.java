@@ -165,12 +165,12 @@ class XpTransverseMercator extends AbstractProjection {
 			validateLongitude(lam);
 			final double cosphi = Math.cos(phi);
 			final double b = cosphi * Math.sin(lam);
-			MapMath.validDivisorEPS10(Math.abs(b) - 1.0);
+			if (!MapMath.validDivisorEPS10(Math.abs(b) - 1.0)) throw ProjectionException.coordinateOutsideBounds();
 			final double c = cosphi * Math.cos(lam) / Math.sqrt(1.0 - b * b);
 			final double ac = Math.abs(c);
 			double d;
 			if (ac >= 1.0) {
-				MapMath.validDivisorEPS10(ac - 1.0);
+				if (!MapMath.validDivisorEPS10(ac - 1.0)) throw ProjectionException.coordinateOutsideBounds();
 				d = 0.0;
 			} else {
 				d = MapMath.acos(c);
