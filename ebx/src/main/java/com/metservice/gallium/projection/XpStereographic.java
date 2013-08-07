@@ -39,16 +39,6 @@ class XpStereographic extends AbstractProjection {
 	}
 
 	@Override
-	public boolean isConformal() {
-		return true;
-	}
-
-	@Override
-	public boolean isEqualArea() {
-		return false;
-	}
-
-	@Override
 	public boolean isRectilinear() {
 		return false;
 	}

@@ -17,10 +17,6 @@ public interface IGalliumProjection {
 	public GalliumPointD inverseDegrees(double xMetres, double yMetres)
 			throws GalliumProjectionException;
 
-	public boolean isConformal();
-
-	public boolean isEqualArea();
-
 	public boolean isRectilinear();
 
 	public double totalScale();
