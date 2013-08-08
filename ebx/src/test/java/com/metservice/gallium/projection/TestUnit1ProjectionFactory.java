@@ -44,26 +44,6 @@ public class TestUnit1ProjectionFactory {
 	}
 
 	@Test
-	public void a690_eqc_Fail() {
-		final WktStructure p = new WktStructure("PROJECTION", "Equidistant Cylindrical");
-		final WktStructure[] params = { param("standard_parallel_1", -90.0) };
-		final WktStructure spec = new WktStructure("PROJCS", "EQC Ref", GCS_Sphere, p, params, Metres);
-		try {
-			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
-			pcs.newProjection();
-			Assert.assertTrue("Expecting failure: true latitude", false);
-		} catch (final GalliumSyntaxException ex) {
-			System.out.println(spec.format());
-			System.err.println(ex.getMessage());
-			Assert.fail("Syntax Exception: " + ex.getMessage());
-		} catch (final GalliumProjectionException ex) {
-			System.out.println(spec.format());
-			System.out.println("Good exception: " + ex.getMessage());
-			Assert.assertTrue("True Latitude", true);
-		}
-	}
-
-	@Test
 	public void t120_stereoOblique() {
 		final WktStructure gcsE = geogcs("Bessel 1841", 6377397.155, 299.15281);
 		final WktStructure p = new WktStructure("PROJECTION", "Oblique Stereographic");
@@ -801,6 +781,26 @@ public class TestUnit1ProjectionFactory {
 			System.out.println(spec.format());
 			System.err.println(ex.getMessage());
 			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t690_eqc_Fail() {
+		final WktStructure p = new WktStructure("PROJECTION", "Equidistant Cylindrical");
+		final WktStructure[] params = { param("standard_parallel_1", -90.0) };
+		final WktStructure spec = new WktStructure("PROJCS", "EQC Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			pcs.newProjection();
+			Assert.assertTrue("Expecting failure: true latitude", false);
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.out.println("Good exception: " + ex.getMessage());
+			Assert.assertTrue("True Latitude", true);
 		}
 	}
 }
