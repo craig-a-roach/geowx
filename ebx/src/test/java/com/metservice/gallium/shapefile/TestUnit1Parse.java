@@ -7,6 +7,7 @@ package com.metservice.gallium.shapefile;
 
 import java.nio.file.Path;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -23,6 +24,12 @@ public class TestUnit1Parse {
 		Path src = null;
 		try {
 			src = newGHHS("c", 2);
+			final ShapeReader r = new ShapeReader(src, 3);
+			r.scan();
+		} catch (final GalliumShapefileFormatException ex) {
+			Assert.fail("Format exception: " + ex.getMessage());
+		} catch (final GalliumShapefileReadException ex) {
+			Assert.fail("Read exception: " + ex.getMessage());
 		} finally {
 			TestFolder.Instance.scrub(src);
 		}
