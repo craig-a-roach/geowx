@@ -21,7 +21,16 @@ import com.metservice.gallium.GalliumBoundingBoxD;
 class ShapeReader {
 
 	public static final int FileCode = 9994;
-	private static final int BufferCap = CArgon.K;
+	private static final int DefaultBufferCap = 8 * CArgon.K;
+	private static final int FileHeaderBc = 100;
+
+	private int emitRecord(State state)
+			throws FormatException, IOException {
+		assert state != null;
+		final int recNo = state.intBE("Record Number");
+		final int bcRec = (state.intBE("Content Length") * 2) + 4;
+		return bcRec;
+	}
 
 	private void newFileHeader(State state)
 			throws GalliumShapefileFormatException, IOException {
@@ -51,10 +60,27 @@ class ShapeReader {
 			final double zMax = state.doubleLE("Zmax");
 			final double mMin = state.doubleLE("Mmin");
 			final double mMax = state.doubleLE("Mmax");
-			System.out.println(shapeType);
-
 		} catch (final FormatException ex) {
 			final String m = "Malformed main file header..." + ex.getMessage();
+			throw new GalliumShapefileFormatException(m_srcPath, m);
+		}
+	}
+
+	private void scanRecords(State state)
+			throws GalliumShapefileFormatException, IOException {
+		assert state != null;
+		final long bcPayload = state.bcPayload();
+		int recordIndex = 0;
+		long biPayload = 0L;
+		try {
+			while (biPayload < bcPayload) {
+				final int bcRec = emitRecord(state);
+				biPayload += bcRec;
+				recordIndex++;
+			}
+		} catch (final FormatException ex) {
+			final String exm = ex.getMessage();
+			final String m = "Record " + recordIndex + " at payload byte offset " + biPayload + " is malformed..." + exm;
 			throw new GalliumShapefileFormatException(m_srcPath, m);
 		}
 	}
@@ -66,7 +92,7 @@ class ShapeReader {
 		try {
 			oState = new State(m_srcPath, m_bufferOps);
 			newFileHeader(oState);
-
+			scanRecords(oState);
 		} catch (final IOException ex) {
 			throw new GalliumShapefileReadException(m_srcPath, ex);
 		} finally {
@@ -77,7 +103,7 @@ class ShapeReader {
 	}
 
 	public ShapeReader(Path srcPath) {
-		this(srcPath, BufferCap);
+		this(srcPath, DefaultBufferCap);
 	}
 
 	public ShapeReader(Path srcPath, int bufferOps) {
@@ -167,6 +193,10 @@ class ShapeReader {
 
 		public long bcFile() {
 			return m_bcFile;
+		}
+
+		public long bcPayload() {
+			return Math.max(0L, m_bcFile - FileHeaderBc);
 		}
 
 		public void close() {
