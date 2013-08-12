@@ -22,12 +22,33 @@ public class TestUnit1Parse {
 		return TestFolder.Instance.newFile("GSHHS_" + res + "_L" + level + ".shp");
 	}
 
+	private Path newWDBII_river(String res, int level) {
+		return TestFolder.Instance.newFile("WDBII_river_" + res + "_L" + level + ".shp");
+	}
+
 	@Test
 	public void a10_gshhs() {
 		Path src = null;
 		try {
-			src = newGHHS("c", 2);
-			final ShapeReader r = new ShapeReader(src, 3);
+			src = newGHHS("c", 1);
+			final ShapeReader r = new ShapeReader(src);
+			final Handler h = new Handler();
+			r.scan(h);
+		} catch (final GalliumShapefileFormatException ex) {
+			Assert.fail("Format exception: " + ex.getMessage());
+		} catch (final GalliumShapefileReadException ex) {
+			Assert.fail("Read exception: " + ex.getMessage());
+		} finally {
+			TestFolder.Instance.scrub(src);
+		}
+	}
+
+	@Test
+	public void a20_river() {
+		Path src = null;
+		try {
+			src = newWDBII_river("c", 1);
+			final ShapeReader r = new ShapeReader(src);
 			final Handler h = new Handler();
 			r.scan(h);
 		} catch (final GalliumShapefileFormatException ex) {
@@ -64,8 +85,13 @@ public class TestUnit1Parse {
 		}
 
 		@Override
-		public void polygon(int recNo, int partIndex, int pointIndex, GalliumPointD pt) {
-			System.out.println("Rec " + recNo + " part " + partIndex + " point " + pointIndex + "=" + pt);
+		public void polygonClose(int recNo, int partIndex) {
+			System.out.println("Rec " + recNo + " part " + partIndex + " CLOSE");
+		}
+
+		@Override
+		public void polygonVertex(int recNo, int partIndex, int vertexIndex, GalliumPointD pt) {
+			System.out.println("Rec " + recNo + " part " + partIndex + " point " + vertexIndex + ":" + pt);
 		}
 
 		public Handler() {

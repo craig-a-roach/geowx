@@ -45,9 +45,16 @@ class ShapeReader {
 		for (int partIndex = 0, partNext = 1; partIndex < partCount; partIndex++, partNext++) {
 			final int pointStart = zptParts[partIndex];
 			final int pointEnd = partNext < partCount ? zptParts[partNext] : pointCount;
-			for (int pointIndex = pointStart; pointIndex < pointEnd; pointIndex++) {
-				final GalliumPointD pt = newPointD(state);
-				handler.polygon(recNo, partIndex, pointIndex, pt);
+			final int vertexLast = pointEnd - pointStart - 1;
+			if (vertexLast > 0) {
+				for (int pointIndex = pointStart, vertexIndex = 0; pointIndex < pointEnd; pointIndex++, vertexIndex++) {
+					final GalliumPointD pt = newPointD(state);
+					if (vertexIndex < vertexLast) {
+						handler.polygonVertex(recNo, partIndex, vertexIndex, pt);
+					} else {
+						handler.polygonClose(recNo, partIndex);
+					}
+				}
 			}
 		}
 	}

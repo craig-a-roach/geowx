@@ -23,5 +23,7 @@ public interface IGalliumShapefileHandler {
 
 	public void point(int recNo, GalliumPointD pt);
 
-	public void polygon(int recNo, int partIndex, int pointIndex, GalliumPointD pt);
+	public void polygonClose(int recNo, int partIndex);
+
+	public void polygonVertex(int recNo, int partIndex, int vertexIndex, GalliumPointD pt);
 }
