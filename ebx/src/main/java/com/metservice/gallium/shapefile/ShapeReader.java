@@ -14,6 +14,7 @@ import java.nio.file.StandardOpenOption;
 
 import com.metservice.argon.CArgon;
 import com.metservice.gallium.GalliumBoundingBoxD;
+import com.metservice.gallium.GalliumPointD;
 
 /**
  * @author roach
@@ -24,16 +25,68 @@ class ShapeReader {
 	private static final int DefaultBufferCap = 8 * CArgon.K;
 	private static final int FileHeaderBc = 100;
 
-	private int emitRecord(State state)
+	private void emitPoint(IGalliumShapefileHandler handler, State state, int recNo)
+			throws FormatException, IOException {
+		final GalliumPointD pt = newPointD(state);
+		handler.point(recNo, pt);
+	}
+
+	private void emitPolygon(IGalliumShapefileHandler handler, State state, int recNo)
+			throws FormatException, IOException {
+		final GalliumBoundingBoxD box = newBoundingBoxD(state);
+		final int partCount = state.intLE("NumParts");
+		final int pointCount = state.intLE("NumPoints");
+		if (!handler.acceptPolygon(recNo, box, partCount, pointCount)) {
+			final int bcAdvance = (partCount * 4) + (pointCount * 16);
+			state.advance(bcAdvance);
+			return;
+		}
+		final int[] zptParts = state.intLEArray(partCount, "Parts");
+		for (int partIndex = 0, partNext = 1; partIndex < partCount; partIndex++, partNext++) {
+			final int pointStart = zptParts[partIndex];
+			final int pointEnd = partNext < partCount ? zptParts[partNext] : pointCount;
+			for (int pointIndex = pointStart; pointIndex < pointEnd; pointIndex++) {
+				final GalliumPointD pt = newPointD(state);
+				handler.polygon(recNo, partIndex, pointIndex, pt);
+			}
+		}
+	}
+
+	private int emitRecord(IGalliumShapefileHandler handler, State state)
 			throws FormatException, IOException {
 		assert state != null;
 		final int recNo = state.intBE("Record Number");
-		final int bcRec = (state.intBE("Content Length") * 2) + 4;
+		final int bcRec = (state.intBE("Content Length") * 2) + 8;
+		final int shapeType = state.intLE("Shape Type");
+		switch (shapeType) {
+			case 0:
+			break;
+			case 1:
+				emitPoint(handler, state, recNo);
+			break;
+			case 5:
+				emitPolygon(handler, state, recNo);
+			break;
+			default: {
+				throw FormatException.unsupportedShape(shapeType, recNo, state);
+			}
+		}
 		return bcRec;
 	}
 
-	private void newFileHeader(State state)
+	private GalliumBoundingBoxD newBoundingBoxD(State state)
+			throws FormatException, IOException {
+		assert state != null;
+		final double xMin = state.doubleLE("Xmin");
+		final double yMin = state.doubleLE("Ymin");
+		final double xMax = state.doubleLE("Xmax");
+		final double yMax = state.doubleLE("Ymax");
+		return GalliumBoundingBoxD.newCorners(yMin, xMin, yMax, xMax);
+	}
+
+	private GalliumShapefileHeader newFileHeader(State state)
 			throws GalliumShapefileFormatException, IOException {
+		assert state != null;
 		final long bcFileActual = state.bcFile();
 		try {
 			final int fileCode = state.intBE("File Code");
@@ -41,9 +94,7 @@ class ShapeReader {
 				final String d = "Not a shapefile (file code=" + fileCode + ")";
 				throw new GalliumShapefileFormatException(m_srcPath, d);
 			}
-			for (int i = 0; i < 5; i++) {
-				state.advance4("Unused Integer");
-			}
+			state.advance(20);
 			final int bcFileHeader = state.intBE("File Length") * 2;
 			if (bcFileActual != bcFileHeader) {
 				final String d = "Incomplete; header specifies " + bcFileHeader + " bytes but file is " + bcFileActual;
@@ -51,48 +102,70 @@ class ShapeReader {
 			}
 			final int version = state.intLE("Version");
 			final int shapeType = state.intLE("Shape Type");
-			final double xMin = state.doubleLE("Xmin");
-			final double yMin = state.doubleLE("Ymin");
-			final double xMax = state.doubleLE("Xmax");
-			final double yMax = state.doubleLE("Ymax");
-			final GalliumBoundingBoxD bb = GalliumBoundingBoxD.newCorners(yMin, xMin, yMax, xMax);
+			if (!supportedShape(shapeType)) {
+				final String d = "Unsupported shape type " + shapeType;
+				throw new GalliumShapefileFormatException(m_srcPath, d);
+			}
+			final GalliumBoundingBoxD box = newBoundingBoxD(state);
 			final double zMin = state.doubleLE("Zmin");
 			final double zMax = state.doubleLE("Zmax");
 			final double mMin = state.doubleLE("Mmin");
 			final double mMax = state.doubleLE("Mmax");
+			return new GalliumShapefileHeader(version, shapeType, box, zMin, zMax, mMin, mMax);
 		} catch (final FormatException ex) {
 			final String m = "Malformed main file header..." + ex.getMessage();
 			throw new GalliumShapefileFormatException(m_srcPath, m);
 		}
 	}
 
-	private void scanRecords(State state)
+	private GalliumPointD newPointD(State state)
+			throws FormatException, IOException {
+		final double x = state.doubleLE("X");
+		final double y = state.doubleLE("Y");
+		return new GalliumPointD(x, y);
+	}
+
+	private void scanRecords(IGalliumShapefileHandler handler, State state)
 			throws GalliumShapefileFormatException, IOException {
+		assert handler != null;
 		assert state != null;
 		final long bcPayload = state.bcPayload();
-		int recordIndex = 0;
-		long biPayload = 0L;
+		int recIndex = 0;
+		long bcScanned = 0L;
 		try {
-			while (biPayload < bcPayload) {
-				final int bcRec = emitRecord(state);
-				biPayload += bcRec;
-				recordIndex++;
+			while (bcScanned < bcPayload) {
+				final int bcRec = emitRecord(handler, state);
+				bcScanned += bcRec;
+				recIndex++;
 			}
 		} catch (final FormatException ex) {
 			final String exm = ex.getMessage();
-			final String m = "Record " + recordIndex + " at payload byte offset " + biPayload + " is malformed..." + exm;
+			final String p = "File byte offset=" + state.biFile() + ".";
+			final String s = "Scanned " + bcScanned + " bytes.";
+			final String m = "Record index " + recIndex + " is malformed. " + " " + p + " " + s + " " + exm;
 			throw new GalliumShapefileFormatException(m_srcPath, m);
 		}
 	}
 
-	public void scan()
-			throws GalliumShapefileFormatException, GalliumShapefileReadException {
+	private boolean supportedShape(int t) {
+		if (t < 0 || t > 31) return false;
+		if (t == 0) return true;
+		return (t == 1 || t == 3 || t == 5 || t == 8);
+	}
 
+	public void scan(IGalliumShapefileHandler handler)
+			throws GalliumShapefileFormatException, GalliumShapefileReadException {
+		if (handler == null) throw new IllegalArgumentException("object is null");
 		State oState = null;
 		try {
 			oState = new State(m_srcPath, m_bufferOps);
-			newFileHeader(oState);
-			scanRecords(oState);
+			final long bcPayload = oState.bcPayload();
+			if (handler.acceptFile(m_srcPath, bcPayload)) {
+				final GalliumShapefileHeader header = newFileHeader(oState);
+				if (handler.acceptHeader(header)) {
+					scanRecords(handler, oState);
+				}
+			}
 		} catch (final IOException ex) {
 			throw new GalliumShapefileReadException(m_srcPath, ex);
 		} finally {
@@ -186,9 +259,21 @@ class ShapeReader {
 			return (b7 | b6 | b5 | b4 | b3 | b2 | b1 | b0);
 		}
 
-		public void advance4(String desc)
-				throws FormatException, IOException {
-			loadOperand(4, desc);
+		public void advance(int bcAdvance)
+				throws IOException {
+			final int bcRem = m_buffer.remaining();
+			if (bcAdvance <= bcRem) {
+				final int pos = m_buffer.position();
+				m_buffer.position(pos + bcAdvance);
+				return;
+			}
+			final int bcSeek = bcAdvance - bcRem;
+			final long biFileEx = m_channel.position();
+			final long biFileNeo = biFileEx + bcSeek;
+			m_channel.position(biFileNeo);
+			m_buffer.position(0);
+			m_channel.read(m_buffer);
+			m_buffer.flip();
 		}
 
 		public long bcFile() {
@@ -197,6 +282,14 @@ class ShapeReader {
 
 		public long bcPayload() {
 			return Math.max(0L, m_bcFile - FileHeaderBc);
+		}
+
+		public long biFile() {
+			try {
+				return m_channel.position();
+			} catch (final IOException ex) {
+				return -1L;
+			}
 		}
 
 		public void close() {
@@ -222,6 +315,15 @@ class ShapeReader {
 				throws FormatException, IOException {
 			loadOperand(4, desc);
 			return makeIntLE();
+		}
+
+		public int[] intLEArray(int length, String desc)
+				throws FormatException, IOException {
+			final int[] zpt = new int[length];
+			for (int i = 0; i < length; i++) {
+				zpt[i] = intLE(desc);
+			}
+			return zpt;
 		}
 
 		@Override
