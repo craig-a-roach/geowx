@@ -74,9 +74,20 @@ public class TestUnit1Parse {
 		}
 
 		@Override
-		public boolean acceptPolygon(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount) {
-			System.out.println("Accept polygon " + recNo + " box " + box + " parts=" + partCount + ", points=" + pointCount);
-			return true;
+		public IGalliumShapefileMultiPoint createMultiPoint(int recNo, GalliumBoundingBoxD box, int pointCount) {
+			return null;
+		}
+
+		@Override
+		public IGalliumShapefilePolygon createPolygon(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount) {
+			System.out.println("Polygon record " + recNo + " :" + box);
+			return new Polygon();
+		}
+
+		@Override
+		public IGalliumShapefilePolyLine createPolyLine(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount) {
+			System.out.println("PolyLine record " + recNo + " :" + box);
+			return new PolyLine();
 		}
 
 		@Override
@@ -84,18 +95,51 @@ public class TestUnit1Parse {
 			System.out.println("Point " + recNo + ":" + pt);
 		}
 
-		@Override
-		public void polygonClose(int recNo, int partIndex) {
-			System.out.println("Rec " + recNo + " part " + partIndex + " CLOSE");
-		}
-
-		@Override
-		public void polygonVertex(int recNo, int partIndex, int vertexIndex, GalliumPointD pt) {
-			System.out.println("Rec " + recNo + " part " + partIndex + " point " + vertexIndex + ":" + pt);
-		}
-
 		public Handler() {
 		}
 	}
 
+	private static class Polygon implements IGalliumShapefilePolygon {
+
+		@Override
+		public IGalliumShapefilePolygonPart createPart(int partIndex, int pointCount) {
+			System.out.println("Part " + partIndex + ": " + pointCount + " vertices");
+			return new PolygonPart();
+		}
+	}
+
+	private static class PolygonPart implements IGalliumShapefilePolygonPart {
+
+		@Override
+		public void close() {
+			System.out.println("Part CLOSE");
+		}
+
+		@Override
+		public void vertex(int vertexIndex, GalliumPointD pt) {
+			System.out.println("Part vertex " + vertexIndex + ":" + pt);
+		}
+	}
+
+	private static class PolyLine implements IGalliumShapefilePolyLine {
+
+		@Override
+		public IGalliumShapefilePolyLinePart createPart(int partIndex, int pointCount) {
+			System.out.println("Part " + partIndex + ": " + pointCount + " vertices");
+			return new PolyLinePart();
+		}
+	}
+
+	private static class PolyLinePart implements IGalliumShapefilePolyLinePart {
+
+		@Override
+		public void end() {
+			System.out.println("Part END");
+		}
+
+		@Override
+		public void vertex(int vertexIndex, GalliumPointD pt) {
+			System.out.println("Part vertex " + vertexIndex + ":" + pt);
+		}
+	}
 }

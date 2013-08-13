@@ -25,6 +25,22 @@ class ShapeReader {
 	private static final int DefaultBufferCap = 8 * CArgon.K;
 	private static final int FileHeaderBc = 100;
 
+	private void emitMultiPoint(IGalliumShapefileHandler handler, State state, int recNo)
+			throws FormatException, IOException {
+		final GalliumBoundingBoxD box = newBoundingBoxD(state);
+		final int pointCount = state.intLE("NumPoints");
+		final IGalliumShapefileMultiPoint oMultiPoint = handler.createMultiPoint(recNo, box, pointCount);
+		if (oMultiPoint == null) {
+			final int bcAdvance = pointCount * 16;
+			state.advance(bcAdvance);
+			return;
+		}
+		for (int pointIndex = 0; pointIndex < pointCount; pointIndex++) {
+			final GalliumPointD pt = newPointD(state);
+			oMultiPoint.point(pointIndex, pt);
+		}
+	}
+
 	private void emitPoint(IGalliumShapefileHandler handler, State state, int recNo)
 			throws FormatException, IOException {
 		final GalliumPointD pt = newPointD(state);
@@ -36,7 +52,8 @@ class ShapeReader {
 		final GalliumBoundingBoxD box = newBoundingBoxD(state);
 		final int partCount = state.intLE("NumParts");
 		final int pointCount = state.intLE("NumPoints");
-		if (!handler.acceptPolygon(recNo, box, partCount, pointCount)) {
+		final IGalliumShapefilePolygon oPolygon = handler.createPolygon(recNo, box, partCount, pointCount);
+		if (oPolygon == null) {
 			final int bcAdvance = (partCount * 4) + (pointCount * 16);
 			state.advance(bcAdvance);
 			return;
@@ -45,16 +62,46 @@ class ShapeReader {
 		for (int partIndex = 0, partNext = 1; partIndex < partCount; partIndex++, partNext++) {
 			final int pointStart = zptParts[partIndex];
 			final int pointEnd = partNext < partCount ? zptParts[partNext] : pointCount;
-			final int vertexLast = pointEnd - pointStart - 1;
-			if (vertexLast > 0) {
-				for (int pointIndex = pointStart, vertexIndex = 0; pointIndex < pointEnd; pointIndex++, vertexIndex++) {
-					final GalliumPointD pt = newPointD(state);
-					if (vertexIndex < vertexLast) {
-						handler.polygonVertex(recNo, partIndex, vertexIndex, pt);
-					} else {
-						handler.polygonClose(recNo, partIndex);
-					}
+			final int vertexCount = pointEnd - pointStart - 1;
+			final IGalliumShapefilePolygonPart oPart = oPolygon.createPart(partIndex, vertexCount);
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+				final GalliumPointD pt = newPointD(state);
+				if (oPart != null) {
+					oPart.vertex(vertexIndex, pt);
 				}
+			}
+			newPointD(state);
+			if (oPart != null) {
+				oPart.close();
+			}
+		}
+	}
+
+	private void emitPolyLine(IGalliumShapefileHandler handler, State state, int recNo)
+			throws FormatException, IOException {
+		final GalliumBoundingBoxD box = newBoundingBoxD(state);
+		final int partCount = state.intLE("NumParts");
+		final int pointCount = state.intLE("NumPoints");
+		final IGalliumShapefilePolyLine oPolyLine = handler.createPolyLine(recNo, box, partCount, pointCount);
+		if (oPolyLine == null) {
+			final int bcAdvance = (partCount * 4) + (pointCount * 16);
+			state.advance(bcAdvance);
+			return;
+		}
+		final int[] zptParts = state.intLEArray(partCount, "Parts");
+		for (int partIndex = 0, partNext = 1; partIndex < partCount; partIndex++, partNext++) {
+			final int pointStart = zptParts[partIndex];
+			final int pointEnd = partNext < partCount ? zptParts[partNext] : pointCount;
+			final int vertexCount = pointEnd - pointStart;
+			final IGalliumShapefilePolyLinePart oPart = oPolyLine.createPart(partIndex, vertexCount);
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+				final GalliumPointD pt = newPointD(state);
+				if (oPart != null) {
+					oPart.vertex(vertexIndex, pt);
+				}
+			}
+			if (oPart != null) {
+				oPart.end();
 			}
 		}
 	}
@@ -71,8 +118,14 @@ class ShapeReader {
 			case 1:
 				emitPoint(handler, state, recNo);
 			break;
+			case 3:
+				emitPolyLine(handler, state, recNo);
+			break;
 			case 5:
 				emitPolygon(handler, state, recNo);
+			break;
+			case 8:
+				emitMultiPoint(handler, state, recNo);
 			break;
 			default: {
 				throw FormatException.unsupportedShape(shapeType, recNo, state);
@@ -155,9 +208,7 @@ class ShapeReader {
 	}
 
 	private boolean supportedShape(int t) {
-		if (t < 0 || t > 31) return false;
-		if (t == 0) return true;
-		return (t == 1 || t == 3 || t == 5 || t == 8);
+		return (t == 0 || t == 1 || t == 3 || t == 5 || t == 8);
 	}
 
 	public void scan(IGalliumShapefileHandler handler)

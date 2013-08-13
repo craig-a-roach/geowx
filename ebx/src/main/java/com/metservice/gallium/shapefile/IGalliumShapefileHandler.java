@@ -19,11 +19,11 @@ public interface IGalliumShapefileHandler {
 
 	public boolean acceptHeader(GalliumShapefileHeader header);
 
-	public boolean acceptPolygon(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount);
+	public IGalliumShapefileMultiPoint createMultiPoint(int recNo, GalliumBoundingBoxD box, int pointCount);
+
+	public IGalliumShapefilePolygon createPolygon(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount);
+
+	public IGalliumShapefilePolyLine createPolyLine(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount);
 
 	public void point(int recNo, GalliumPointD pt);
-
-	public void polygonClose(int recNo, int partIndex);
-
-	public void polygonVertex(int recNo, int partIndex, int vertexIndex, GalliumPointD pt);
 }
