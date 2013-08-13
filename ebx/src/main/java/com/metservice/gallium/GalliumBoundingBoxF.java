@@ -85,6 +85,11 @@ public class GalliumBoundingBoxF implements Comparable<GalliumBoundingBoxF> {
 		return m_yHi - m_yLo;
 	}
 
+	public boolean intersects(GalliumBoundingBoxF rhs) {
+		if (rhs == null) throw new IllegalArgumentException("object is null");
+		return (rhs.m_xHi > m_xLo && rhs.m_yHi > m_yLo && rhs.m_xLo < m_xHi && rhs.m_yHi > m_yLo);
+	}
+
 	public GalliumBoundingBoxF newUnion(GalliumBoundingBoxF oRhs) {
 		if (oRhs == null) return this;
 		final float yLo = Math.min(m_yLo, oRhs.m_yLo);

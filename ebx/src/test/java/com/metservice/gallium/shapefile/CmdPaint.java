@@ -25,21 +25,29 @@ import com.metservice.gallium.GalliumPointD;
 public class CmdPaint {
 
 	public static void main(String[] args) {
-		if (args.length != 3) {
-			System.out.println("Usage: -fill|-stroke srcShapeFile dstPNG");
+		if (args.length != 4) {
+			System.out.println("Usage: -fill|-stroke -nz|-uk srcShapeFile dstPNG");
 			return;
 		}
 		final boolean fill = args[0].toLowerCase().equals("-fill");
-		final Path src = Paths.get(args[1]);
-		final Path dst = Paths.get(args[2]);
+		final boolean nz = args[1].toLowerCase().equals("-nz");
+		final Path src = Paths.get(args[2]);
+		final Path dst = Paths.get(args[3]);
 		final ShapeReader r = new ShapeReader(src);
-		final Color fg = fill ? new Color(220, 220, 180) : new Color(150, 100, 50);
+		final Color fg = fill ? new Color(210, 200, 180) : new Color(150, 100, 50);
 		final Color bg = fill ? new Color(50, 50, 80) : new Color(200, 200, 230);
-		final Canvas c = new Canvas(16000, 8000, fill, bg, fg);
+		final GalliumBoundingBoxD bounds = nz ? GalliumBoundingBoxD.newCorners(-55, 150, -30, 180) : GalliumBoundingBoxD
+				.newCorners(40, -15, 65, 15);
+		final Canvas c = new Canvas(bounds, fill, bg, fg);
 		final Handler h = new Handler(c);
 		try {
+			final long tsStart = System.currentTimeMillis();
 			r.scan(h);
+			final long tsScanned = System.currentTimeMillis();
+			System.out.println("Scan = " + (tsScanned - tsStart) + "ms");
 			c.save(dst.toFile());
+			final long tsSaved = System.currentTimeMillis();
+			System.out.println("Save = " + (tsSaved - tsScanned) + "ms");
 		} catch (GalliumShapefileFormatException | GalliumShapefileReadException ex) {
 			ex.printStackTrace();
 		}
@@ -64,16 +72,23 @@ public class CmdPaint {
 		}
 
 		public float x(GalliumPointD pt) {
-			final double xd = ((pt.x / 360.0) + 0.5) * m_width;
+			final double w = bounds.width();
+			final double xLo = bounds.xLo();
+			final double xd = ((pt.x - xLo) / w) * m_width;
 			return (float) xd;
 		}
 
 		public float y(GalliumPointD pt) {
-			final double yd = (0.5 - (pt.y / 180.0)) * m_height;
-			return (float) yd;
+			final double h = bounds.height();
+			final double yHi = bounds.yHi();
+			final double xd = ((yHi - pt.y) / h) * m_height;
+			return (float) xd;
 		}
 
-		public Canvas(int w, int h, boolean fill, Color bg, Color fg) {
+		public Canvas(GalliumBoundingBoxD b, boolean fill, Color bg, Color fg) {
+			final int w = (int) Math.round(b.width() * 50.0);
+			final int h = (int) Math.round(b.height() * 50.0);
+			this.bounds = b;
 			m_width = w;
 			m_height = h;
 			m_fill = fill;
@@ -87,6 +102,7 @@ public class CmdPaint {
 				m_g2d.setColor(fg);
 			}
 		}
+		final GalliumBoundingBoxD bounds;
 		private final int m_width;
 		private final int m_height;
 		private final boolean m_fill;
@@ -115,7 +131,7 @@ public class CmdPaint {
 
 		@Override
 		public IGalliumShapefilePolygon createPolygon(int recNo, GalliumBoundingBoxD box, int partCount, int pointCount) {
-			return new Polygon(m_canvas);
+			return (m_bounds.intersects(box)) ? new Polygon(m_canvas) : null;
 		}
 
 		@Override
@@ -129,8 +145,10 @@ public class CmdPaint {
 
 		public Handler(Canvas canvas) {
 			m_canvas = canvas;
+			m_bounds = canvas.bounds;
 		}
 		private final Canvas m_canvas;
+		private final GalliumBoundingBoxD m_bounds;
 	}
 
 	private static class Polygon implements IGalliumShapefilePolygon {

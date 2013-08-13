@@ -76,6 +76,11 @@ public class GalliumBoundingBoxD implements Comparable<GalliumBoundingBoxD> {
 		return m_yHi - m_yLo;
 	}
 
+	public boolean intersects(GalliumBoundingBoxD rhs) {
+		if (rhs == null) throw new IllegalArgumentException("object is null");
+		return (rhs.m_xHi > m_xLo && rhs.m_yHi > m_yLo && rhs.m_xLo < m_xHi && rhs.m_yHi > m_yLo);
+	}
+
 	public GalliumBoundingBoxD newUnion(GalliumBoundingBoxD oRhs) {
 		if (oRhs == null) return this;
 		final double yLo = Math.min(m_yLo, oRhs.m_yLo);
@@ -86,6 +91,7 @@ public class GalliumBoundingBoxD implements Comparable<GalliumBoundingBoxD> {
 	}
 
 	public boolean similarTo(GalliumBoundingBoxD rhs) {
+		if (rhs == null) throw new IllegalArgumentException("object is null");
 		if (!ArgonCompare.similar(m_yLo, rhs.m_yLo)) return false;
 		if (!ArgonCompare.similar(m_xLo, rhs.m_xLo)) return false;
 		if (!ArgonCompare.similar(m_yHi, rhs.m_yHi)) return false;
@@ -94,6 +100,7 @@ public class GalliumBoundingBoxD implements Comparable<GalliumBoundingBoxD> {
 	}
 
 	public boolean similarTo(GalliumBoundingBoxD rhs, float epsilon) {
+		if (rhs == null) throw new IllegalArgumentException("object is null");
 		if (!ArgonCompare.similar(m_yLo, rhs.m_yLo, epsilon)) return false;
 		if (!ArgonCompare.similar(m_xLo, rhs.m_xLo, epsilon)) return false;
 		if (!ArgonCompare.similar(m_yHi, rhs.m_yHi, epsilon)) return false;
