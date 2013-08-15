@@ -1,0 +1,2 @@
+Syntax error in JSON string at position 37...Expecting ','
+{user:"met", files:["f1.txt","f2.txt" HERE>>>}<<<}

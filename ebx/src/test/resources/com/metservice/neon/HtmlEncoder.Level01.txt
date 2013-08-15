@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<HTML>
+  <HEAD>
+    <TITLE>Radio Group</TITLE>
+    <LINK href="../styles/core.css" rel="stylesheet" type="text/css">
+    <STYLE type="text/css">#result tt {
+  color: maroon;
+  font-size: 1.1em;
+}
+form>div {
+  margin-top: 0.9em;
+}
+</STYLE>
+    <SCRIPT src="../scripts/jquery-1.4.js" type="text/javascript"></SCRIPT>
+    <SCRIPT type="text/javascript">$(function(){
+  $('#testButton').click(function(){
+    var checkedValue = $('[name="rg"]:radio:checked').val();
+    $('#result').html('The radio element with value <tt>' + checkedValue + '</tt> is checked.');
+  });
+});
+</SCRIPT></HEAD>
+  <BODY>
+    <FORM>
+      <DIV>
+        <LABEL for="radioYes">Your answer?</LABEL>
+        <INPUT checked="checked" id="radioYes" name="rg" type="radio" value="yes">Yes<INPUT id="radioNo" name="rg" type="radio" value="no">No<INPUT id="radioMaybe" name="rg" type="radio" value="maybe">Maybe</DIV>
+      <DIV>
+        <BUTTON class="green90x24" id="testButton" type="button">Which?</BUTTON></DIV>
+      <DIV id="result"></DIV></FORM></BODY></HTML>

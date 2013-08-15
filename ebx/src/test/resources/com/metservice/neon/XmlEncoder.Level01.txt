@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<purchaseReport xmlns="http://www.example.com/Report" xmlns:iso="http://www.iso.org/2009/ProductSchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xsd:year="2010">
+  <region code="N">
+    <iso:product>
+      <iso:id>A</iso:id>
+      <iso:qty>6</iso:qty>
+    </iso:product>
+    <iso:product>
+      <iso:id>B</iso:id>
+      <iso:qty>13</iso:qty>
+    </iso:product>
+  </region>
+  <region code="S">
+    <iso:product>
+      <iso:id>A</iso:id>
+      <iso:qty>3</iso:qty>
+    </iso:product>
+    <iso:product>
+      <iso:id>B</iso:id>
+      <iso:qty>17</iso:qty>
+    </iso:product>
+  </region>
+</purchaseReport>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<purchaseReport year="2010">
+  <region code="N">
+    <product id="A" qty="6"/>
+    <product id="B" qty="13"/>
+  </region>
+  <region code="S">
+    <product id="A" qty="3"/>
+    <product id="B" qty="17"/>
+  </region>
+</purchaseReport>

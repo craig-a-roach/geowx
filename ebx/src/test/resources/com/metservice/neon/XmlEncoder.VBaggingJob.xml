@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dpt SYSTEM "VBaggingJob.dtd">
+<dpt>
+ <parameters>
+  <job_instance_id>1</job_instance_id>
+  <job_class>VBaggingJob</job_class>
+  <base_time>2010-03-10 00:00:00.000</base_time>
+  <data_root_path><![CDATA[UnitTest/JobRunner/VBaggingJob01/]]></data_root_path>
+  <vbaggingjob>
+   <action>update</action>
+   <base_step>720</base_step>
+   <base_time>from-schedule</base_time>
+   <equation_output_path><![CDATA[UnitTest/JobRunner/VBaggingJob01/equations/]]></equation_output_path>
+   <forecast_name>FTFWindEC</forecast_name>
+   <input_smearing>0.001</input_smearing>
+   <minimum_width>0.333</minimum_width>
+   <number_of_gaussians>10</number_of_gaussians>
+   <predictand>ECMWFdetf10</predictand>
+   <predictor_set_name>ZieglerFinal</predictor_set_name>
+  </vbaggingjob>
+ </parameters>
+ <data>
+  <predictor>
+   <name>Constant</name>
+   <equation_string>1</equation_string>
+  </predictor>
+  <predictor>
+   <name>ECMWFdetf10</name>
+   <equation_string>1</equation_string>
+  </predictor>
+  <predictor_set>
+   <name>ZieglerFinal</name>
+   <member>
+    <name>Constant</name>
+    <type>predictor</type>
+   </member>
+   <member>
+    <name>ECMWFdetf102</name>
+    <type>primitive</type>
+   </member>
+  </predictor_set>
+  <primitive_predictor>
+   <name>ECMWFdetf10</name>
+   <process>raw</process>
+   <source>ECMWF</source>
+   <category>single</category>
+   <domain_name>global</domain_name>
+   <variable>f10</variable>
+  </primitive_predictor>
+  <primitive_predictor>
+   <name>ECMWFdetf102</name>
+   <process>raw</process>
+   <source>ECMWF</source>
+   <category>single</category>
+   <domain_name>global</domain_name>
+   <variable>f10</variable>
+  </primitive_predictor>
+  <station>
+   <station_id>UK1</station_id>
+   <name>United Kingdom 1</name>
+   <offset_to_utc>00:00</offset_to_utc>
+  </station>
+  <station>
+   <station_id>SPA1</station_id>
+   <name>Spain 1</name>
+   <offset_to_utc>00:00</offset_to_utc>
+  </station>
+ </data>
+</dpt>

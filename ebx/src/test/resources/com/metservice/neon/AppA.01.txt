@@ -1,0 +1,3 @@
+[0 prog 0 lastModified 20110601T1201Z00M000 files fh.0000_pa.membrc00_tl.press_gr.onedeg...4 members c00,p01,p02,p03]
+[1 prog 6h lastModified 20110601T1203Z00M000 files fh.0006_pa.membrc00_tl.press_gr.onedeg...5 members c00,p01,p02,p03,p04]
+[2 prog 12h lastModified 20110601T1205Z00M000 files fh.0012_pa.membrc00_tl.press_gr.onedeg...4 members c00,p01,p02,p03]

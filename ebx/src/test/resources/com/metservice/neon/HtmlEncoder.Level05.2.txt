@@ -1,0 +1,1 @@
+<DIV class="info"><DIV class="directive"><DIV><EM>files: </EM><SPAN class="directiveJson">[{lm:1234567890Z,nm:"f1.txt",sz:4200.0,tmo:null},{lm:2468024680Z,nm:"f2.txt",sz:5100.0,tmo:5}]</SPAN></DIV><DIV><EM>passive: </EM><SPAN>true</SPAN></DIV><DIV><EM>timeout: </EM><SPAN>30s</SPAN></DIV><DIV><EM>user: </EM><SPAN>met</SPAN></DIV></DIV></DIV>

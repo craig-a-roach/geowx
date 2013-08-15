@@ -1,0 +1,18 @@
+{
+ files:[
+  {
+   lm:1234567890Z
+   ,nm:"f1.txt"
+   ,sz:4200.0
+   ,tmo:null
+  }
+  ,{
+   lm:2468024680Z
+   ,nm:"f2.txt"
+   ,sz:5100.0
+   ,tmo:5
+  }
+ ]
+ ,passive:true
+ ,timeout:30000M
+ ,user:"met"}

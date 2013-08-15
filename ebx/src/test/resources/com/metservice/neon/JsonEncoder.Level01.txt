@@ -1,0 +1,16 @@
+{
+ files:[
+  {
+   name:"f1.txt"
+   ,path:"grib"
+  }
+  ,{
+   name:"f2.txt"
+   ,path:"grib"
+   ,timeout:17
+  }
+ ]
+ ,passive:true
+ ,pwd:null
+ ,timeout:30
+ ,user:"met"}

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Element Objects -->
+<!ELEMENT action (#PCDATA)>        
+<!ELEMENT base_step (#PCDATA)>
+<!ELEMENT base_time (#PCDATA)>
+<!ELEMENT base_time_offset (#PCDATA)>
+<!ELEMENT base_time_tolerance (#PCDATA)>
+<!ELEMENT caf_output_path (#PCDATA)>
+<!ELEMENT category (#PCDATA)>
+<!ELEMENT custom (#PCDATA)>
+<!ELEMENT data_root_path (#PCDATA)>
+<!ELEMENT data_period (#PCDATA)>
+<!ELEMENT data_points (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT domain_name (#PCDATA)> 
+<!ELEMENT eor_output_path (#PCDATA)>
+<!ELEMENT equation_input_path (#PCDATA)>   
+<!ELEMENT equation_output_path (#PCDATA)>
+<!ELEMENT equation_parameters (#PCDATA)>
+<!ELEMENT equation_string (#PCDATA)>
+<!ELEMENT error (#PCDATA)>
+<!ELEMENT error_type (#PCDATA)>
+<!ELEMENT forecast_name (#PCDATA)>
+<!ELEMENT forecast_type (#PCDATA)>
+<!ELEMENT historic_apply_now_offset (#PCDATA)>
+<!ELEMENT historic_number_of_forecasts (#PCDATA)>
+<!ELEMENT historic_update_now_offset (#PCDATA)>
+<!ELEMENT input_smearing (#PCDATA)> 
+<!ELEMENT interpolate (#PCDATA)>
+<!ELEMENT job_class (#PCDATA)>
+<!ELEMENT job_instance_id (#PCDATA)>
+<!ELEMENT last_base_time (#PCDATA)>
+<!ELEMENT last_update (#PCDATA)>   
+<!ELEMENT location (#PCDATA)> 
+<!ELEMENT minimum_width (#PCDATA)>
+<!ELEMENT name (#PCDATA)>     
+<!ELEMENT notes (#PCDATA)> 
+<!ELEMENT number_of_gaussians (#PCDATA)>
+<!ELEMENT number_of_iterations (#PCDATA)>
+<!ELEMENT number_of_steps (#PCDATA)>
+<!ELEMENT offset_to_utc (#PCDATA)>
+<!ELEMENT predictand (#PCDATA)>
+<!ELEMENT predictor_name (#PCDATA)>
+<!ELEMENT predictor_set_name (#PCDATA)>      
+<!ELEMENT predictor_importance (#PCDATA)>
+<!ELEMENT predictor_importance_group_ensembles (#PCDATA)>
+<!ELEMENT predictor_importance_time_period_step_size (#PCDATA)>
+<!ELEMENT predictor_importance_to_file (#PCDATA)>
+<!ELEMENT process (#PCDATA)>
+<!ELEMENT prognosis_from_equation (#PCDATA)>
+<!ELEMENT prognosis_from_predictand (#PCDATA)>
+<!ELEMENT prognosis_list (#PCDATA)>
+<!ELEMENT prognosis_period (#PCDATA)>
+<!ELEMENT prognosis_period_offset (#PCDATA)>
+<!ELEMENT prognosis_start (#PCDATA)>
+<!ELEMENT prognosis_start_adjusted_to_start_of_local_day (#PCDATA)>
+<!ELEMENT prognosis_step (#PCDATA)>
+<!ELEMENT run_time (#PCDATA)>
+<!ELEMENT source (#PCDATA)>
+<!ELEMENT station_id (#PCDATA)>    
+<!ELEMENT station_name (#PCDATA)>
+<!ELEMENT station_set_id (#PCDATA)>
+<!ELEMENT stations (#PCDATA)>       
+<!ELEMENT step_size_adjustment (#PCDATA)>
+<!ELEMENT technique (#PCDATA)> 
+<!ELEMENT training_length (#PCDATA)>
+<!ELEMENT training_offset (#PCDATA)>
+<!ELEMENT transformation_power (#PCDATA)>
+<!ELEMENT transformation_type (#PCDATA)>
+<!ELEMENT truncation_width (#PCDATA)>     
+<!ELEMENT type (#PCDATA)>
+<!ELEMENT update_frequency (#PCDATA)>
+<!ELEMENT variable (#PCDATA)>      
+            
+<!-- Structure -->
+<!ELEMENT dpt (parameters, data)>
+  <!ELEMENT parameters (job_instance_id, job_class, base_time, data_root_path, vbaggingjob)>             
+    <!ELEMENT vbaggingjob (action?, base_step?, base_time?, caf_output_path?, eor_output_path?, equation_input_path?,
+      equation_output_path?, forecast_name?, forecast_type?, historic_apply_now_offset?, historic_number_of_forecasts?,
+      historic_update_now_offset?, input_smearing?, minimum_width?, number_of_gaussians?, 
+      number_of_iterations?, number_of_steps?, predictand, predictor_name?, predictor_set_name?, 
+      predictor_importance?, predictor_importance_group_ensembles?, predictor_importance_time_period_step_size?,
+      predictor_importance_to_file?, prognosis_from_equation?, prognosis_from_predictand?,
+      prognosis_list?, prognosis_period?, prognosis_start?, prognosis_start_adjusted_to_start_of_local_day?,
+      prognosis_step?, station_set_id?, stations?,
+      step_size_adjustment?, training_length?, training_offset?, transformation_power?, transformation_type?, 
+      truncation_width?) >          
+  <!ELEMENT data (domain*, equation*, model*, predictor*, predictor_set*, primitive_predictor*, station*)>
+    <!ELEMENT domain (name, description)>
+    <!ELEMENT equation (station_name, predictand, predictor_set_name, run_time, prognosis_period, technique,
+      custom?, error?, error_type?, data_points?, data_period?, update_frequency?, last_update?, last_base_time?, notes?,
+      equation_parameters)>    
+    <!ELEMENT model (name, description)>
+    <!ELEMENT predictor (name, equation_string)>
+    <!ELEMENT predictor_set (name, member*)>
+      <!ELEMENT member (name, type)>          
+    <!ELEMENT primitive_predictor (name, process, source, category, domain_name, variable, base_time_offset?,
+      prognosis_period_offset?, interpolate?, base_time_tolerance?, location?)>       
+    <!ELEMENT station (station_id, name, offset_to_utc)>
+
+

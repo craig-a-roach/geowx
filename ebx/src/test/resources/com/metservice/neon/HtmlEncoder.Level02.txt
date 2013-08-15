@@ -1,0 +1,3 @@
+<P>abc<SPAN class="t" id="t1">e&lt;f&#186;&gt;g</SPAN>h&lt;i&gt;j&amp;k<span id="t4" title="t&amp;u">
+j&lt;k&amp;
+</span><UL id="u3"><LI class="ka">1&nbsp;&nbsp;x<br>1&nbsp;&nbsp;y</LI><LI class="kb">2&nbsp;&nbsp;x<br>2&nbsp;&nbsp;y<br>2&nbsp;z</LI><LI>3&lt;</LI></UL></P>

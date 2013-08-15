@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dpt SYSTEM "../DataIngestJob.dtd">
+<dpt>
+  <data>
+    <domain>
+      <description>Global Domain</description>
+      <name>global</name>
+    </domain>
+    <model>
+      <description>Test Model 01</description>
+      <name>ECMWF</name>
+    </model>
+    <station>
+      <name>United Kingdom 1</name>
+      <offset_to_utc>00:00</offset_to_utc>
+      <station_id>UK1</station_id>
+    </station>
+    <station>
+      <name>Some Station</name>
+      <offset_to_utc>00:00</offset_to_utc>
+      <station_id>DEN1</station_id>
+    </station>
+    <station>
+      <name>Some Station</name>
+      <offset_to_utc>00:00</offset_to_utc>
+      <station_id>DEN2</station_id>
+    </station>
+    <station>
+      <name>Some Station</name>
+      <offset_to_utc>00:00</offset_to_utc>
+      <station_id>SPA1</station_id>
+    </station>
+    <station_region>
+      <east>-0.6</east>
+      <north>55.5</north>
+      <south>54.5</south>
+      <station_id>UK1</station_id>
+      <west>-6.25</west>
+    </station_region>
+    <station_region>
+      <east>9.57</east>
+      <north>57.2</north>
+      <south>54.87</south>
+      <station_id>DEN1</station_id>
+      <west>7.84</west>
+    </station_region>
+    <station_region>
+      <east>12.7</east>
+      <north>56.15</north>
+      <south>54.84</south>
+      <station_id>DEN2</station_id>
+      <west>10.8</west>
+    </station_region>
+    <station_region>
+      <east>-3.63</east>
+      <north>49.82</north>
+      <south>47.49</south>
+      <station_id>SPA1</station_id>
+      <west>-4.89</west>
+    </station_region>
+  </data>
+  <parameters>
+    <base_time>2008-03-22 00:00:00.000</base_time>
+    <data_root_path>UnitTest/JobRunner/DataIngestJob01/</data_root_path>
+    <dataingestjob>
+      <activate_post_processing>false</activate_post_processing>
+      <caf_file_dropoff_location>UnitTest/JobRunner/DataIngestJob01/caf/ecmwf_single_${station}_${predictor}_${base-datetime-utc}.caf</caf_file_dropoff_location>
+      <caf_output_variable>f10</caf_output_variable>
+      <delete_ingested>false</delete_ingested>
+      <do_station_interpolation>true</do_station_interpolation>
+      <flag_file_check_interval>10</flag_file_check_interval>
+      <flag_file_path>TestData/JobRunner/netcdf/flags/uk_hires_ec_det_${base-hour-utc}Z.${base-date6-utc}${base-hour-utc}</flag_file_path>
+      <flag_file_timeout>43200</flag_file_timeout>
+      <ingest_days_back>0</ingest_days_back>
+      <label_rule>process::raw</label_rule>
+      <label_rule>model::ECMWF</label_rule>
+      <label_rule>domain::global</label_rule>
+      <label_rule>type::single</label_rule>
+      <source_path>TestData/JobRunner/netcdf/uk_hires/*.nc</source_path>
+      <station_set_id>81</station_set_id>
+    </dataingestjob>
+    <job_class>DataIngestJob</job_class>
+    <job_instance_id>1</job_instance_id>
+  </parameters>
+</dpt>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sww>
+  <region name="Otago">
+    <areas>High Country and Lakes</areas>
+    <category id="HeavyRain">Intense bursts about <span class="place">High Country</span> later
+this afternoon, gradually moving <span class="place">south</span> towards
+evening.</category>
+    <category id="StrongWind"><b>85kts</b>later in the <b>morning</b></category>
+  </region>
+  <region name="Manawatu">
+    <category id="Snow"/>
+    <category id="StrongWind"/>
+  </region>
+</sww>

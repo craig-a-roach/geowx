@@ -1,0 +1,21 @@
+<DIV id="tabMain">
+ <UL>
+  <LI>
+   <A href="#panelA">Alpha</A></LI>
+  <LI>
+   <A href="#panelB">Bravo</A></LI>
+  <LI>
+   <A href="#panelC">Charlie</A></LI></UL>
+ <DIV id="panelA">
+  <UL>
+   <LI>A1</LI>
+   <LI>A2</LI></UL></DIV>
+ <DIV id="panelB">
+  <UL>
+   <LI>
+    <SPAN>B</SPAN><SPAN>1</SPAN></LI>
+   <LI>B2</LI></UL></DIV>
+ <DIV id="panelC">
+  <UL>
+   <LI>C1</LI>
+   <LI>C2</LI></UL></DIV></DIV>
