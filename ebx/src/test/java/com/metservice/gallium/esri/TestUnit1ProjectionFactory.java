@@ -9,12 +9,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.metservice.gallium.GalliumPointD;
-import com.metservice.gallium.esri.GalliumProjectionException;
-import com.metservice.gallium.esri.GalliumSyntaxException;
-import com.metservice.gallium.esri.IGalliumProjection;
-import com.metservice.gallium.esri.ProjectedCoordinateSystem;
-import com.metservice.gallium.esri.WktCoordinateSystemFactory;
-import com.metservice.gallium.esri.WktStructure;
 
 /**
  * @author roach
@@ -47,6 +41,45 @@ public class TestUnit1ProjectionFactory {
 
 	private static WktStructure param(String name, double value) {
 		return new WktStructure("PARAMETER", name, value);
+	}
+
+	public void a700_gnomonicOblique() {
+		final WktStructure p = new WktStructure("PROJECTION", "Gnomonic 43047");
+		final WktStructure[] params = { param("latitudeOfCenter", deg('S', 41, 0)),
+				param("longitudeOfCenter", deg('E', 170, 0)) };
+		final WktStructure spec = new WktStructure("PROJCS", "Orthographic Ref", GCS_Sphere, p, params, Metres);
+		try {
+			final ProjectedCoordinateSystem pcs = WktCoordinateSystemFactory.newCoordinateSystemProjected(spec.format());
+			final IGalliumProjection pj = pcs.newProjection();
+			{
+				final double lon = 175.0;
+				final double lat = -40.0;
+				final GalliumPointD pt = pj.transform(lon, lat);
+				Assert.assertEquals("Easting(m)", 426363.85, pt.x, 1e-2);
+				Assert.assertEquals("Northing(m)", 99238.62, pt.y, 1e-2);
+				final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+				Assert.assertEquals("Lon", lon, pi.x, 1e-2);
+				Assert.assertEquals("Lat", lat, pi.y, 1e-2);
+			}
+			{
+				final double lon = -175.0;
+				final double lat = 10.0;
+				final GalliumPointD pt = pj.transform(lon, lat);
+				Assert.assertEquals("Easting(m)", 2688573.86, pt.x, 1e-2);
+				Assert.assertEquals("Northing(m)", 7965197.16, pt.y, 1e-2);
+				final GalliumPointD pi = pj.inverseDegrees(pt.x, pt.y);
+				Assert.assertEquals("Lon", lon, pi.x, 1e-2);
+				Assert.assertEquals("Lat", lat, pi.y, 1e-2);
+			}
+		} catch (final GalliumSyntaxException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Syntax Exception: " + ex.getMessage());
+		} catch (final GalliumProjectionException ex) {
+			System.out.println(spec.format());
+			System.err.println(ex.getMessage());
+			Assert.fail("Projection Exception: " + ex.getMessage());
+		}
 	}
 
 	@Test
