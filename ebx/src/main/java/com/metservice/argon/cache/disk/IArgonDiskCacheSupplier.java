@@ -10,9 +10,9 @@ import com.metservice.argon.cache.ArgonCacheException;
 /**
  * @author roach
  */
-public interface IArgonDiskCacheSupplier {
+public interface IArgonDiskCacheSupplier<R extends IArgonDiskCacheRequest> {
 
-	public IArgonDiskCacheable find(IArgonDiskCacheRequest request)
+	public IArgonDiskCacheable find(R request)
 			throws ArgonCacheException;
 
 }

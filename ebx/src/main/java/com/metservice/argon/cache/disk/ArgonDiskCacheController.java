@@ -50,7 +50,7 @@ public class ArgonDiskCacheController {
 		return new ArgonDiskCacheController(cfg, timer);
 	}
 
-	public File find(IArgonDiskCacheSupplier supplier, IArgonDiskCacheRequest request) {
+	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request) {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
 		if (request == null) throw new IllegalArgumentException("object is null");
 		return null;
@@ -167,22 +167,3 @@ public class ArgonDiskCacheController {
 		long msCheckpointTimerPeriod = DefaultCheckpointTimerPeriodMs;
 	}
 }
-
-/*
- * class Adler32Checksum {
- * 
- * public static int and(byte[] ozpt, int a32in) { return ozpt == null ? a32in : and(ozpt, 0, ozpt.length, a32in); }
- * 
- * public static int and(byte[] ozpt, int offset, int length, int a32in) { if (ozpt == null || ozpt.length == 0 ||
- * length == 0) return a32in;
- * 
- * final long ua32in = a32in & 0xffffffffL; long s1 = ua32in & 0xffffL; long s2 = (ua32in >> 16) & 0xffffL; int len =
- * length; int bufpos = offset; while (len > 0) { int k = len < NMAX ? len : NMAX; len -= k; while (k > 0) { final long
- * b = ozpt[bufpos] & 0xffL; bufpos++; s1 += b; s2 += s1; k--; } s1 = s1 % MOD_ADLER; s2 = s2 % MOD_ADLER; }
- * 
- * final long ua32out = (s2 << 16) | s1; return (int) ua32out; }
- * 
- * public static final int Init = 1;
- * 
- * private static final long MOD_ADLER = 65521L; private static final int NMAX = 5552; }
- */
