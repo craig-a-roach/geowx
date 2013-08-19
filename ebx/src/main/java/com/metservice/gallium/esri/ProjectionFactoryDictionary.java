@@ -33,6 +33,7 @@ class ProjectionFactoryDictionary {
 		b.add(ProjectionSelector.newEsri(43020, "Lambert_Conformal_Conic", XfLambertConformalConic.class));
 		b.add(ProjectionSelector.newEsri(43026, "Stereographic", XfStereographic.class));
 		b.add(ProjectionSelector.newEsri(43041, "Orthographic", XfOrthographic.class));
+		b.add(ProjectionSelector.newEsri(43047, "Gnomonic", XfGnomonic.class));
 		b.add(ProjectionSelector.newEsri(43050, "Stereographic_North_Pole", XfStereographic.class, XfStereographic.NorthPole));
 		b.add(ProjectionSelector.newEsri(43051, "Stereographic_South_Pole", XfStereographic.class, XfStereographic.SouthPole));
 
