@@ -12,6 +12,8 @@ import java.util.Date;
  */
 public interface IArgonDiskCacheRequest {
 
+	public String getContentType();
+
 	public Date getValidator();
 
 	public boolean isValid(Date validator);

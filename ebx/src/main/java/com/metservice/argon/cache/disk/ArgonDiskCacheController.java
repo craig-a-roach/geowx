@@ -7,11 +7,16 @@ package com.metservice.argon.cache.disk;
 
 import java.io.File;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.metservice.argon.ArgonPermissionException;
+import com.metservice.argon.ArgonPlatformException;
 import com.metservice.argon.ArgonQuotaException;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.ArgonStreamReadException;
@@ -20,6 +25,7 @@ import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonFileProbe;
+import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.management.IArgonSpaceId;
 
@@ -28,8 +34,13 @@ import com.metservice.argon.management.IArgonSpaceId;
  */
 public class ArgonDiskCacheController {
 
+	public static final String MessageDigestAlgorithm = "SHA-1";
 	public static final String ThreadPrefix = "argon-cache-disk-";
 	public static final String SubDirDiskCache = "diskcache";
+
+	private static String qlcFormatDigest(byte[] digest) {
+		return "";
+	}
 
 	public static Config newConfig(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
@@ -42,17 +53,61 @@ public class ArgonDiskCacheController {
 		return new Config(probe, cndir, qccThreadName);
 	}
 
-	public static ArgonDiskCacheController newInstance(Config cfg) {
+	public static ArgonDiskCacheController newInstance(Config cfg)
+			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
-		final CheckpointTask task = new CheckpointTask(cfg);
-		final Timer timer = new Timer(cfg.qccThreadName, true);
-		timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
-		return new ArgonDiskCacheController(cfg, timer);
+		try {
+			final MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithm);
+			final CheckpointTask task = new CheckpointTask(cfg);
+			final Timer timer = new Timer(cfg.qccThreadName, true);
+			timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
+			return new ArgonDiskCacheController(cfg, timer, digester);
+		} catch (final NoSuchAlgorithmException ex) {
+			final String m = "Digest algorithm required by cache controller is not available..." + Ds.message(ex);
+			throw new ArgonPlatformException(m);
+		}
 	}
 
-	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request) {
+	private String qlcFileNameLk(IArgonDiskCacheRequest request) {
+		final Binary rid = Binary.newFromStringUTF8(request.qccResourceId());
+		m_digester.reset();
+		m_digester.update(rid.zptReadOnly);
+		final byte[] digest = m_digester.digest();
+		return qlcFormatDigest(digest);
+	}
+
+	private void registerHit(String qlcFileName) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void registerMiss() {
+		// TODO Auto-generated method stub
+
+	}
+
+	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
+			throws ArgonCacheException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
 		if (request == null) throw new IllegalArgumentException("object is null");
+		m_rwLock.readLock().lock();
+		try {
+			final String qlcFileName = qlcFileNameLk(request);
+			final File file = new File(m_cndir, qlcFileName);
+			// CHECK MRU table ?
+			final boolean exists = file.exists();
+			if (!exists) {
+				registerMiss();
+			} else {
+				registerHit(qlcFileName);
+			}
+		} finally {
+			m_rwLock.readLock().unlock();
+		}
+		final IArgonDiskCacheable oCacheable = supplier.find(request);
+		if (oCacheable == null) return null;
+		final Binary oContent = oCacheable.getContent();
+		if (oContent == null) return null;
 		return null;
 	}
 
@@ -68,18 +123,22 @@ public class ArgonDiskCacheController {
 		return destFile;
 	}
 
-	private ArgonDiskCacheController(Config config, Timer timer) {
+	private ArgonDiskCacheController(Config config, Timer timer, MessageDigest digester) {
 		assert config != null;
 		assert timer != null;
+		assert digester != null;
 		m_probe = config.probe;
 		m_cndir = config.cndir;
 		m_timer = timer;
+		m_digester = digester;
 		m_bcSizeQuota = config.bcSizeQuota;
 		m_bcSizeEst = config.bcSizeEst;
 	}
+	private final ReadWriteLock m_rwLock = new ReentrantReadWriteLock();
 	private final IArgonFileProbe m_probe;
 	private final File m_cndir;
 	private final Timer m_timer;
+	private final MessageDigest m_digester;
 	private final int m_bcSizeQuota;
 	private final int m_bcSizeEst;
 

@@ -13,6 +13,11 @@ import java.util.Date;
 public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheRequest {
 
 	@Override
+	public String getContentType() {
+		return m_oqContentType;
+	}
+
+	@Override
 	public Date getValidator() {
 		return null;
 	}
@@ -36,12 +41,18 @@ public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheRequest {
 	}
 
 	public ArgonDiskCacheClasspathRequest(Class<?> resourceRef, String qccResourcePath) {
+		this(resourceRef, qccResourcePath, null);
+	}
+
+	public ArgonDiskCacheClasspathRequest(Class<?> resourceRef, String qccResourcePath, String oqContentType) {
 		if (resourceRef == null) throw new IllegalArgumentException("object is null");
 		if (qccResourcePath == null || qccResourcePath.length() == 0)
 			throw new IllegalArgumentException("string is null or empty");
 		m_resourceRef = resourceRef;
 		m_qccResourcePath = qccResourcePath;
+		m_oqContentType = oqContentType;
 	}
 	private final Class<?> m_resourceRef;
 	private final String m_qccResourcePath;
+	private final String m_oqContentType;
 }
