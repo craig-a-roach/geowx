@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.metservice.argon.text.ArgonNumber;
+import com.metservice.argon.ArgonNumber;
 
 /**
  * @author roach

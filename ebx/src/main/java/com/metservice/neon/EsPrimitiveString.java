@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.metservice.argon.ArgonFormatException;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.Binary;
 import com.metservice.argon.DateFactory;
@@ -25,7 +26,6 @@ import com.metservice.argon.json.IJsonNative;
 import com.metservice.argon.json.IJsonString;
 import com.metservice.argon.json.JsonString;
 import com.metservice.argon.json.JsonType;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * 

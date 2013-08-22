@@ -10,8 +10,6 @@ import java.util.Properties;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.metservice.argon.text.ArgonTransformer;
-
 /**
  * @author roach
  */
@@ -63,4 +61,14 @@ public class TestUnit1Transformer {
 		Assert.assertEquals("ab...", ArgonTransformer.zLeftDot3("abcdef", 5));
 	}
 
+	@Test
+	public void t80() {
+		final String src = "http://metservice.com";
+		try {
+			final String dst = ArgonTransformer.base64UrlDecode(ArgonTransformer.base64UrlEncode(src));
+			Assert.assertEquals(src, dst);
+		} catch (final ArgonFormatException ex) {
+			Assert.fail(ex.getMessage());
+		}
+	}
 }

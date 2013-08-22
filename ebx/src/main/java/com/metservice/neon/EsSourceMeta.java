@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.metservice.argon.text.ArgonJoiner;
+import com.metservice.argon.ArgonJoiner;
 
 /**
  * @author roach

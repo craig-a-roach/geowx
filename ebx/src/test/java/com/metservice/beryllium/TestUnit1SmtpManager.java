@@ -20,8 +20,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.metservice.argon.ArgonClock;
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.DateFormatter;
-import com.metservice.argon.text.ArgonJoiner;
 
 /**
  * @author roach

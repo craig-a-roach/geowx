@@ -14,22 +14,6 @@ import org.junit.Test;
 public class TestUnit1B64 {
 
 	@Test
-	public void a70() {
-		final String src1 = "h:/";
-		final String src2 = "h:/w";
-		final String enc1 = Binary.newFromStringUTF8(src1).newB64URL();
-		final String enc2 = Binary.newFromStringUTF8(src2).newB64URL();
-		try {
-			final String dst1 = Binary.newFromB64URL(enc1).newStringUTF8();
-			final String dst2 = Binary.newFromB64URL(enc2).newStringUTF8();
-			Assert.assertEquals(src1, dst1);
-			Assert.assertEquals(src2, dst2);
-		} catch (final ArgonFormatException ex) {
-			Assert.fail(ex.getMessage());
-		}
-	}
-
-	@Test
 	public void t30() {
 		final byte[] datum = new byte[1000];
 		for (int i = 0; i < datum.length; i++) {
@@ -98,6 +82,26 @@ public class TestUnit1B64 {
 				Assert.assertTrue("match at " + i, datum[i] == zptout[i]);
 			}
 			Assert.assertEquals(datum.length, zptout.length);
+		} catch (final ArgonFormatException ex) {
+			Assert.fail(ex.getMessage());
+		}
+	}
+
+	@Test
+	public void t70() {
+		final String src1 = "h:/";
+		final String src2 = "h:/w";
+		final String src3 = "h:/w?";
+		final String src4 = "h:/w?&";
+		final String enc1 = Binary.newFromStringUTF8(src1).newB64URL();
+		final String enc2 = Binary.newFromStringUTF8(src2).newB64URL();
+		final String enc3 = Binary.newFromStringUTF8(src3).newB64URL();
+		final String enc4 = Binary.newFromStringUTF8(src4).newB64URL();
+		try {
+			Assert.assertEquals(src1, Binary.newFromB64URL(enc1).newStringUTF8());
+			Assert.assertEquals(src2, Binary.newFromB64URL(enc2).newStringUTF8());
+			Assert.assertEquals(src3, Binary.newFromB64URL(enc3).newStringUTF8());
+			Assert.assertEquals(src4, Binary.newFromB64URL(enc4).newStringUTF8());
 		} catch (final ArgonFormatException ex) {
 			Assert.fail(ex.getMessage());
 		}

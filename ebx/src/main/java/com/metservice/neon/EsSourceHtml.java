@@ -7,8 +7,8 @@ package com.metservice.neon;
 
 import java.io.PrintWriter;
 
-import com.metservice.argon.text.ArgonNumber;
-import com.metservice.argon.text.ArgonTransformer;
+import com.metservice.argon.ArgonNumber;
+import com.metservice.argon.ArgonTransformer;
 
 /**
  * @author roach

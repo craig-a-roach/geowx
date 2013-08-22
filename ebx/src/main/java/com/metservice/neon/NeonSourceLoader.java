@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.metservice.argon.text.ArgonSplitter;
+import com.metservice.argon.ArgonSplitter;
 
 /**
  * @author roach

@@ -14,8 +14,8 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonText;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

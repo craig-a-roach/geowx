@@ -16,12 +16,12 @@ import java.util.List;
 
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonQuotaException;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonFileProbe;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

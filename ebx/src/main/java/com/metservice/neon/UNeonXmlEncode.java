@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.EnumDecoder;
-import com.metservice.argon.text.ArgonTransformer;
 
 /**
  * @author roach

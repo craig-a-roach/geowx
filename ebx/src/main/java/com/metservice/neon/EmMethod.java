@@ -5,7 +5,7 @@
  */
 package com.metservice.neon;
 
-import com.metservice.argon.text.ArgonJoiner;
+import com.metservice.argon.ArgonJoiner;
 
 /**
  * 

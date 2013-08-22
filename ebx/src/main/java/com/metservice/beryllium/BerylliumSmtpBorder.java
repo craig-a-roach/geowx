@@ -8,7 +8,7 @@ package com.metservice.beryllium;
 import java.util.Collections;
 import java.util.List;
 
-import com.metservice.argon.text.ArgonTransformer;
+import com.metservice.argon.ArgonTransformer;
 
 /**
  * @author roach

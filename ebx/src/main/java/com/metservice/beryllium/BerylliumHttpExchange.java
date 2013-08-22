@@ -28,12 +28,12 @@ import org.eclipse.jetty.io.BufferUtil;
 
 import com.metservice.argon.ArgonApiException;
 import com.metservice.argon.ArgonClock;
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.Binary;
 import com.metservice.argon.BinaryOutputStream;
 import com.metservice.argon.DateFactory;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * @author roach

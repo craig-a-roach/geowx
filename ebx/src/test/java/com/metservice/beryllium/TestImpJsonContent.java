@@ -5,8 +5,8 @@
  */
 package com.metservice.beryllium;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.json.JsonObject;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * @author roach

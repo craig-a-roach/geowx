@@ -18,12 +18,12 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.ArgonQuotaException;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonJoiner;
 import com.metservice.beryllium.BerylliumSupportId;
 
 /**

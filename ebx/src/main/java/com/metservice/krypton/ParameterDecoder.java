@@ -6,6 +6,7 @@
 package com.metservice.krypton;
 
 import com.metservice.argon.ArgonFormatException;
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.Binary;
 import com.metservice.argon.json.DefaultSaxJsonFactory;
 import com.metservice.argon.json.IJsonNative;
@@ -17,7 +18,6 @@ import com.metservice.argon.json.JsonObject;
 import com.metservice.argon.json.JsonSchemaException;
 import com.metservice.argon.json.JsonString;
 import com.metservice.argon.json.SaxJsonDecoder;
-import com.metservice.argon.text.ArgonNumber;
 import com.metservice.cobalt.CobaltParameter;
 
 /**

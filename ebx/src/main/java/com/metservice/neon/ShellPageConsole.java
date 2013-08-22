@@ -13,9 +13,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
 
+import com.metservice.argon.ArgonNumber;
+import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.DateFormatter;
-import com.metservice.argon.text.ArgonNumber;
-import com.metservice.argon.text.ArgonTransformer;
 import com.metservice.beryllium.BerylliumApiException;
 import com.metservice.beryllium.BerylliumPath;
 import com.metservice.beryllium.BerylliumPathQuery;

@@ -3,18 +3,32 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.text;
+package com.metservice.argon;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
 
-import com.metservice.argon.ArgonText;
-
 /**
  * @author roach
  */
 public class ArgonTransformer {
+
+	public static String base64UrlDecode(String zB64)
+			throws ArgonFormatException {
+		if (zB64 == null) throw new IllegalArgumentException("object is null");
+		final int sl = zB64.length();
+		if (sl == 0) return zB64;
+		return UArgonB64.newURLFromB64UTF8(zB64);
+	}
+
+	public static String base64UrlEncode(String zURL)
+			throws ArgonFormatException {
+		if (zURL == null) throw new IllegalArgumentException("object is null");
+		final int sl = zURL.length();
+		if (sl == 0) return zURL;
+		return UArgonB64.newB64UTF8FromURL(zURL);
+	}
 
 	public static Properties newProperties(String ozSpec) {
 		final Properties p = new Properties();

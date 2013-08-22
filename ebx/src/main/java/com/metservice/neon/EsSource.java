@@ -11,12 +11,12 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import com.metservice.argon.ArgonFormatException;
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
 import com.metservice.argon.ElapsedFactory;
 import com.metservice.argon.ElapsedUnit;
 import com.metservice.argon.Real;
-import com.metservice.argon.text.ArgonNumber;
 import com.metservice.argon.xml.W3cDom;
 
 /**

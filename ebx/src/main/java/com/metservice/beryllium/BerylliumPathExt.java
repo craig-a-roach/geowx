@@ -5,7 +5,7 @@
  */
 package com.metservice.beryllium;
 
-import com.metservice.argon.text.ArgonSplitter;
+import com.metservice.argon.ArgonSplitter;
 
 /**
  * @author roach

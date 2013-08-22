@@ -5,7 +5,7 @@
  */
 package com.metservice.boron;
 
-import com.metservice.argon.text.ArgonNumber;
+import com.metservice.argon.ArgonNumber;
 
 /**
  * @author roach

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * @author roach

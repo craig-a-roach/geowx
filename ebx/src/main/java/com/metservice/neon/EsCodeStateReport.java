@@ -5,8 +5,8 @@
  */
 package com.metservice.neon;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.ArgonText;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * 

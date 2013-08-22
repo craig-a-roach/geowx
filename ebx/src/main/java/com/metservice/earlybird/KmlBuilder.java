@@ -7,7 +7,7 @@ package com.metservice.earlybird;
 
 import java.io.PrintWriter;
 
-import com.metservice.argon.text.ArgonTransformer;
+import com.metservice.argon.ArgonTransformer;
 
 /**
  * @author roach

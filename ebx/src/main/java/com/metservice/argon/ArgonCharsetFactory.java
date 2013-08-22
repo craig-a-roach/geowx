@@ -3,12 +3,11 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.text;
+package com.metservice.argon;
 
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 
-import com.metservice.argon.ArgonApiException;
 
 /**
  * @author roach

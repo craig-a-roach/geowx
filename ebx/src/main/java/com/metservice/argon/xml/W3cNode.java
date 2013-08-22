@@ -26,8 +26,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 
+import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.Binary;
-import com.metservice.argon.text.ArgonTransformer;
 
 /**
  * @author roach

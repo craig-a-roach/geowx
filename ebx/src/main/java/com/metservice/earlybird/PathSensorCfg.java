@@ -8,8 +8,8 @@ package com.metservice.earlybird;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

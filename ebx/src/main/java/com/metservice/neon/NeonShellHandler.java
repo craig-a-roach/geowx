@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import com.metservice.argon.text.ArgonJoiner;
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.beryllium.BerylliumAssetLoader;
 import com.metservice.beryllium.BerylliumPath;
 import com.metservice.beryllium.BerylliumSupportId;

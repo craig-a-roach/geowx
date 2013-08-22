@@ -5,7 +5,7 @@
  */
 package com.metservice.krypton;
 
-import com.metservice.argon.text.ArgonNumber;
+import com.metservice.argon.ArgonNumber;
 
 /**
  * @author roach

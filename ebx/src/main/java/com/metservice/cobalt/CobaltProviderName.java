@@ -7,7 +7,7 @@ package com.metservice.cobalt;
 
 import com.metservice.argon.ArgonApiException;
 import com.metservice.argon.ArgonText;
-import com.metservice.argon.text.ArgonTransformer;
+import com.metservice.argon.ArgonTransformer;
 
 /**
  * @author roach

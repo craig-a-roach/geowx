@@ -17,10 +17,10 @@ import org.eclipse.jetty.server.bio.SocketConnector;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
 import org.eclipse.jetty.util.thread.ExecutorThreadPool;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.management.ArgonSpaceThreadFactory;
 import com.metservice.argon.net.ArgonPlatform;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * @author roach

@@ -5,8 +5,8 @@
  */
 package com.metservice.krypton;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.HashCoder;
-import com.metservice.argon.text.ArgonNumber;
 
 /**
  * @author roach

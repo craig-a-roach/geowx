@@ -17,8 +17,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.metservice.argon.ArgonPermissionException;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

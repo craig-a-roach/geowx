@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.metservice.argon.text.ArgonNumber;
+import com.metservice.argon.ArgonNumber;
 import com.metservice.gallium.GalliumBoundingBoxD;
 import com.metservice.gallium.GalliumPointD;
 

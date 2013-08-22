@@ -26,15 +26,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.metservice.argon.ArgonJoiner;
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.ArgonServiceId;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.DateFactory;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonFileProbe;
-import com.metservice.argon.text.ArgonJoiner;
-import com.metservice.argon.text.ArgonNumber;
-import com.metservice.argon.text.ArgonSplitter;
 import com.metservice.beryllium.BerylliumBinaryHttpPayload;
 import com.metservice.beryllium.BerylliumHttpPlatformException;
 import com.metservice.beryllium.CBeryllium;

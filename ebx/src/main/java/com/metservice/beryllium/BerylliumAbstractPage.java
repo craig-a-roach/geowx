@@ -15,7 +15,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.Logger;
 
-import com.metservice.argon.text.ArgonTransformer;
+import com.metservice.argon.ArgonTransformer;
 
 /**
  * @author roach

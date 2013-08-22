@@ -15,11 +15,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.metservice.argon.ArgonQuotaException;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

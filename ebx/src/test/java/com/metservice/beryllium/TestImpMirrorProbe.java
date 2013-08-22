@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonNumber;
 import com.metservice.beryllium.mirror.IBerylliumMirrorProbe;
 
 /**

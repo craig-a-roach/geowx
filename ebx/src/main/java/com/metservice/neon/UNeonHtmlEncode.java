@@ -11,9 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.json.IJsonNative;
 import com.metservice.argon.json.JsonEncoder;
-import com.metservice.argon.text.ArgonTransformer;
 import com.metservice.beryllium.BerylliumPath;
 import com.metservice.beryllium.BerylliumQuery;
 import com.metservice.beryllium.BerylliumUrlBuilder;

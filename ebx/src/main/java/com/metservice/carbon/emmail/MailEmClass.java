@@ -5,9 +5,9 @@
  */
 package com.metservice.carbon.emmail;
 
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.ArgonTuple2;
-import com.metservice.argon.text.ArgonSplitter;
 import com.metservice.beryllium.BerylliumSmtpManager;
 import com.metservice.beryllium.BerylliumSmtpUrl;
 import com.metservice.neon.EmClass;

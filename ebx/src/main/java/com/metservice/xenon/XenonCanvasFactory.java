@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.Ds;
 import com.metservice.argon.json.JsonAccessor;
 import com.metservice.argon.json.JsonObject;
-import com.metservice.argon.text.ArgonJoiner;
 
 /**
  * @author roach

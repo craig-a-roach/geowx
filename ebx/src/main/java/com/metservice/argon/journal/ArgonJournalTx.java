@@ -7,7 +7,7 @@ package com.metservice.argon.journal;
 
 import java.io.File;
 
-import com.metservice.argon.text.ArgonNumber;
+import com.metservice.argon.ArgonNumber;
 
 /**
  * @author roach

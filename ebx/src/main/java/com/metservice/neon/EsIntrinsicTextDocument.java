@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonCharsetFactory;
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.Binary;
 import com.metservice.argon.json.IJsonNative;
 import com.metservice.argon.json.IJsonString;
 import com.metservice.argon.json.JsonString;
 import com.metservice.argon.json.JsonType;
-import com.metservice.argon.text.ArgonCharsetFactory;
-import com.metservice.argon.text.ArgonJoiner;
 import com.metservice.argon.text.ArgonTextVector;
 
 /**

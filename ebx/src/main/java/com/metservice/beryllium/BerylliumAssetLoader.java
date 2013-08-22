@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.Request;
 
 import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.ArgonQuotaException;
+import com.metservice.argon.ArgonSplitter;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.DateFactory;
@@ -29,7 +30,6 @@ import com.metservice.argon.Elapsed;
 import com.metservice.argon.ElapsedFactory;
 import com.metservice.argon.ElapsedFormatter;
 import com.metservice.argon.ElapsedUnit;
-import com.metservice.argon.text.ArgonSplitter;
 
 /**
  * @author roach

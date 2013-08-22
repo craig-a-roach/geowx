@@ -5,8 +5,8 @@
  */
 package com.metservice.carbon;
 
+import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.Ds;
-import com.metservice.argon.text.ArgonNumber;
 import com.metservice.beryllium.IBerylliumSmtpProbe;
 
 /**

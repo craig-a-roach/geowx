@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.Ds;
 import com.metservice.argon.management.ArgonSpaceThreadFactory;
-import com.metservice.argon.text.ArgonJoiner;
 import com.metservice.beryllium.BerylliumPath;
 import com.metservice.beryllium.BerylliumSupportId;
 
