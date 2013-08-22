@@ -61,10 +61,16 @@ public class Binary {
 		}
 	}
 
-	public static Binary newFromB64ASCII(String zsrc)
+	public static Binary newFromB64MIME(String zsrc)
 			throws ArgonFormatException {
 		if (zsrc == null) throw new IllegalArgumentException("object is null");
-		return UArgonB64.newBinaryFromB64(zsrc);
+		return UArgonB64.newBinaryFromB64MIME(zsrc);
+	}
+
+	public static Binary newFromB64URL(String zsrc)
+			throws ArgonFormatException {
+		if (zsrc == null) throw new IllegalArgumentException("object is null");
+		return UArgonB64.newBinaryFromB64URL(zsrc);
 	}
 
 	public static Binary newFromInputStream(InputStream ins, int bcQuota)
@@ -172,8 +178,12 @@ public class Binary {
 		return zptReadOnly.length == 0;
 	}
 
-	public String newB64ASCII() {
-		return UArgonB64.newB64(this);
+	public String newB64MIME() {
+		return UArgonB64.newB64MIME(this);
+	}
+
+	public String newB64URL() {
+		return UArgonB64.newB64URL(this);
 	}
 
 	public Binary newGZipDecoded()

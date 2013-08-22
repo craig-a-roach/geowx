@@ -14,6 +14,21 @@ import com.metservice.argon.Binary;
  */
 public class JsonEncoder {
 
+	private static final char Indenter = ' ';
+	public static final JsonEncoder Default = new JsonEncoder(1024, 0, false, true, false);
+	public static final JsonEncoder Standard = new JsonEncoder(1024, 0, true, true, false);
+	public static final JsonEncoder Debug = new JsonEncoder(1024, 2, false, true, false);
+
+	private static void encodeUni(StringBuilder sb, int ch) {
+		sb.append("\\u");
+		final String hex = Integer.toHexString(ch).toUpperCase();
+		final int pad = 4 - hex.length();
+		for (int i = 0; i < pad; i++) {
+			sb.append('0');
+		}
+		sb.append(hex);
+	}
+
 	private void addName(StringBuilder sb, int depth, boolean tail, String oqname) {
 		indent(sb, depth);
 		if (tail) {
@@ -129,9 +144,9 @@ public class JsonEncoder {
 	private void encodeValueBinary(StringBuilder sb, IJsonBinary jvalue) {
 		assert jvalue != null;
 		final Binary datum = jvalue.jsonDatum();
-		final String zB64ASCII = datum.newB64ASCII();
+		final String zB64 = datum.newB64MIME();
 		sb.append('~');
-		sb.append(zB64ASCII);
+		sb.append(zB64);
 		sb.append('~');
 	}
 
@@ -254,16 +269,6 @@ public class JsonEncoder {
 		return sb.toString();
 	}
 
-	private static void encodeUni(StringBuilder sb, int ch) {
-		sb.append("\\u");
-		final String hex = Integer.toHexString(ch).toUpperCase();
-		final int pad = 4 - hex.length();
-		for (int i = 0; i < pad; i++) {
-			sb.append('0');
-		}
-		sb.append(hex);
-	}
-
 	public JsonEncoder(int initialCapacity, int indent, boolean quotedProperties, boolean escape0080, boolean escapeFwdSlash) {
 		m_initialCapacity = initialCapacity;
 		m_indent = indent;
@@ -271,16 +276,9 @@ public class JsonEncoder {
 		m_escape0080 = escape0080;
 		m_escapeFwdSlash = escapeFwdSlash;
 	}
-
 	private final int m_initialCapacity;
 	private final int m_indent;
 	private final boolean m_quotedProperties;
 	private final boolean m_escape0080;
 	private final boolean m_escapeFwdSlash;
-
-	private static final char Indenter = ' ';
-
-	public static final JsonEncoder Default = new JsonEncoder(1024, 0, false, true, false);
-	public static final JsonEncoder Standard = new JsonEncoder(1024, 0, true, true, false);
-	public static final JsonEncoder Debug = new JsonEncoder(1024, 2, false, true, false);
 }

@@ -95,7 +95,7 @@ class UJson {
 		if (jsonValue instanceof JsonBinary) {
 			final JsonBinary binaryValue = (JsonBinary) jsonValue;
 			encodeLhs(dest, zPath, jsonName);
-			dest.append(binaryValue.value.newB64ASCII());
+			dest.append(binaryValue.value.newB64MIME());
 			dest.append('\n');
 			return;
 		}

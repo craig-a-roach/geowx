@@ -58,7 +58,7 @@ public class JsonDecoder {
 	private IJsonDeValue parseBinary(Parser p, IJsonDeFactory df)
 			throws ArgonFormatException {
 		final String zB64 = p.consumeDelimited(BDelim);
-		final Binary binary = Binary.newFromB64ASCII(zB64);
+		final Binary binary = Binary.newFromB64MIME(zB64);
 		return df.newBinary(binary);
 	}
 

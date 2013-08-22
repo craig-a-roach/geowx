@@ -8,7 +8,6 @@ package com.metservice.argon.cache.disk;
 import java.io.File;
 import java.io.InputStream;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +33,6 @@ import com.metservice.argon.management.IArgonSpaceId;
  */
 public class ArgonDiskCacheController {
 
-	public static final String MessageDigestAlgorithm = "SHA-1";
 	public static final String ThreadPrefix = "argon-cache-disk-";
 	public static final String SubDirDiskCache = "diskcache";
 
@@ -56,16 +54,11 @@ public class ArgonDiskCacheController {
 	public static ArgonDiskCacheController newInstance(Config cfg)
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
-		try {
-			final MessageDigest digester = MessageDigest.getInstance(MessageDigestAlgorithm);
-			final CheckpointTask task = new CheckpointTask(cfg);
-			final Timer timer = new Timer(cfg.qccThreadName, true);
-			timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
-			return new ArgonDiskCacheController(cfg, timer, digester);
-		} catch (final NoSuchAlgorithmException ex) {
-			final String m = "Digest algorithm required by cache controller is not available..." + Ds.message(ex);
-			throw new ArgonPlatformException(m);
-		}
+		final MessageDigest digester = null; // MessageDigest.getInstance(MessageDigestAlgorithm);
+		final CheckpointTask task = new CheckpointTask(cfg);
+		final Timer timer = new Timer(cfg.qccThreadName, true);
+		timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
+		return new ArgonDiskCacheController(cfg, timer, digester);
 	}
 
 	private String qlcFileNameLk(IArgonDiskCacheRequest request) {
