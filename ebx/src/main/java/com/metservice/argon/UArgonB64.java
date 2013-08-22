@@ -25,30 +25,36 @@ class UArgonB64 {
 
 	public static String newB64MIME(Binary src) {
 		if (src == null) throw new IllegalArgumentException("object is null");
-		return new String(InstanceMIME.encode(src.zptReadOnly));
+		return InstanceMIME.encode(src.zptReadOnly);
 	}
 
 	public static String newB64URL(Binary src) {
 		if (src == null) throw new IllegalArgumentException("object is null");
-		return new String(InstanceURL.encode(src.zptReadOnly));
+		return InstanceURL.encode(src.zptReadOnly);
+	}
+
+	public static String newB64UTF8FromURL(String src)
+			throws ArgonFormatException {
+		if (src == null) throw new IllegalArgumentException("object is null");
+		return InstanceURL.encode(src.getBytes(UArgon.UTF8));
 	}
 
 	public static Binary newBinaryFromB64MIME(String zB64)
 			throws ArgonFormatException {
 		if (zB64 == null) throw new IllegalArgumentException("object is null");
-		return Binary.newFromTransient(InstanceMIME.decode(zB64.toCharArray()));
+		return Binary.newFromTransient(InstanceMIME.decode(zB64));
 	}
 
 	public static Binary newBinaryFromB64URL(String zB64)
 			throws ArgonFormatException {
 		if (zB64 == null) throw new IllegalArgumentException("object is null");
-		return Binary.newFromTransient(InstanceURL.decode(zB64.toCharArray()));
+		return Binary.newFromTransient(InstanceURL.decode(zB64));
 	}
 
-	public static String newStringUTF8FromB64URL(String zB64)
+	public static String newURLFromB64UTF8(String zB64)
 			throws ArgonFormatException {
 		if (zB64 == null) throw new IllegalArgumentException("object is null");
-		return new String(InstanceURL.decode(zB64.toCharArray()), UArgon.UTF8);
+		return new String(InstanceURL.decode(zB64), UArgon.UTF8);
 	}
 
 	private byte[] decode(char[] zptch)
@@ -108,7 +114,6 @@ class UArgonB64 {
 						r[ri++] = (byte) (b0 << 2 | b1 >>> 4);
 					break;
 					default:
-					break;
 				}
 			}
 		} catch (final RuntimeException ex) {
@@ -118,12 +123,16 @@ class UArgonB64 {
 		return r;
 	}
 
-	private char[] encode(byte[] zpt) {
+	private byte[] decode(String zB64)
+			throws ArgonFormatException {
+		return decode(zB64.toCharArray());
+	}
+
+	private String encode(byte[] zpt) {
 		if (zpt == null) throw new IllegalArgumentException("object is null");
 		final int bLen = zpt.length;
 		final int cap = ((bLen + 2) / 3) * 4;
-		final char r[] = new char[cap];
-		int ri = 0;
+		final StringBuilder r = new StringBuilder(cap);
 		int bi = 0;
 		byte b0, b1, b2;
 		final int stop = (bLen / 3) * 3;
@@ -131,37 +140,36 @@ class UArgonB64 {
 			b0 = zpt[bi++];
 			b1 = zpt[bi++];
 			b2 = zpt[bi++];
-			r[ri++] = m_nibble2code[(b0 >>> 2) & 0x3f];
-			r[ri++] = m_nibble2code[(b0 << 4) & 0x3f | (b1 >>> 4) & 0x0f];
-			r[ri++] = m_nibble2code[(b1 << 2) & 0x3f | (b2 >>> 6) & 0x03];
-			r[ri++] = m_nibble2code[b2 & 077];
+			r.append(m_nibble2code[(b0 >>> 2) & 0x3f]);
+			r.append(m_nibble2code[(b0 << 4) & 0x3f | (b1 >>> 4) & 0x0f]);
+			r.append(m_nibble2code[(b1 << 2) & 0x3f | (b2 >>> 6) & 0x03]);
+			r.append(m_nibble2code[b2 & 077]);
 		}
 		if (bLen != bi) {
 			switch (bLen % 3) {
 				case 2:
 					b0 = zpt[bi++];
 					b1 = zpt[bi++];
-					r[ri++] = m_nibble2code[(b0 >>> 2) & 0x3f];
-					r[ri++] = m_nibble2code[(b0 << 4) & 0x3f | (b1 >>> 4) & 0x0f];
-					r[ri++] = m_nibble2code[(b1 << 2) & 0x3f];
+					r.append(m_nibble2code[(b0 >>> 2) & 0x3f]);
+					r.append(m_nibble2code[(b0 << 4) & 0x3f | (b1 >>> 4) & 0x0f]);
+					r.append(m_nibble2code[(b1 << 2) & 0x3f]);
 					if (m_requirePad) {
-						r[ri++] = m_cpad;
+						r.append(m_cpad);
 					}
 				break;
 				case 1:
 					b0 = zpt[bi++];
-					r[ri++] = m_nibble2code[(b0 >>> 2) & 0x3f];
-					r[ri++] = m_nibble2code[(b0 << 4) & 0x3f];
+					r.append(m_nibble2code[(b0 >>> 2) & 0x3f]);
+					r.append(m_nibble2code[(b0 << 4) & 0x3f]);
 					if (m_requirePad) {
-						r[ri++] = m_cpad;
-						r[ri++] = m_cpad;
+						r.append(m_cpad);
+						r.append(m_cpad);
 					}
 				break;
 				default:
-				break;
 			}
 		}
-		return r;
+		return r.toString();
 	}
 
 	private UArgonB64(char[] nibble2code, char pad, boolean requirePad) {

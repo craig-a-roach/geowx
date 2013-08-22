@@ -15,15 +15,35 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ArgonDigester {
 
+	private static ArgonDigester newStandardInstance(String algorithm) {
+		try {
+			return new ArgonDigester(MessageDigest.getInstance(algorithm));
+		} catch (final NoSuchAlgorithmException ex) {
+			final String m = "Standard digest algorithm '" + algorithm + "'  is not available..." + Ds.message(ex);
+			throw new IllegalStateException(m);
+		}
+	}
+
 	public static ArgonDigester newInstance(String algorithm)
 			throws ArgonPlatformException {
 		try {
-			final MessageDigest imp = MessageDigest.getInstance(algorithm);
-			return new ArgonDigester(imp);
+			return new ArgonDigester(MessageDigest.getInstance(algorithm));
 		} catch (final NoSuchAlgorithmException ex) {
 			final String m = "Required digest algorithm '" + algorithm + "'  is not available..." + Ds.message(ex);
 			throw new ArgonPlatformException(m);
 		}
+	}
+
+	public static ArgonDigester newMD5() {
+		return newStandardInstance("MD5");
+	}
+
+	public static ArgonDigester newSHA1() {
+		return newStandardInstance("SHA-1");
+	}
+
+	public static ArgonDigester newSHA256() {
+		return newStandardInstance("SHA-256");
 	}
 
 	public Binary digest(Binary src) {
@@ -46,6 +66,10 @@ public class ArgonDigester {
 	public Binary digestUTF8(String src) {
 		if (src == null) throw new IllegalArgumentException("object is null");
 		return Binary.newFromTransient(digest(src.getBytes(UArgon.UTF8)));
+	}
+
+	public String digestUTF8B64URL(String src) {
+		return digestUTF8(src).newB64URL();
 	}
 
 	private ArgonDigester(MessageDigest imp) {
