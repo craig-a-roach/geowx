@@ -27,8 +27,6 @@ import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonFileProbe;
 import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.file.ArgonDirectoryManagement;
-import com.metservice.argon.json.JsonObject;
-import com.metservice.argon.json.JsonSchemaException;
 import com.metservice.argon.management.IArgonSpaceId;
 
 /**
@@ -38,11 +36,6 @@ public class ArgonDiskCacheController {
 
 	public static final String ThreadPrefix = "argon-cache-disk-";
 	public static final String SubDirDiskCache = "diskcache";
-
-	static final String p_fileName = "fn";
-	static final String p_lastAccess = "la";
-	static final String p_lastModified = "lm";
-	static final String p_contentType = "ct";
 
 	public static Config newConfig(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
@@ -138,43 +131,6 @@ public class ArgonDiskCacheController {
 		}
 		private final IArgonFileProbe m_probe;
 		private final File m_cndir;
-	}
-
-	private static class Descriptor {
-
-		public void registerAccess(long tsNow) {
-			if (tsNow > m_tsLastAccess) {
-				m_tsLastAccess = tsNow;
-			}
-		}
-
-		public void registerReload(long tsLastModified, String qlcContentType) {
-			m_tsLastModified = tsLastModified;
-			m_qlcContentType = qlcContentType;
-		}
-
-		public void save(JsonObject dst) {
-			dst.putTime(p_lastAccess, m_tsLastAccess);
-			dst.putTime(p_lastModified, m_tsLastModified);
-			dst.putString(p_contentType, m_qlcContentType);
-		}
-
-		public Descriptor(JsonObject src) throws JsonSchemaException {
-			if (src == null) throw new IllegalArgumentException("object is null");
-			m_tsLastAccess = src.accessor(p_lastAccess).datumTs();
-			m_tsLastModified = src.accessor(p_lastModified).datumTs();
-			m_qlcContentType = src.accessor(p_contentType).datumQtwString();
-		}
-
-		public Descriptor(long tsLastModified, String qlcContentType, long tsNow) {
-			m_tsLastAccess = tsNow;
-			m_tsLastModified = tsLastModified;
-			m_qlcContentType = qlcContentType;
-		}
-
-		private long m_tsLastAccess;
-		private long m_tsLastModified;
-		private String m_qlcContentType;
 	}
 
 	public static class Config {
