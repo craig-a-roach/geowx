@@ -7,6 +7,7 @@ package com.metservice.argon.cache.disk;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import com.metservice.argon.ArgonCompare;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonFileProbe;
+import com.metservice.argon.file.ArgonFileManagement;
 import com.metservice.argon.json.JsonObject;
 import com.metservice.argon.json.JsonSchemaException;
 
@@ -36,16 +38,72 @@ class DiskMruTable {
 	public static final int FileLimitLo = 1;
 	public static final int FileLimitHi = 128 * CArgon.K;
 
+	private List<String> newPurgeAgenda() {
+		List<String> zlAgenda = Collections.emptyList();
+		m_rwlock.writeLock().lock();
+		try {
+			if (purgeRequiredLk()) {
+				zlAgenda = newPurgeFileNamesLk();
+			}
+		} finally {
+			m_rwlock.writeLock().unlock();
+		}
+		return zlAgenda;
+	}
+
 	private List<String> newPurgeFileNamesLk() {
-		final int estReclaim = m_cacheFileActual - m_cacheFileGoal;
+		final int estReclaim = m_popCacheFileActual - m_popCacheFileGoal;
 		final List<String> zlNames = new ArrayList<>(estReclaim);
+		final List<Tracker> zlTrackersAsc = new ArrayList<>(m_mapFileName_Tracker.values());
+		Collections.sort(zlTrackersAsc);
+		final int trackerCount = zlTrackersAsc.size();
+		long bcNeo = m_bcCacheSizeActual;
+		int popNeo = m_popCacheFileActual;
+		for (int i = 0; i < trackerCount && purgeMoreLk(bcNeo, popNeo); i++) {
+			final Tracker tracker = zlTrackersAsc.get(i);
+			zlNames.add(tracker.qccFileName());
+			tracker.purgeMark();
+			bcNeo -= tracker.bcFile();
+			popNeo--;
+		}
 		return zlNames;
 	}
 
+	private void purge(IArgonFileProbe probe, File cndir, List<String> zlAgenda) {
+		assert probe != null;
+		assert cndir != null;
+		assert zlAgenda != null;
+		final int agendaCount = zlAgenda.size();
+		for (int i = 0; i < agendaCount; i++) {
+			final String qccFileName = zlAgenda.get(i);
+			m_rwlock.writeLock().lock();
+			try {
+				final Tracker oEx = m_mapFileName_Tracker.get(qccFileName);
+				if (oEx != null && oEx.isPurgeSafe()) {
+					final File target = new File(cndir, qccFileName);
+					final boolean deleted = ArgonFileManagement.deleteFile(probe, target);
+					if (deleted) {
+						m_mapFileName_Tracker.remove(qccFileName);
+						m_bcCacheSizeActual -= oEx.bcFile();
+						m_popCacheFileActual--;
+					}
+				}
+			} finally {
+				m_rwlock.writeLock().unlock();
+			}
+		}
+	}
+
+	private boolean purgeMoreLk(long bcCache, int filePop) {
+		return (bcCache >= m_bcCacheSizeGoal || filePop >= m_popCacheFileGoal);
+	}
+
 	private boolean purgeRequiredLk() {
-		if (m_bcCacheSizeActual >= m_bcCacheSizeQuota) return true;
-		if (m_cacheFileActual >= m_cacheFileLimit) return true;
-		return false;
+		return purgeRequiredLk(m_bcCacheSizeActual, m_popCacheFileActual);
+	}
+
+	private boolean purgeRequiredLk(long bcCache, int filePop) {
+		return (bcCache >= m_bcCacheSizeQuota || filePop >= m_popCacheFileLimit);
 	}
 
 	public Descriptor findDescriptor(String qccFileName, long tsNow) {
@@ -69,59 +127,78 @@ class DiskMruTable {
 		final int kbFile = Math.max(1, bcFile / CArgon.K);
 		m_rwlock.writeLock().lock();
 		try {
-			final Tracker tracker = new Tracker(qccFileName, tsLastModified, kbFile, qlcContentType, tsNow);
-			m_mapFileName_Tracker.put(qccFileName, tracker);
-			m_bcCacheSizeActual += bcFile;
-			m_cacheFileActual++;
-			return tracker.newDescriptor();
+			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
+			if (vTracker == null) {
+				vTracker = new Tracker(qccFileName, tsLastModified, kbFile, qlcContentType, tsNow);
+				m_mapFileName_Tracker.put(qccFileName, vTracker);
+				m_popCacheFileActual++;
+			} else {
+				m_bcCacheSizeActual -= vTracker.bcFile();
+				vTracker.registerReload(tsLastModified, kbFile, qlcContentType);
+			}
+			m_bcCacheSizeActual += vTracker.bcFile();
+			return vTracker.newDescriptor();
 		} finally {
 			m_rwlock.writeLock().unlock();
 		}
 	}
 
-	public void purge(IArgonFileProbe oprobe, File cndir) {
+	public void purge(IArgonFileProbe probe, File cndir) {
+		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (cndir == null) throw new IllegalArgumentException("object is null");
-		m_rwlock.writeLock().lock();
-		try {
-			if (!purgeRequiredLk()) return;
-
-		} finally {
-			m_rwlock.writeLock().unlock();
-		}
+		final List<String> zlAgenda = newPurgeAgenda();
+		purge(probe, cndir, zlAgenda);
 	}
 
 	public DiskMruTable(long bcCacheSizeQuota, int cacheFileLimit, int goalPct) {
 		final int f = Math.max(FileLimitLo, Math.min(FileLimitHi, cacheFileLimit));
 		final int g = Math.max(GoalPctLo, Math.min(GoalPctHi, goalPct));
 		m_bcCacheSizeQuota = bcCacheSizeQuota;
-		m_cacheFileLimit = f;
+		m_popCacheFileLimit = f;
 		m_bcCacheSizeGoal = (bcCacheSizeQuota * g) / 100L;
-		m_cacheFileGoal = (f * g) / 100;
+		m_popCacheFileGoal = (f * g) / 100;
 		m_mapFileName_Tracker = new HashMap<>(f);
 	}
 	private final long m_bcCacheSizeQuota;
-	private final int m_cacheFileLimit;
+	private final int m_popCacheFileLimit;
 	private final long m_bcCacheSizeGoal;
-	private final int m_cacheFileGoal;
+	private final int m_popCacheFileGoal;
 	private final ReadWriteLock m_rwlock = new ReentrantReadWriteLock();
 	private final Map<String, Tracker> m_mapFileName_Tracker;
 	private long m_bcCacheSizeActual;
-	private int m_cacheFileActual;
+	private int m_popCacheFileActual;
 
 	private static class Tracker implements Comparable<Tracker> {
+
+		public int bcFile() {
+			return m_kbFile * CArgon.K;
+		}
 
 		@Override
 		public int compareTo(Tracker rhs) {
 			return ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
 		}
 
+		public boolean isPurgeSafe() {
+			return m_purgeMarked;
+		}
+
 		public Descriptor newDescriptor() {
 			return new Descriptor(m_tsLastAccess, m_tsLastModified, m_qlcContentType);
+		}
+
+		public void purgeMark() {
+			m_purgeMarked = true;
+		}
+
+		public String qccFileName() {
+			return m_qccFileName;
 		}
 
 		public void registerAccess(long tsNow) {
 			if (tsNow > m_tsLastAccess) {
 				m_tsLastAccess = tsNow;
+				m_purgeMarked = false;
 			}
 		}
 
@@ -137,6 +214,18 @@ class DiskMruTable {
 			dst.putInteger(p_fileKB, m_kbFile);
 			dst.putTime(p_lastModified, m_tsLastModified);
 			dst.putString(p_contentType, m_qlcContentType);
+		}
+
+		@Override
+		public String toString() {
+			final Ds ds = Ds.o("DiskMruTable.Tracker");
+			ds.a("fileName", m_qccFileName);
+			ds.at8("lastAccess", m_tsLastAccess);
+			ds.a("kB", m_kbFile);
+			ds.at8("lastModified", m_tsLastModified);
+			ds.a("contentType", m_qlcContentType);
+			ds.a("purgeMarked", m_purgeMarked);
+			return ds.s();
 		}
 
 		public Tracker(JsonObject src) throws JsonSchemaException {
@@ -160,6 +249,7 @@ class DiskMruTable {
 		private int m_kbFile;
 		private long m_tsLastModified;
 		private String m_qlcContentType;
+		private boolean m_purgeMarked;
 	}
 
 	public static class Descriptor {

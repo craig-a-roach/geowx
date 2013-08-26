@@ -36,16 +36,21 @@ public class ArgonDiskCacheController {
 
 	public static final String ThreadPrefix = "argon-cache-disk-";
 	public static final String SubDirDiskCache = "diskcache";
+	public static final String SubDirMRU = "mru";
+	public static final String SubDirJAR = "jar";
 
 	public static Config newConfig(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (sid == null) throw new IllegalArgumentException("object is null");
 		if (idSpace == null) throw new IllegalArgumentException("object is null");
-		final File cndir = ArgonDirectoryManagement.cndirEnsureUserWriteable(sid.qtwVendor, sid.qtwService, SubDirDiskCache,
-				idSpace.format());
+		final String spc = idSpace.format();
+		final File cndirMRU = ArgonDirectoryManagement.cndirEnsureUserWriteable(sid.qtwVendor, sid.qtwService, SubDirDiskCache,
+				spc, SubDirMRU);
+		final File cndirJAR = ArgonDirectoryManagement.cndirEnsureUserWriteable(sid.qtwVendor, sid.qtwService, SubDirDiskCache,
+				spc, SubDirJAR);
 		final String qccThreadName = ThreadPrefix + idSpace.format();
-		return new Config(probe, cndir, qccThreadName);
+		return new Config(probe, cndirMRU, cndirJAR, qccThreadName);
 	}
 
 	public static ArgonDiskCacheController newInstance(Config cfg)
@@ -91,7 +96,7 @@ public class ArgonDiskCacheController {
 		final InputStream oins = resourceRef.getResourceAsStream(qccFileName);
 		if (oins == null) return null;
 		final Binary src = Binary.newFromInputStream(oins, m_bcSizeEst, qccFileName, m_bcSizeQuota);
-		final File destFile = new File(m_cndir, qccFileName);
+		final File destFile = new File(m_cndirJAR, qccFileName);
 		src.save(destFile, false);
 		return destFile;
 	}
@@ -101,7 +106,8 @@ public class ArgonDiskCacheController {
 		assert timer != null;
 		assert digester != null;
 		m_probe = config.probe;
-		m_cndir = config.cndir;
+		m_cndirMRU = config.cndirMRU;
+		m_cndirJAR = config.cndirJAR;
 		m_timer = timer;
 		m_digester = digester;
 		m_bcSizeQuota = config.bcSizeQuota;
@@ -110,7 +116,8 @@ public class ArgonDiskCacheController {
 
 	private final ReadWriteLock m_rwLock = new ReentrantReadWriteLock();
 	private final IArgonFileProbe m_probe;
-	private final File m_cndir;
+	private final File m_cndirMRU;
+	private final File m_cndirJAR;
 	private final Timer m_timer;
 	private final ArgonDigester m_digester;
 	private final int m_bcSizeQuota;
@@ -127,7 +134,7 @@ public class ArgonDiskCacheController {
 		public CheckpointTask(Config cfg) {
 			assert cfg != null;
 			m_probe = cfg.probe;
-			m_cndir = cfg.cndir;
+			m_cndir = cfg.cndirMRU;
 		}
 		private final IArgonFileProbe m_probe;
 		private final File m_cndir;
@@ -139,8 +146,8 @@ public class ArgonDiskCacheController {
 		public static final int DefaultCacheFileLimit = 1000;
 		public static final int DefaultSizeQuota = Integer.MAX_VALUE;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
-		public static final int DefaultCheckpointTimerDelayMs = 2 * CArgon.MIN_TO_MS;
-		public static final int DefaultCheckpointTimerPeriodMs = 10 * CArgon.MIN_TO_MS;
+		public static final int DefaultCheckpointTimerDelayMs = 90 * CArgon.SEC_TO_MS;
+		public static final int DefaultCheckpointTimerPeriodMs = 150 * CArgon.SEC_TO_MS;
 
 		public Config cacheFileLimit(int count) {
 			cacheFileLimit = Math.max(1, count);
@@ -172,7 +179,7 @@ public class ArgonDiskCacheController {
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("ArgonDiskCacheController.Config");
-			ds.a("cndir", cndir);
+			ds.a("cndirMRU", cndirMRU);
 			ds.a("bcCacheSizeQuota", bcCacheSizeQuota);
 			ds.a("cacheFileLimit", cacheFileLimit);
 			ds.a("bcSizeQuota", bcSizeQuota);
@@ -181,16 +188,19 @@ public class ArgonDiskCacheController {
 			return ds.s();
 		}
 
-		Config(IArgonFileProbe probe, File cndir, String qccThreadName) {
+		Config(IArgonFileProbe probe, File cndirMRU, File cndirJAR, String qccThreadName) {
 			assert probe != null;
-			assert cndir != null;
+			assert cndirMRU != null;
+			assert cndirJAR != null;
 			assert qccThreadName != null && qccThreadName.length() > 0;
 			this.probe = probe;
-			this.cndir = cndir;
+			this.cndirMRU = cndirMRU;
+			this.cndirJAR = cndirJAR;
 			this.qccThreadName = qccThreadName;
 		}
 		final IArgonFileProbe probe;
-		final File cndir;
+		final File cndirMRU;
+		final File cndirJAR;
 		final String qccThreadName;
 		long bcCacheSizeQuota = DefaultCacheSizeQuota;
 		int cacheFileLimit = DefaultCacheFileLimit;
