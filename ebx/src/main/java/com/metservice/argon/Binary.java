@@ -61,6 +61,37 @@ public class Binary {
 		}
 	}
 
+	public static Binary createFromFile(IArgonFileProbe oprobe, File srcFile, int bcQuota) {
+		FileInputStream fis;
+		try {
+			fis = new FileInputStream(srcFile);
+		} catch (final FileNotFoundException ex) {
+			return null;
+		}
+		final long bcSrc = srcFile.length();
+		try {
+			return UArgonIO.newInstance(fis, bcSrc, srcFile.getPath(), bcQuota);
+		} catch (final ArgonQuotaException ex) {
+			if (oprobe != null) {
+				final Ds ds = Ds.triedTo("Read complete file contents into binary array", ex, "Return null");
+				ds.a("bcQuota", bcQuota);
+				oprobe.failFile(ds, srcFile);
+			}
+			return null;
+		} catch (final ArgonStreamReadException ex) {
+			if (oprobe != null) {
+				final Ds ds = Ds.triedTo("Read complete file contents into binary array", ex, "Return null");
+				oprobe.failFile(ds, srcFile);
+			}
+			return null;
+		} finally {
+			try {
+				fis.close();
+			} catch (final IOException ex) {
+			}
+		}
+	}
+
 	public static Binary newFromB64MIME(String zsrc)
 			throws ArgonFormatException {
 		if (zsrc == null) throw new IllegalArgumentException("object is null");
@@ -237,14 +268,42 @@ public class Binary {
 		}
 
 		try {
+			fos.write(zptReadOnly, 0, zptReadOnly.length);
+		} catch (final IOException ex) {
+			final Ds ds = Ds.triedTo("Save binary array to file", ex, ArgonStreamWriteException.class);
+			ds.a("destFile", destFile);
+			ds.a("append", append);
+			throw new ArgonStreamWriteException(ds.s());
+		} finally {
 			try {
-				fos.write(zptReadOnly, 0, zptReadOnly.length);
+				fos.close();
 			} catch (final IOException ex) {
-				final Ds ds = Ds.triedTo("Save binary array to file", ex, ArgonStreamWriteException.class);
-				ds.a("destFile", destFile);
-				ds.a("append", append);
-				throw new ArgonStreamWriteException(ds.s());
 			}
+		}
+	}
+
+	public boolean save(IArgonFileProbe oprobe, File destFile, boolean append) {
+		final FileOutputStream fos;
+		try {
+			fos = new FileOutputStream(destFile, append);
+		} catch (final FileNotFoundException ex) {
+			if (oprobe != null) {
+				final Ds ds = Ds.triedTo("Open file for saving binary array", ex, "Return error flag");
+				ds.a("append", append);
+				oprobe.failFile(ds, destFile);
+			}
+			return false;
+		}
+		try {
+			fos.write(zptReadOnly, 0, zptReadOnly.length);
+			return true;
+		} catch (final IOException ex) {
+			if (oprobe != null) {
+				final Ds ds = Ds.triedTo("Save binary array to file", ex, "Return error flag");
+				ds.a("append", append);
+				oprobe.failFile(ds, destFile);
+			}
+			return false;
 		} finally {
 			try {
 				fos.close();
