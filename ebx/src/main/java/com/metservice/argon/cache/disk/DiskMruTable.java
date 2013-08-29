@@ -79,8 +79,9 @@ class DiskMruTable {
 		final int cpctGoal = Math.max(GoalPctLo, Math.min(GoalPctHi, goalPct));
 		final long bcGoal = (cbcQuota * cpctGoal) / 100L;
 		final int popGoal = (cpopLimit * cpctGoal) / 100;
+		final Cfg cfg = new Cfg(probe, cndir, cbcQuota, cpopLimit, bcGoal, popGoal);
 		final State state = newState(probe, cndir, cpopLimit);
-		return new DiskMruTable(probe, cndir, cbcQuota, cpopLimit, bcGoal, popGoal, state);
+		return new DiskMruTable(cfg, state);
 	}
 
 	private JsonObject newCheckpointJson() {
@@ -95,8 +96,8 @@ class DiskMruTable {
 	private List<String> newPurgeAgenda() {
 		m_lock.lock();
 		try {
-			final boolean due = m_state.isPurgeDue(m_bcQuota, m_popCacheFileLimit);
-			if (due) return m_state.newPurgeFileNames(m_bcCacheSizeGoal, m_popCacheFileGoal);
+			final boolean due = m_state.isPurgeDue(cfg.bcQuota, cfg.popLimit);
+			if (due) return m_state.newPurgeFileNames(cfg.bcGoal, cfg.popGoal);
 			return Collections.emptyList();
 		} finally {
 			m_lock.unlock();
@@ -104,15 +105,13 @@ class DiskMruTable {
 	}
 
 	private void purge(List<String> zlAgenda) {
-		assert probe != null;
-		assert cndir != null;
 		assert zlAgenda != null;
 		final int agendaCount = zlAgenda.size();
 		for (int i = 0; i < agendaCount; i++) {
 			final String qccFileName = zlAgenda.get(i);
 			m_lock.lock();
 			try {
-				m_state.purge(probe, cndir, qccFileName);
+				m_state.purge(cfg.probe, cfg.cndir, qccFileName);
 			} finally {
 				m_lock.unlock();
 			}
@@ -122,8 +121,8 @@ class DiskMruTable {
 	public void checkpoint() {
 		final JsonObject cp = newCheckpointJson();
 		final Binary out = Binary.newFromStringUTF8(JsonEncoder.Default.encode(cp));
-		final File destFile = new File(cndir, CheckpointFileName);
-		out.save(probe, destFile, false);
+		final File destFile = new File(cfg.cndir, CheckpointFileName);
+		out.save(cfg.probe, destFile, false);
 	}
 
 	public Descriptor findDescriptor(String qccFileName, long tsNow) {
@@ -154,26 +153,35 @@ class DiskMruTable {
 		purge(newPurgeAgenda());
 	}
 
-	public DiskMruTable(IArgonFileProbe probe, File cndir, long bcQuota, int popLimit, long bcGoal, int popGoal, State state) {
-		assert probe != null;
-		assert cndir != null;
+	public DiskMruTable(Cfg cfg, State state) {
+		assert cfg != null;
 		assert state != null;
-		this.probe = probe;
-		this.cndir = cndir;
-		m_bcQuota = bcQuota;
-		m_popCacheFileLimit = popLimit;
-		m_bcCacheSizeGoal = bcGoal;
-		m_popCacheFileGoal = popGoal;
+		this.cfg = cfg;
 		m_state = state;
 	}
-	final IArgonFileProbe probe;
-	final File cndir;
-	private final long m_bcQuota;
-	private final int m_popCacheFileLimit;
-	private final long m_bcCacheSizeGoal;
-	private final int m_popCacheFileGoal;
+	private final Cfg cfg;
 	private final Lock m_lock = new ReentrantLock();
 	private final State m_state;
+
+	private static class Cfg {
+
+		Cfg(IArgonFileProbe probe, File cndir, long bcQuota, int popLimit, long bcGoal, int popGoal) {
+			assert probe != null;
+			assert cndir != null;
+			this.probe = probe;
+			this.cndir = cndir;
+			this.bcQuota = bcQuota;
+			this.popLimit = popLimit;
+			this.bcGoal = bcGoal;
+			this.popGoal = popGoal;
+		}
+		final IArgonFileProbe probe;
+		final File cndir;
+		final long bcQuota;
+		final int popLimit;
+		final long bcGoal;
+		final int popGoal;
+	}
 
 	private static class State {
 
