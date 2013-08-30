@@ -163,6 +163,29 @@ public class ArgonText {
 		return new StringListIterator(zlLines, charset, zTerminator);
 	}
 
+	public static String oqLettersAndDigits(String oz) {
+		final String oqnctw = ArgonText.oqtw(oz);
+		if (oqnctw == null) return null;
+		final int slen = oqnctw.length();
+		StringBuilder osb = null;
+		for (int i = 0; i < slen; i++) {
+			final char ch = oqnctw.charAt(i);
+			final boolean accept = ArgonText.isLetterOrDigit(ch);
+			if (accept) {
+				if (osb != null) {
+					osb.append(ch);
+				}
+			} else {
+				if (osb == null) {
+					osb = new StringBuilder(slen);
+					osb.append(oqnctw.substring(0, i));
+				}
+			}
+		}
+		if (osb == null) return oqnctw;
+		return osb.length() == 0 ? null : osb.toString();
+	}
+
 	public static String oqtw(String oz) {
 		if (oz == null || oz.length() == 0) return null;
 		final String ztw = oz.trim();
@@ -252,6 +275,13 @@ public class ArgonText {
 		} catch (final NumberFormatException ex) {
 			return oDefaultValue;
 		}
+	}
+
+	public static String qLettersAndDigits(String oz)
+			throws ArgonApiException {
+		final String oq = oqLettersAndDigits(oz);
+		if (oq != null) return oq;
+		throw new ArgonApiException("Value contains no letters or digits");
 	}
 
 	public static String qtw(String oz)
