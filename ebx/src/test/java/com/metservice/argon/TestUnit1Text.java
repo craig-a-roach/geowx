@@ -8,14 +8,13 @@ package com.metservice.argon;
 import org.junit.Assert;
 import org.junit.Test;
 
-
 /**
  * @author roach
  */
 public class TestUnit1Text {
 
 	@Test
-	public void t50_number() {
+	public void t40_number() {
 		Assert.assertEquals("005", ArgonNumber.intToDec3(5));
 		Assert.assertEquals("-05", ArgonNumber.intToDec3(-5));
 		Assert.assertEquals("000", ArgonNumber.intToDec3(0));
@@ -23,6 +22,16 @@ public class TestUnit1Text {
 		Assert.assertEquals("-99", ArgonNumber.intToDec3(-99));
 		Assert.assertEquals("1000", ArgonNumber.intToDec3(1000));
 		Assert.assertEquals("-100", ArgonNumber.intToDec3(-100));
+	}
+
+	@Test
+	public void t50_words() {
+		Assert.assertEquals("a", ArgonText.oqLettersAndDigits("a"));
+		Assert.assertEquals("a1c", ArgonText.oqLettersAndDigits("a1c"));
+		Assert.assertEquals("a1c", ArgonText.oqLettersAndDigits("a_1c"));
+		Assert.assertEquals("a1c", ArgonText.oqLettersAndDigits("_a_1c"));
+		Assert.assertNull(ArgonText.oqLettersAndDigits("_"));
+		Assert.assertNull(ArgonText.oqLettersAndDigits("**"));
 	}
 
 	@Test

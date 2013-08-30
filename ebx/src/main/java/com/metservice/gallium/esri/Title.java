@@ -17,19 +17,9 @@ class Title implements Comparable<Title> {
 		final String oqnctw = ArgonText.oqtw(ncTitle);
 		if (oqnctw == null) throw new IllegalArgumentException("title is all whitespace");
 		final int slen = oqnctw.length();
-		final StringBuilder sb = new StringBuilder(slen);
-		if (slen == 1) {
-			sb.append(oqnctw);
-		} else {
-			for (int i = 0; i < slen; i++) {
-				final char ch = oqnctw.charAt(i);
-				if (ArgonText.isLetterOrDigit(ch)) {
-					sb.append(Character.toUpperCase(ch));
-				}
-			}
-		}
-		if (sb.length() == 0) throw new IllegalArgumentException("title contains no letters or digits");
-		return new Title(oqnctw, sb.toString());
+		final String oqword = slen == 1 ? oqnctw : ArgonText.oqLettersAndDigits(oqnctw);
+		if (oqword == null) throw new IllegalArgumentException("title contains no letters or digits");
+		return new Title(oqnctw, oqword.toUpperCase());
 	}
 
 	public static String oquctwKey(String oz) {
