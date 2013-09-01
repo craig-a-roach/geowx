@@ -22,7 +22,6 @@ import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
-import com.metservice.argon.IArgonFileProbe;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.file.ArgonFileManagement;
 import com.metservice.argon.json.JsonArray;
@@ -77,7 +76,7 @@ class DiskMruTable {
 		return new State(cfg, cap);
 	}
 
-	public static DiskMruTable newInstance(IArgonFileProbe probe, File cndir, long bcQuota, int popLimit, int goalPct,
+	public static DiskMruTable newInstance(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, int goalPct,
 			int auditCycle) {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (cndir == null) throw new IllegalArgumentException("object is null");
@@ -201,6 +200,15 @@ class DiskMruTable {
 		}
 	}
 
+	public SensorSnapshot newSensorSnapshot() {
+		m_lockState.lock();
+		try {
+			return m_state.newSensorSnapshot();
+		} finally {
+			m_lockState.unlock();
+		}
+	}
+
 	public void tick() {
 		if (m_purgeDue.getAndSet(false)) {
 			purge();
@@ -228,7 +236,7 @@ class DiskMruTable {
 
 	private static class Cfg {
 
-		Cfg(IArgonFileProbe probe, File cndir, long bcQuota, int popLimit, long bcGoal, int popGoal, int auditCycle) {
+		Cfg(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, long bcGoal, int popGoal, int auditCycle) {
 			assert probe != null;
 			assert cndir != null;
 			this.probe = probe;
@@ -239,7 +247,7 @@ class DiskMruTable {
 			this.popGoal = popGoal;
 			this.auditCycle = auditCycle;
 		}
-		final IArgonFileProbe probe;
+		final IArgonDiskCacheProbe probe;
 		final File cndir;
 		final long bcQuota;
 		final int popLimit;
@@ -306,6 +314,10 @@ class DiskMruTable {
 			final JsonObject neo = JsonObject.newMutable();
 			neo.put(p_trackers, array);
 			return neo;
+		}
+
+		public SensorSnapshot newSensorSnapshot() {
+			return new SensorSnapshot(m_bcActual, m_mapFileName_Tracker.size());
 		}
 
 		public void purge(String qccFileName) {
@@ -458,6 +470,24 @@ class DiskMruTable {
 		private long m_tsLastModified;
 		private String m_qlcContentType;
 		private boolean m_purgeMarked;
+	}
+
+	static class SensorSnapshot {
+
+		@Override
+		public String toString() {
+			final Ds ds = Ds.o("DiskMruTable.SensorSnapshot");
+			ds.a("bcActual", bcActual);
+			ds.a("popActual", popActual);
+			return ds.s();
+		}
+
+		public SensorSnapshot(long bcActual, int popActual) {
+			this.bcActual = bcActual;
+			this.popActual = popActual;
+		}
+		public final long bcActual;
+		public final int popActual;
 	}
 
 	public static class Descriptor {

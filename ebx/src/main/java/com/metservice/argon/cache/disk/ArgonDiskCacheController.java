@@ -10,8 +10,6 @@ import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.metservice.argon.ArgonClock;
 import com.metservice.argon.ArgonDigester;
@@ -25,7 +23,6 @@ import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
-import com.metservice.argon.IArgonFileProbe;
 import com.metservice.argon.IArgonSensor;
 import com.metservice.argon.IArgonSensorMap;
 import com.metservice.argon.cache.ArgonCacheException;
@@ -45,7 +42,13 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	public static final ArgonSensorId SensorCacheHitRate = new ArgonSensorId("CacheHitRate");
 	private static final ArgonSensorId[] SENSORS = { SensorCacheHitRate };
 
-	public static Config newConfig(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
+	private static DiskMruTable newMruTable(Config cfg) {
+		assert cfg != null;
+		return DiskMruTable.newInstance(cfg.probe, cfg.cndirMRU, cfg.bcCacheSizeQuota, cfg.cacheFileLimit,
+				cfg.pctCacheSizeGoal, cfg.auditCycle);
+	}
+
+	public static Config newConfig(IArgonDiskCacheProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (sid == null) throw new IllegalArgumentException("object is null");
@@ -63,10 +66,11 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		final ArgonDigester digester = ArgonDigester.newSHA1();
-		final MruTask task = new MruTask(cfg);
+		final DiskMruTable mruTable = newMruTable(cfg);
+		final MruTask task = new MruTask(mruTable);
 		final Timer timer = new Timer(cfg.qccThreadName, true);
 		timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
-		return new ArgonDiskCacheController(cfg, timer, digester);
+		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
 	}
 
 	private void registerHit(String qlcFileName) {
@@ -133,55 +137,50 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return m_idSpace;
 	}
 
-	private ArgonDiskCacheController(Config config, Timer timer, ArgonDigester digester) {
+	private ArgonDiskCacheController(Config config, DiskMruTable mruTable, Timer timer, ArgonDigester digester) {
 		assert config != null;
+		assert mruTable != null;
 		assert timer != null;
 		assert digester != null;
 		m_probe = config.probe;
 		m_idService = config.idService;
 		m_idSpace = config.idSpace;
-		m_cndirMRU = config.cndirMRU;
-		m_cndirJAR = config.cndirJAR;
+		m_mruTable = mruTable;
 		m_timer = timer;
 		m_digester = digester;
+		m_cndirJAR = config.cndirJAR;
 		m_bcSizeQuota = config.bcSizeQuota;
 		m_bcSizeEst = config.bcSizeEst;
 	}
-	private final ReadWriteLock m_rwLock = new ReentrantReadWriteLock();
-	private final IArgonFileProbe m_probe;
+	private final IArgonDiskCacheProbe m_probe;
 	private final ArgonServiceId m_idService;
 	private final IArgonSpaceId m_idSpace;
-	private final File m_cndirMRU;
-	private final File m_cndirJAR;
+	private final DiskMruTable m_mruTable;
 	private final Timer m_timer;
-
 	private final ArgonDigester m_digester;
-
+	private final File m_cndirJAR;
 	private final int m_bcSizeQuota;
-
 	private final int m_bcSizeEst;
 
 	private static class MruTask extends TimerTask {
 
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-
+			m_mruTable.tick();
 		}
 
-		public MruTask(Config cfg) {
-			assert cfg != null;
-			m_probe = cfg.probe;
-			m_cndir = cfg.cndirMRU;
+		public MruTask(DiskMruTable mruTable) {
+			assert mruTable != null;
+			m_mruTable = mruTable;
 		}
-		private final IArgonFileProbe m_probe;
-		private final File m_cndir;
+		private final DiskMruTable m_mruTable;
 	}
 
 	public static class Config {
 
 		public static final long DefaultCacheSizeQuota = 4 * CArgon.G;
 		public static final int DefaultCacheFileLimit = 1000;
+		public static final int DefaultCacheSizeGoal = 95;
 		public static final int DefaultSizeQuota = Integer.MAX_VALUE;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
 		public static final int DefaultCheckpointTimerDelayMs = 90 * CArgon.SEC_TO_MS;
@@ -225,12 +224,24 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return this;
 		}
 
+		public File mruDirectory() {
+			return cndirMRU;
+		}
+
+		public Config mruDirectory(String qccPath)
+				throws ArgonPermissionException {
+			if (qccPath == null || qccPath.length() == 0) throw new IllegalArgumentException("string is null or empty");
+			cndirMRU = ArgonDirectoryManagement.cndirEnsureWriteable(qccPath);
+			return this;
+		}
+
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("ArgonDiskCacheController.Config");
 			ds.a("cndirMRU", cndirMRU);
 			ds.a("bcCacheSizeQuota", bcCacheSizeQuota);
 			ds.a("cacheFileLimit", cacheFileLimit);
+			ds.a("pctCacheSizeGoal", pctCacheSizeGoal);
 			ds.a("bcSizeQuota", bcSizeQuota);
 			ds.a("msCheckpointTimerDelay", msCheckpointTimerDelay);
 			ds.a("msCheckpointTimerPeriod", msCheckpointTimerPeriod);
@@ -240,7 +251,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return ds.s();
 		}
 
-		Config(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace, File cndirMRU, File cndirJAR,
+		Config(IArgonDiskCacheProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace, File cndirMRU, File cndirJAR,
 				String qccThreadName) {
 			assert probe != null;
 			assert sid != null;
@@ -255,14 +266,15 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			this.cndirJAR = cndirJAR;
 			this.qccThreadName = qccThreadName;
 		}
-		final IArgonFileProbe probe;
+		final IArgonDiskCacheProbe probe;
 		final ArgonServiceId idService;
 		final IArgonSpaceId idSpace;
-		final File cndirMRU;
+		File cndirMRU;
 		final File cndirJAR;
 		final String qccThreadName;
 		long bcCacheSizeQuota = DefaultCacheSizeQuota;
 		int cacheFileLimit = DefaultCacheFileLimit;
+		int pctCacheSizeGoal = DefaultCacheSizeGoal;
 		int bcSizeQuota = DefaultSizeQuota;
 		int bcSizeEst = DefaultSizeEst;
 		long msCheckpointTimerDelay = DefaultCheckpointTimerDelayMs;
