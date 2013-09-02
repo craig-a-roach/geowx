@@ -22,6 +22,7 @@ import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
+import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.file.ArgonFileManagement;
 import com.metservice.argon.json.JsonArray;
@@ -37,7 +38,7 @@ class DiskMruTable {
 
 	static final String p_fileName = "fn";
 	static final String p_lastAccess = "la";
-	static final String p_lastModified = "lm";
+	static final String p_contentValidator = "cv";
 	static final String p_fileKB = "kb";
 	static final String p_contentType = "ct";
 	static final String p_trackers = "trackers";
@@ -52,8 +53,17 @@ class DiskMruTable {
 
 	private static final String TryDecodeCp = "Decode MRU Checkpoint";
 	private static final String CsqScrub = "Wipe contents of cache";
+	private static final String TryTick = "Perform MRU table resource management functions";
+	private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 	private static final String[] NONAMES = new String[0];
 	private static final int NOAUDIT = Integer.MAX_VALUE;
+
+	private static int kbFile(String qccFileName, long bcFile)
+			throws ArgonCacheException {
+		final long kbFileL = Math.max(1L, bcFile / CArgon.K);
+		if (kbFileL <= Integer.MAX_VALUE) return (int) kbFileL;
+		throw new ArgonCacheException("Size of file " + qccFileName + " is " + bcFile + ", which exceeds 2TB limit");
+	}
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
@@ -178,10 +188,13 @@ class DiskMruTable {
 		}
 	}
 
-	public Descriptor newDescriptor(String qccFileName, long tsLastModified, int bcFile, String qlcContentType, long tsNow) {
+	public Descriptor newDescriptor(String qccFileName, String zContentValidator, int bcFile, String qlcContentType, long tsNow)
+			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
+		if (zContentValidator == null) throw new IllegalArgumentException("object is null");
 		if (qlcContentType == null || qlcContentType.length() == 0)
 			throw new IllegalArgumentException("string is null or empty");
+		final int kbFile = kbFile(qccFileName, bcFile);
 		m_lockState.lock();
 		try {
 			m_checkpointDue.set(true);
@@ -189,7 +202,7 @@ class DiskMruTable {
 				m_auditCounter.incrementAndGet();
 			}
 			final long bcEx = m_state.bcActual();
-			final Tracker tracker = m_state.putTracker(qccFileName, tsLastModified, bcFile, qlcContentType, tsNow);
+			final Tracker tracker = m_state.putTracker(qccFileName, zContentValidator, kbFile, qlcContentType, tsNow);
 			final long bcDelta = m_state.bcActual() - bcEx;
 			if (bcDelta > 0L) {
 				m_purgeDue.set(true);
@@ -210,14 +223,22 @@ class DiskMruTable {
 	}
 
 	public void tick() {
-		if (m_purgeDue.getAndSet(false)) {
-			purge();
-		}
-		if (m_checkpointDue.getAndSet(false)) {
-			checkpoint();
-		}
-		if (m_auditCounter.compareAndSet(cfg.auditCycle, 0)) {
-			audit();
+		try {
+			if (m_purgeDue.getAndSet(false)) {
+				purge();
+			}
+			if (m_checkpointDue.getAndSet(false)) {
+				checkpoint();
+			}
+			if (m_auditCounter.compareAndSet(cfg.auditCycle, 0)) {
+				audit();
+			}
+		} catch (final RuntimeException ex) {
+			final Ds ds = Ds.triedTo(TryTick, ex, CsqRetry);
+			ds.a("purgeDue", m_purgeDue);
+			ds.a("checkpointDue", m_checkpointDue);
+			ds.a("auditCounter", m_auditCounter);
+			cfg.probe.failSoftware(ds);
 		}
 	}
 
@@ -228,8 +249,8 @@ class DiskMruTable {
 		m_state = state;
 	}
 	private final Cfg cfg;
-	private final AtomicBoolean m_checkpointDue = new AtomicBoolean();
 	private final AtomicBoolean m_purgeDue = new AtomicBoolean();
+	private final AtomicBoolean m_checkpointDue = new AtomicBoolean();
 	private final AtomicInteger m_auditCounter = new AtomicInteger();
 	private final Lock m_lockState = new ReentrantLock();
 	private final State m_state;
@@ -332,15 +353,14 @@ class DiskMruTable {
 			}
 		}
 
-		public Tracker putTracker(String qccFileName, long tsLastModified, int bcFile, String qlcContentType, long tsNow) {
-			final int kbFile = Math.max(1, bcFile / CArgon.K);
+		public Tracker putTracker(String qccFileName, String zContentValidator, int kbFile, String qlcContentType, long tsNow) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, tsLastModified, kbFile, qlcContentType, tsNow);
+				vTracker = new Tracker(qccFileName, zContentValidator, kbFile, qlcContentType, tsNow);
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
 				m_bcActual -= vTracker.bcFile();
-				vTracker.registerReload(tsLastModified, kbFile, qlcContentType);
+				vTracker.registerReload(zContentValidator, kbFile, qlcContentType);
 			}
 			m_bcActual += vTracker.bcFile();
 			return vTracker;
@@ -390,7 +410,7 @@ class DiskMruTable {
 
 	private static class Tracker implements Comparable<Tracker> {
 
-		public int bcFile() {
+		public long bcFile() {
 			return m_kbFile * CArgon.K;
 		}
 
@@ -404,7 +424,7 @@ class DiskMruTable {
 		}
 
 		public Descriptor newDescriptor() {
-			return new Descriptor(m_tsLastAccess, m_tsLastModified, m_qlcContentType);
+			return new Descriptor(m_tsLastAccess, m_zContentValidator, m_qlcContentType);
 		}
 
 		public void purgeMark() {
@@ -422,8 +442,8 @@ class DiskMruTable {
 			}
 		}
 
-		public void registerReload(long tsLastModified, int kbFile, String qlcContentType) {
-			m_tsLastModified = tsLastModified;
+		public void registerReload(String zContentValidator, int kbFile, String qlcContentType) {
+			m_zContentValidator = zContentValidator;
 			m_kbFile = kbFile;
 			m_qlcContentType = qlcContentType;
 		}
@@ -432,7 +452,7 @@ class DiskMruTable {
 			dst.putString(p_fileName, m_qccFileName);
 			dst.putTime(p_lastAccess, m_tsLastAccess);
 			dst.putInteger(p_fileKB, m_kbFile);
-			dst.putTime(p_lastModified, m_tsLastModified);
+			dst.putString(p_contentValidator, m_zContentValidator);
 			dst.putString(p_contentType, m_qlcContentType);
 		}
 
@@ -442,7 +462,7 @@ class DiskMruTable {
 			ds.a("fileName", m_qccFileName);
 			ds.at8("lastAccess", m_tsLastAccess);
 			ds.a("kB", m_kbFile);
-			ds.at8("lastModified", m_tsLastModified);
+			ds.a("contentValidator", m_zContentValidator);
 			ds.a("contentType", m_qlcContentType);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
@@ -453,21 +473,21 @@ class DiskMruTable {
 			m_qccFileName = src.accessor(p_fileName).datumQtwString();
 			m_tsLastAccess = src.accessor(p_lastAccess).datumTs();
 			m_kbFile = src.accessor(p_fileKB).datumInteger();
-			m_tsLastModified = src.accessor(p_lastModified).datumTs();
+			m_zContentValidator = src.accessor(p_contentValidator).datumZtwString();
 			m_qlcContentType = src.accessor(p_contentType).datumQtwString();
 		}
 
-		public Tracker(String qccFileName, long tsLastModified, int kbFile, String qlcContentType, long tsNow) {
+		public Tracker(String qccFileName, String zContentValidator, int kbFile, String qlcContentType, long tsNow) {
 			m_qccFileName = qccFileName;
 			m_tsLastAccess = tsNow;
 			m_kbFile = kbFile;
-			m_tsLastModified = tsLastModified;
+			m_zContentValidator = zContentValidator;
 			m_qlcContentType = qlcContentType;
 		}
 		private final String m_qccFileName;
 		private long m_tsLastAccess;
 		private int m_kbFile;
-		private long m_tsLastModified;
+		private String m_zContentValidator;
 		private String m_qlcContentType;
 		private boolean m_purgeMarked;
 	}
@@ -496,18 +516,18 @@ class DiskMruTable {
 		public String toString() {
 			final Ds ds = Ds.o("DiskMruTable.Descriptor");
 			ds.at8("lastAccess", tsLastAccess);
-			ds.at8("lastModified", tsLastModified);
+			ds.a("contentValidator", zContentValidator);
 			ds.a("contentType", qlcContentType);
 			return ds.s();
 		}
 
-		public Descriptor(long tsLastAccess, long tsLastModified, String qlcContentType) {
+		public Descriptor(long tsLastAccess, String zContentValidator, String qlcContentType) {
 			this.tsLastAccess = tsLastAccess;
-			this.tsLastModified = tsLastModified;
+			this.zContentValidator = zContentValidator;
 			this.qlcContentType = qlcContentType;
 		}
 		public long tsLastAccess;
-		public long tsLastModified;
+		public String zContentValidator;
 		public String qlcContentType;
 	}
 

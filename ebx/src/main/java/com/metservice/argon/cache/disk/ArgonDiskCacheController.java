@@ -26,6 +26,7 @@ import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonSensor;
 import com.metservice.argon.IArgonSensorMap;
 import com.metservice.argon.cache.ArgonCacheException;
+import com.metservice.argon.cache.disk.DiskMruTable.Descriptor;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.management.IArgonSpaceId;
 
@@ -73,7 +74,11 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
 	}
 
-	private void registerHit(String qlcFileName) {
+	private File newMRUFile(String qccFileName) {
+		return new File(m_cndirMRU, qccFileName);
+	}
+
+	private void registerHit() {
 		// TODO Auto-generated method stub
 
 	}
@@ -83,6 +88,10 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	}
 
+	public void cancel() {
+		m_timer.cancel();
+	}
+
 	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
 			throws ArgonCacheException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
@@ -90,8 +99,15 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final String qccResourceId = request.qccResourceId();
 		if (qccResourceId == null || qccResourceId.length() == 0)
 			throw new IllegalArgumentException("Request resource id is empty");
-		final String fileName = m_digester.digestUTF8B64URL(qccResourceId);
+		final String qccFileName = m_digester.digestUTF8B64URL(qccResourceId);
 		final long tsNow = ArgonClock.tsNow();
+		final Descriptor oMru = m_mruTable.findDescriptor(qccFileName, tsNow);
+		final boolean isValid = oMru != null && request.isValid(oMru.zContentValidator, oMru.qlcContentType);
+		if (isValid) {
+			registerHit();
+			return newMRUFile(qccFileName);
+		}
+		registerMiss();
 		final IArgonDiskCacheable oCacheable = supplier.find(request);
 		if (oCacheable == null) return null;
 		final Binary oContent = oCacheable.getContent();
@@ -148,6 +164,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		m_mruTable = mruTable;
 		m_timer = timer;
 		m_digester = digester;
+		m_cndirMRU = config.cndirMRU;
 		m_cndirJAR = config.cndirJAR;
 		m_bcSizeQuota = config.bcSizeQuota;
 		m_bcSizeEst = config.bcSizeEst;
@@ -158,6 +175,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	private final DiskMruTable m_mruTable;
 	private final Timer m_timer;
 	private final ArgonDigester m_digester;
+	private final File m_cndirMRU;
 	private final File m_cndirJAR;
 	private final int m_bcSizeQuota;
 	private final int m_bcSizeEst;

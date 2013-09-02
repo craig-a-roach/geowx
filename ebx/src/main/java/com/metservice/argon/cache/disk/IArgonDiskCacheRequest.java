@@ -5,8 +5,6 @@
  */
 package com.metservice.argon.cache.disk;
 
-import java.util.Date;
-
 /**
  * @author roach
  */
@@ -14,9 +12,9 @@ public interface IArgonDiskCacheRequest {
 
 	public String getContentType();
 
-	public Date getValidator();
+	public String getContentValidator();
 
-	public boolean isValid(Date validator);
+	public boolean isValid(String zContentValidator, String qlcContentType);
 
 	public String qccResourceId();
 }

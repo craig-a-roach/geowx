@@ -5,8 +5,6 @@
  */
 package com.metservice.argon.cache.disk;
 
-import java.util.Date;
-
 /**
  * @author roach
  */
@@ -14,17 +12,17 @@ public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheRequest {
 
 	@Override
 	public String getContentType() {
-		return m_oqContentType;
+		return m_oqlcContentType;
 	}
 
 	@Override
-	public Date getValidator() {
+	public String getContentValidator() {
 		return null;
 	}
 
 	@Override
-	public boolean isValid(Date validator) {
-		return true;
+	public boolean isValid(String zContentValidator, String qlcContentType) {
+		return m_oqlcContentType == null || m_oqlcContentType.equals(qlcContentType);
 	}
 
 	@Override
@@ -50,9 +48,9 @@ public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheRequest {
 			throw new IllegalArgumentException("string is null or empty");
 		m_resourceRef = resourceRef;
 		m_qccResourcePath = qccResourcePath;
-		m_oqContentType = oqContentType;
+		m_oqlcContentType = oqContentType == null ? null : oqContentType.toLowerCase();
 	}
 	private final Class<?> m_resourceRef;
 	private final String m_qccResourcePath;
-	private final String m_oqContentType;
+	private final String m_oqlcContentType;
 }
