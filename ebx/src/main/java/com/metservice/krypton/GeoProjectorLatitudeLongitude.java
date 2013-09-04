@@ -30,7 +30,7 @@ class GeoProjectorLatitudeLongitude implements IKryptonGeoProjector {
 		final int iE = m_scan.eastNeighbour(i);
 		final int jN = m_scan.northNeighbour(j);
 
-		final double u = Math.cos(lat * Math.PI / 180.0) * UGeo.angle360(lon - lonSW) / dlon;
+		final double u = UGeo.angle360(lon - lonSW) / dlon;
 		final double v = (lat - latSW) / dlat;
 
 		final float vSW = array.value(m_scan.arrayIndex(i, j));
