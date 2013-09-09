@@ -236,7 +236,6 @@ public class TestUnit1Reduce {
 			}
 		}
 		Assert.assertNotNull(oPreNcube);
-		if (oPreNcube == null) return;
 		Assert.assertEquals(185, oPreNcube.recordCount());
 
 		final CobaltKmlStyle style = new CobaltKmlStyle();
