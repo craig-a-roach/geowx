@@ -8,49 +8,30 @@ package com.metservice.argon.cache.disk;
 /**
  * @author roach
  */
-public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheRequest {
-
-	@Override
-	public String getContentType() {
-		return m_oqlcContentType;
-	}
-
-	@Override
-	public String getContentValidator() {
-		return null;
-	}
-
-	@Override
-	public boolean isValid(String zContentValidator, String qlcContentType) {
-		return m_oqlcContentType == null || m_oqlcContentType.equals(qlcContentType);
-	}
+public class ArgonDiskCacheClasspathRequest implements IArgonDiskCacheClasspathRequest {
 
 	@Override
 	public String qccResourceId() {
 		return m_resourceRef.getName() + "/" + m_qccResourcePath;
 	}
 
+	@Override
 	public String qccResourcePath() {
 		return m_qccResourcePath;
 	}
 
+	@Override
 	public Class<?> resourceRef() {
 		return m_resourceRef;
 	}
 
 	public ArgonDiskCacheClasspathRequest(Class<?> resourceRef, String qccResourcePath) {
-		this(resourceRef, qccResourcePath, null);
-	}
-
-	public ArgonDiskCacheClasspathRequest(Class<?> resourceRef, String qccResourcePath, String oqContentType) {
 		if (resourceRef == null) throw new IllegalArgumentException("object is null");
 		if (qccResourcePath == null || qccResourcePath.length() == 0)
 			throw new IllegalArgumentException("string is null or empty");
 		m_resourceRef = resourceRef;
 		m_qccResourcePath = qccResourcePath;
-		m_oqlcContentType = oqContentType == null ? null : oqContentType.toLowerCase();
 	}
 	private final Class<?> m_resourceRef;
 	private final String m_qccResourcePath;
-	private final String m_oqlcContentType;
 }

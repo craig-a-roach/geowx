@@ -7,6 +7,7 @@ package com.metservice.argon.cache.disk;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -74,8 +75,33 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
 	}
 
-	private File newMRUFile(String qccFileName) {
-		return new File(m_cndirMRU, qccFileName);
+	private File createMRUFile(Descriptor oDescriptor) {
+		if (oDescriptor == null || !oDescriptor.exists) return null;
+		return new File(m_cndirMRU, oDescriptor.qccFileName);
+	}
+
+	private File createMRUFile(Descriptor oDescriptor, Binary oContent)
+			throws ArgonCacheException {
+		if (oContent == null) return null;
+		try {
+			final File oFile = createMRUFile(oDescriptor);
+			if (oFile == null) return null;
+			oContent.save(oFile, false);
+			return oFile;
+		} catch (final ArgonPermissionException ex) {
+			throw new ArgonCacheException(failSave(ex));
+		} catch (final ArgonStreamWriteException ex) {
+			throw new ArgonCacheException(failSave(ex));
+		}
+	}
+
+	private String failSave(Throwable ex) {
+		return "Failed to save cacheable resource content..." + ex.getMessage();
+	}
+
+	private Long obcFile(Binary oContent) {
+		if (oContent == null) return null;
+		return new Long(oContent.byteCount());
 	}
 
 	private void registerHit() {
@@ -92,7 +118,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		m_timer.cancel();
 	}
 
-	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
+	public <R extends IArgonDiskCacheMruRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
 			throws ArgonCacheException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
 		if (request == null) throw new IllegalArgumentException("object is null");
@@ -101,17 +127,26 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			throw new IllegalArgumentException("Request resource id is empty");
 		final String qccFileName = m_digester.digestUTF8B64URL(qccResourceId);
 		final long tsNow = ArgonClock.tsNow();
+		final Date now = new Date(tsNow);
 		final Descriptor oMru = m_mruTable.findDescriptor(qccFileName, tsNow);
-		final boolean isValid = oMru != null && request.isValid(oMru.zContentValidator, oMru.qlcContentType);
+		final boolean isValid = oMru != null && request.isValid(now, oMru.zContentValidator);
 		if (isValid) {
 			registerHit();
-			return newMRUFile(qccFileName);
+			return createMRUFile(oMru);
 		}
 		registerMiss();
 		final IArgonDiskCacheable oCacheable = supplier.find(request);
 		if (oCacheable == null) return null;
+		final String ozContentValidator = oCacheable.getContentValidator();
+		final String zContentValidator = ozContentValidator == null ? "" : ozContentValidator;
 		final Binary oContent = oCacheable.getContent();
-		if (oContent == null) return null;
+		final Long obcFile = obcFile(oContent);
+		final Descriptor descriptor = m_mruTable.newDescriptor(qccFileName, zContentValidator, obcFile, tsNow);
+		return createMRUFile(descriptor, oContent);
+	}
+
+	public <R extends IArgonDiskCacheClasspathRequest> File find(R request)
+			throws ArgonCacheException {
 		return null;
 	}
 

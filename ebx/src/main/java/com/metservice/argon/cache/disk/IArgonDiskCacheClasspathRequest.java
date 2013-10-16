@@ -8,7 +8,9 @@ package com.metservice.argon.cache.disk;
 /**
  * @author roach
  */
-public interface IArgonDiskCacheRequest {
+public interface IArgonDiskCacheClasspathRequest extends IArgonDiskCacheRequest {
 
-	public String qccResourceId();
+	public String qccResourcePath();
+
+	public Class<?> resourceRef();
 }

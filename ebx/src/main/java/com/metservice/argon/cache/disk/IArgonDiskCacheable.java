@@ -5,8 +5,6 @@
  */
 package com.metservice.argon.cache.disk;
 
-import java.util.Date;
-
 import com.metservice.argon.Binary;
 
 /**
@@ -16,7 +14,5 @@ public interface IArgonDiskCacheable {
 
 	public Binary getContent();
 
-	public Date getLastModified();
-
-	public String qlcContentType();
+	public String getContentValidator();
 }

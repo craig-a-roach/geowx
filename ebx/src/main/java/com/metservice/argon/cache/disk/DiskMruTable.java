@@ -40,7 +40,6 @@ class DiskMruTable {
 	static final String p_lastAccess = "la";
 	static final String p_contentValidator = "cv";
 	static final String p_fileKB = "kb";
-	static final String p_contentType = "ct";
 	static final String p_trackers = "trackers";
 
 	public static final String CheckpointFileName = "checkpoint.json";
@@ -57,13 +56,7 @@ class DiskMruTable {
 	private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 	private static final String[] NONAMES = new String[0];
 	private static final int NOAUDIT = Integer.MAX_VALUE;
-
-	private static int kbFile(String qccFileName, long bcFile)
-			throws ArgonCacheException {
-		final long kbFileL = Math.max(1L, bcFile / CArgon.K);
-		if (kbFileL <= Integer.MAX_VALUE) return (int) kbFileL;
-		throw new ArgonCacheException("Size of file " + qccFileName + " is " + bcFile + ", which exceeds 2TB limit");
-	}
+	private static final int NOKB = -1;
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
@@ -86,17 +79,27 @@ class DiskMruTable {
 		return new State(cfg, cap);
 	}
 
+	private static Integer okbFile(String qccFileName, Long obcFile)
+			throws ArgonCacheException {
+		if (obcFile == null) return null;
+		final long bcFile = obcFile.longValue();
+		final long kbFileL = bcFile <= 0L ? 0L : Math.max(1L, bcFile / CArgon.K);
+		if (kbFileL <= Integer.MAX_VALUE) return new Integer((int) kbFileL);
+		throw new ArgonCacheException("Size of file " + qccFileName + " is " + bcFile + ", which exceeds 2GB limit");
+	}
+
 	public static DiskMruTable newInstance(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, int goalPct,
 			int auditCycle) {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (cndir == null) throw new IllegalArgumentException("object is null");
 		final long cbcQuota = Math.max(0L, bcQuota);
+		final long kbQuota = cbcQuota / CArgon.K;
 		final int cpopLimit = Math.max(FileLimitLo, Math.min(FileLimitHi, popLimit));
 		final int cpctGoal = Math.max(GoalPctLo, Math.min(GoalPctHi, goalPct));
-		final long bcGoal = (cbcQuota * cpctGoal) / 100L;
+		final long kbGoal = (cbcQuota * cpctGoal) / 100L / CArgon.K;
 		final int popGoal = (cpopLimit * cpctGoal) / 100;
 		final int cauditCycle = auditCycle <= 0 ? NOAUDIT : auditCycle;
-		final Cfg cfg = new Cfg(probe, cndir, cbcQuota, cpopLimit, bcGoal, popGoal, cauditCycle);
+		final Cfg cfg = new Cfg(probe, cndir, kbQuota, cpopLimit, kbGoal, popGoal, cauditCycle);
 		final State state = newState(cfg, cpopLimit);
 		return new DiskMruTable(cfg, state);
 	}
@@ -188,23 +191,21 @@ class DiskMruTable {
 		}
 	}
 
-	public Descriptor newDescriptor(String qccFileName, String zContentValidator, int bcFile, String qlcContentType, long tsNow)
+	public Descriptor newDescriptor(String qccFileName, String zContentValidator, Long obcFile, long tsNow)
 			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
 		if (zContentValidator == null) throw new IllegalArgumentException("object is null");
-		if (qlcContentType == null || qlcContentType.length() == 0)
-			throw new IllegalArgumentException("string is null or empty");
-		final int kbFile = kbFile(qccFileName, bcFile);
+		final Integer okbFile = okbFile(qccFileName, obcFile);
 		m_lockState.lock();
 		try {
 			m_checkpointDue.set(true);
 			if (cfg.auditCycle != NOAUDIT) {
 				m_auditCounter.incrementAndGet();
 			}
-			final long bcEx = m_state.bcActual();
-			final Tracker tracker = m_state.putTracker(qccFileName, zContentValidator, kbFile, qlcContentType, tsNow);
-			final long bcDelta = m_state.bcActual() - bcEx;
-			if (bcDelta > 0L) {
+			final long kbEx = m_state.kbActual();
+			final Tracker tracker = m_state.putTracker(qccFileName, zContentValidator, okbFile, tsNow);
+			final long kbDelta = m_state.kbActual() - kbEx;
+			if (kbDelta > 0L) {
 				m_purgeDue.set(true);
 			}
 			return tracker.newDescriptor();
@@ -257,22 +258,22 @@ class DiskMruTable {
 
 	private static class Cfg {
 
-		Cfg(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, long bcGoal, int popGoal, int auditCycle) {
+		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbQuota, int popLimit, long kbGoal, int popGoal, int auditCycle) {
 			assert probe != null;
 			assert cndir != null;
 			this.probe = probe;
 			this.cndir = cndir;
-			this.bcQuota = bcQuota;
+			this.kbQuota = kbQuota;
 			this.popLimit = popLimit;
-			this.bcGoal = bcGoal;
+			this.kbGoal = kbGoal;
 			this.popGoal = popGoal;
 			this.auditCycle = auditCycle;
 		}
 		final IArgonDiskCacheProbe probe;
 		final File cndir;
-		final long bcQuota;
+		final long kbQuota;
 		final int popLimit;
-		final long bcGoal;
+		final long kbGoal;
 		final int popGoal;
 		final int auditCycle;
 	}
@@ -286,26 +287,22 @@ class DiskMruTable {
 		private List<String> newPurgeFileNames() {
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
 			final int popReclaim = popCacheFileActual - cfg.popGoal;
-			final long bcReclaim = m_bcActual - cfg.bcGoal;
-			if (popReclaim <= 0 && bcReclaim <= 0) return Collections.emptyList();
+			final long kbReclaim = m_kbActual - cfg.kbGoal;
+			if (popReclaim <= 0 && kbReclaim <= 0) return Collections.emptyList();
 			final List<String> zlNames = new ArrayList<>(Math.max(64, popReclaim));
 			final List<Tracker> zlTrackersAsc = new ArrayList<>(m_mapFileName_Tracker.values());
 			Collections.sort(zlTrackersAsc);
 			final int trackerCount = zlTrackersAsc.size();
-			long bcNeo = m_bcActual;
+			long kbNeo = m_kbActual;
 			int popNeo = popCacheFileActual;
-			for (int i = 0; i < trackerCount && (bcNeo > cfg.bcGoal || popNeo > cfg.popGoal); i++) {
+			for (int i = 0; i < trackerCount && (kbNeo > cfg.kbGoal || popNeo > cfg.popGoal); i++) {
 				final Tracker tracker = zlTrackersAsc.get(i);
 				zlNames.add(tracker.qccFileName());
 				tracker.purgeMark();
-				bcNeo -= tracker.bcFile();
+				kbNeo -= tracker.kbFile();
 				popNeo--;
 			}
 			return zlNames;
-		}
-
-		public long bcActual() {
-			return m_bcActual;
 		}
 
 		public Tracker findTracker(String qccFileName, long tsNow) {
@@ -318,7 +315,11 @@ class DiskMruTable {
 
 		public boolean isPurgeDue() {
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
-			return (m_bcActual > cfg.bcQuota) || (popCacheFileActual > cfg.popLimit);
+			return (m_kbActual > cfg.kbQuota) || (popCacheFileActual > cfg.popLimit);
+		}
+
+		public long kbActual() {
+			return m_kbActual;
 		}
 
 		public JsonObject newJsonCheckpoint() {
@@ -338,7 +339,7 @@ class DiskMruTable {
 		}
 
 		public SensorSnapshot newSensorSnapshot() {
-			return new SensorSnapshot(m_bcActual, m_mapFileName_Tracker.size());
+			return new SensorSnapshot(m_kbActual, m_mapFileName_Tracker.size());
 		}
 
 		public void purge(String qccFileName) {
@@ -348,21 +349,21 @@ class DiskMruTable {
 				final boolean deleted = ArgonFileManagement.deleteFile(cfg.probe, target);
 				if (deleted) {
 					m_mapFileName_Tracker.remove(qccFileName);
-					m_bcActual -= oEx.bcFile();
+					m_kbActual -= oEx.kbFile();
 				}
 			}
 		}
 
-		public Tracker putTracker(String qccFileName, String zContentValidator, int kbFile, String qlcContentType, long tsNow) {
+		public Tracker putTracker(String qccFileName, String zContentValidator, Integer okbFile, long tsNow) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, zContentValidator, kbFile, qlcContentType, tsNow);
+				vTracker = new Tracker(qccFileName, zContentValidator, okbFile, tsNow);
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
-				m_bcActual -= vTracker.bcFile();
-				vTracker.registerReload(zContentValidator, kbFile, qlcContentType);
+				m_kbActual -= vTracker.kbFile();
+				vTracker.registerReload(zContentValidator, okbFile);
 			}
-			m_bcActual += vTracker.bcFile();
+			m_kbActual += vTracker.kbFile();
 			return vTracker;
 		}
 
@@ -400,18 +401,18 @@ class DiskMruTable {
 			for (int i = 0; i < trackerCount; i++) {
 				final Tracker tracker = new Tracker(array.accessor(i).datumObject());
 				m_mapFileName_Tracker.put(tracker.qccFileName(), tracker);
-				m_bcActual += tracker.bcFile();
+				m_kbActual += tracker.kbFile();
 			}
 		}
 		private final Cfg cfg;
 		private final Map<String, Tracker> m_mapFileName_Tracker;
-		private long m_bcActual;
+		private long m_kbActual;
 	}
 
 	private static class Tracker implements Comparable<Tracker> {
 
-		public long bcFile() {
-			return m_kbFile * CArgon.K;
+		private static int kbn(Integer okb) {
+			return okb == null ? NOKB : okb.intValue();
 		}
 
 		@Override
@@ -423,8 +424,13 @@ class DiskMruTable {
 			return m_purgeMarked;
 		}
 
+		public int kbFile() {
+			return m_kbnFile == NOKB ? 0 : m_kbnFile;
+		}
+
 		public Descriptor newDescriptor() {
-			return new Descriptor(m_tsLastAccess, m_zContentValidator, m_qlcContentType);
+			final boolean exists = m_kbnFile != NOKB;
+			return new Descriptor(m_qccFileName, m_tsLastAccess, m_zContentValidator, exists);
 		}
 
 		public void purgeMark() {
@@ -442,18 +448,16 @@ class DiskMruTable {
 			}
 		}
 
-		public void registerReload(String zContentValidator, int kbFile, String qlcContentType) {
+		public void registerReload(String zContentValidator, Integer okbFile) {
 			m_zContentValidator = zContentValidator;
-			m_kbFile = kbFile;
-			m_qlcContentType = qlcContentType;
+			m_kbnFile = kbn(okbFile);
 		}
 
 		public void save(JsonObject dst) {
 			dst.putString(p_fileName, m_qccFileName);
 			dst.putTime(p_lastAccess, m_tsLastAccess);
-			dst.putInteger(p_fileKB, m_kbFile);
+			dst.putInteger(p_fileKB, m_kbnFile);
 			dst.putString(p_contentValidator, m_zContentValidator);
-			dst.putString(p_contentType, m_qlcContentType);
 		}
 
 		@Override
@@ -461,9 +465,8 @@ class DiskMruTable {
 			final Ds ds = Ds.o("DiskMruTable.Tracker");
 			ds.a("fileName", m_qccFileName);
 			ds.at8("lastAccess", m_tsLastAccess);
-			ds.a("kB", m_kbFile);
+			ds.a("kB", m_kbnFile);
 			ds.a("contentValidator", m_zContentValidator);
-			ds.a("contentType", m_qlcContentType);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
 		}
@@ -472,23 +475,20 @@ class DiskMruTable {
 			if (src == null) throw new IllegalArgumentException("object is null");
 			m_qccFileName = src.accessor(p_fileName).datumQtwString();
 			m_tsLastAccess = src.accessor(p_lastAccess).datumTs();
-			m_kbFile = src.accessor(p_fileKB).datumInteger();
+			m_kbnFile = src.accessor(p_fileKB).datumInteger();
 			m_zContentValidator = src.accessor(p_contentValidator).datumZtwString();
-			m_qlcContentType = src.accessor(p_contentType).datumQtwString();
 		}
 
-		public Tracker(String qccFileName, String zContentValidator, int kbFile, String qlcContentType, long tsNow) {
+		public Tracker(String qccFileName, String zContentValidator, Integer okbFile, long tsNow) {
 			m_qccFileName = qccFileName;
 			m_tsLastAccess = tsNow;
-			m_kbFile = kbFile;
+			m_kbnFile = kbn(okbFile);
 			m_zContentValidator = zContentValidator;
-			m_qlcContentType = qlcContentType;
 		}
 		private final String m_qccFileName;
 		private long m_tsLastAccess;
-		private int m_kbFile;
+		private int m_kbnFile;
 		private String m_zContentValidator;
-		private String m_qlcContentType;
 		private boolean m_purgeMarked;
 	}
 
@@ -497,16 +497,16 @@ class DiskMruTable {
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("DiskMruTable.SensorSnapshot");
-			ds.a("bcActual", bcActual);
+			ds.a("kbActual", kbActual);
 			ds.a("popActual", popActual);
 			return ds.s();
 		}
 
-		public SensorSnapshot(long bcActual, int popActual) {
-			this.bcActual = bcActual;
+		public SensorSnapshot(long kbActual, int popActual) {
+			this.kbActual = kbActual;
 			this.popActual = popActual;
 		}
-		public final long bcActual;
+		public final long kbActual;
 		public final int popActual;
 	}
 
@@ -515,20 +515,25 @@ class DiskMruTable {
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("DiskMruTable.Descriptor");
+			ds.a("fileName", qccFileName);
 			ds.at8("lastAccess", tsLastAccess);
 			ds.a("contentValidator", zContentValidator);
-			ds.a("contentType", qlcContentType);
+			ds.a("exists", exists);
 			return ds.s();
 		}
 
-		public Descriptor(long tsLastAccess, String zContentValidator, String qlcContentType) {
+		private Descriptor(String qccFileName, long tsLastAccess, String zContentValidator, boolean exists) {
+			assert qccFileName != null && qccFileName.length() > 0;
+			assert zContentValidator != null;
+			this.qccFileName = qccFileName;
 			this.tsLastAccess = tsLastAccess;
 			this.zContentValidator = zContentValidator;
-			this.qlcContentType = qlcContentType;
+			this.exists = exists;
 		}
+		public final String qccFileName;
 		public long tsLastAccess;
 		public String zContentValidator;
-		public String qlcContentType;
+		public boolean exists;
 	}
 
 }
