@@ -39,7 +39,7 @@ class DiskMruTable {
 	static final String p_fileName = "fn";
 	static final String p_lastAccess = "la";
 	static final String p_contentValidator = "cv";
-	static final String p_fileKB = "kb";
+	static final String p_dcu = "u";
 	static final String p_trackers = "trackers";
 
 	public static final String CheckpointFileName = "checkpoint.json";
@@ -56,7 +56,6 @@ class DiskMruTable {
 	private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 	private static final String[] NONAMES = new String[0];
 	private static final int NOAUDIT = Integer.MAX_VALUE;
-	private static final int NOKB = -1;
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
@@ -77,15 +76,6 @@ class DiskMruTable {
 		}
 		if (oState != null) return oState;
 		return new State(cfg, cap);
-	}
-
-	private static Integer okbFile(String qccFileName, Long obcFile)
-			throws ArgonCacheException {
-		if (obcFile == null) return null;
-		final long bcFile = obcFile.longValue();
-		final long kbFileL = bcFile <= 0L ? 0L : Math.max(1L, bcFile / CArgon.K);
-		if (kbFileL <= Integer.MAX_VALUE) return new Integer((int) kbFileL);
-		throw new ArgonCacheException("Size of file " + qccFileName + " is " + bcFile + ", which exceeds 2GB limit");
 	}
 
 	public static DiskMruTable newInstance(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, int goalPct,
@@ -191,11 +181,11 @@ class DiskMruTable {
 		}
 	}
 
-	public Descriptor newDescriptor(String qccFileName, String zContentValidator, Long obcFile, long tsNow)
+	public Descriptor newDescriptor(String qccFileName, String ztwContentValidator, Dcu dcu, long tsNow)
 			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		if (zContentValidator == null) throw new IllegalArgumentException("object is null");
-		final Integer okbFile = okbFile(qccFileName, obcFile);
+		if (ztwContentValidator == null) throw new IllegalArgumentException("object is null");
+		if (dcu == null) throw new IllegalArgumentException("object is null");
 		m_lockState.lock();
 		try {
 			m_checkpointDue.set(true);
@@ -203,7 +193,7 @@ class DiskMruTable {
 				m_auditCounter.incrementAndGet();
 			}
 			final long kbEx = m_state.kbActual();
-			final Tracker tracker = m_state.putTracker(qccFileName, zContentValidator, okbFile, tsNow);
+			final Tracker tracker = m_state.putTracker(qccFileName, ztwContentValidator, dcu, tsNow);
 			final long kbDelta = m_state.kbActual() - kbEx;
 			if (kbDelta > 0L) {
 				m_purgeDue.set(true);
@@ -354,14 +344,14 @@ class DiskMruTable {
 			}
 		}
 
-		public Tracker putTracker(String qccFileName, String zContentValidator, Integer okbFile, long tsNow) {
+		public Tracker putTracker(String qccFileName, String zContentValidator, Dcu dcu, long tsNow) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, zContentValidator, okbFile, tsNow);
+				vTracker = new Tracker(qccFileName, zContentValidator, dcu, tsNow);
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
 				m_kbActual -= vTracker.kbFile();
-				vTracker.registerReload(zContentValidator, okbFile);
+				vTracker.registerReload(zContentValidator, dcu);
 			}
 			m_kbActual += vTracker.kbFile();
 			return vTracker;
@@ -411,10 +401,6 @@ class DiskMruTable {
 
 	private static class Tracker implements Comparable<Tracker> {
 
-		private static int kbn(Integer okb) {
-			return okb == null ? NOKB : okb.intValue();
-		}
-
 		@Override
 		public int compareTo(Tracker rhs) {
 			return ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
@@ -425,11 +411,11 @@ class DiskMruTable {
 		}
 
 		public int kbFile() {
-			return m_kbnFile == NOKB ? 0 : m_kbnFile;
+			return Dcu.kbUsage(m_dcu);
 		}
 
 		public Descriptor newDescriptor() {
-			final boolean exists = m_kbnFile != NOKB;
+			final boolean exists = Dcu.exists(m_dcu);
 			return new Descriptor(m_qccFileName, m_tsLastAccess, m_zContentValidator, exists);
 		}
 
@@ -448,15 +434,15 @@ class DiskMruTable {
 			}
 		}
 
-		public void registerReload(String zContentValidator, Integer okbFile) {
+		public void registerReload(String zContentValidator, Dcu dcu) {
 			m_zContentValidator = zContentValidator;
-			m_kbnFile = kbn(okbFile);
+			m_dcu = dcu.toInteger();
 		}
 
 		public void save(JsonObject dst) {
 			dst.putString(p_fileName, m_qccFileName);
 			dst.putTime(p_lastAccess, m_tsLastAccess);
-			dst.putInteger(p_fileKB, m_kbnFile);
+			dst.putInteger(p_dcu, m_dcu);
 			dst.putString(p_contentValidator, m_zContentValidator);
 		}
 
@@ -465,7 +451,7 @@ class DiskMruTable {
 			final Ds ds = Ds.o("DiskMruTable.Tracker");
 			ds.a("fileName", m_qccFileName);
 			ds.at8("lastAccess", m_tsLastAccess);
-			ds.a("kB", m_kbnFile);
+			ds.a("dcu", m_dcu);
 			ds.a("contentValidator", m_zContentValidator);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
@@ -475,19 +461,19 @@ class DiskMruTable {
 			if (src == null) throw new IllegalArgumentException("object is null");
 			m_qccFileName = src.accessor(p_fileName).datumQtwString();
 			m_tsLastAccess = src.accessor(p_lastAccess).datumTs();
-			m_kbnFile = src.accessor(p_fileKB).datumInteger();
+			m_dcu = src.accessor(p_dcu).datumInteger();
 			m_zContentValidator = src.accessor(p_contentValidator).datumZtwString();
 		}
 
-		public Tracker(String qccFileName, String zContentValidator, Integer okbFile, long tsNow) {
+		public Tracker(String qccFileName, String zContentValidator, Dcu dcu, long tsNow) {
 			m_qccFileName = qccFileName;
 			m_tsLastAccess = tsNow;
-			m_kbnFile = kbn(okbFile);
+			m_dcu = dcu.toInteger();
 			m_zContentValidator = zContentValidator;
 		}
 		private final String m_qccFileName;
 		private long m_tsLastAccess;
-		private int m_kbnFile;
+		private int m_dcu;
 		private String m_zContentValidator;
 		private boolean m_purgeMarked;
 	}
@@ -497,16 +483,16 @@ class DiskMruTable {
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("DiskMruTable.SensorSnapshot");
-			ds.a("kbActual", kbActual);
+			ds.a("dcuActual", dcuActual);
 			ds.a("popActual", popActual);
 			return ds.s();
 		}
 
-		public SensorSnapshot(long kbActual, int popActual) {
-			this.kbActual = kbActual;
+		public SensorSnapshot(long dcuActual, int popActual) {
+			this.dcuActual = dcuActual;
 			this.popActual = popActual;
 		}
-		public final long kbActual;
+		public final long dcuActual;
 		public final int popActual;
 	}
 

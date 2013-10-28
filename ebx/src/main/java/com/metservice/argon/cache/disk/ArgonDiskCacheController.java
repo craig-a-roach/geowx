@@ -21,6 +21,7 @@ import com.metservice.argon.ArgonSensorId;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.ArgonStreamWriteException;
+import com.metservice.argon.ArgonText;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
@@ -41,8 +42,16 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	public static final String SubDirMRU = "mru";
 	public static final String SubDirJAR = "jar";
 
+	private static final String TrySave = "Save content to file";
+	private static final String TryLoadCp = "Load content from classpath";
+
 	public static final ArgonSensorId SensorCacheHitRate = new ArgonSensorId("CacheHitRate");
 	private static final ArgonSensorId[] SENSORS = { SensorCacheHitRate };
+
+	private static void cleanJarDir(Config cfg) {
+		assert cfg != null;
+		ArgonDirectoryManagement.remove(cfg.probe, cfg.cndirJAR, true);
+	}
 
 	private static DiskMruTable newMruTable(Config cfg) {
 		assert cfg != null;
@@ -68,6 +77,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		final ArgonDigester digester = ArgonDigester.newSHA1();
+		cleanJarDir(cfg);
 		final DiskMruTable mruTable = newMruTable(cfg);
 		final MruTask task = new MruTask(mruTable);
 		final Timer timer = new Timer(cfg.qccThreadName, true);
@@ -75,33 +85,55 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
 	}
 
-	private File createMRUFile(Descriptor oDescriptor) {
-		if (oDescriptor == null || !oDescriptor.exists) return null;
-		return new File(m_cndirMRU, oDescriptor.qccFileName);
-	}
-
-	private File createMRUFile(Descriptor oDescriptor, Binary oContent)
-			throws ArgonCacheException {
-		if (oContent == null) return null;
-		try {
-			final File oFile = createMRUFile(oDescriptor);
-			if (oFile == null) return null;
-			oContent.save(oFile, false);
-			return oFile;
-		} catch (final ArgonPermissionException ex) {
-			throw new ArgonCacheException(failSave(ex));
-		} catch (final ArgonStreamWriteException ex) {
-			throw new ArgonCacheException(failSave(ex));
-		}
+	private String failLoadCp(Throwable ex) {
+		return "Failed to load resource content from class path..." + ex.getMessage();
 	}
 
 	private String failSave(Throwable ex) {
 		return "Failed to save cacheable resource content..." + ex.getMessage();
 	}
 
-	private Long obcFile(Binary oContent) {
-		if (oContent == null) return null;
-		return new Long(oContent.byteCount());
+	private Binary getBinaryFromClasspath(File ref, String qccResourcePath, Class<?> resourceRef)
+			throws ArgonCacheException {
+		final InputStream oins = resourceRef.getResourceAsStream(qccResourcePath);
+		if (oins == null) return null;
+		try {
+			return Binary.newFromInputStream(oins, m_bcSizeEst, qccResourcePath, m_bcSizeQuota);
+		} catch (final ArgonQuotaException ex) {
+			throw new ArgonCacheException(failLoadCp(ex));
+		} catch (final ArgonStreamReadException ex) {
+			probeLoadCp(resourceRef, ex);
+			throw new ArgonCacheException(failLoadCp(ex));
+		}
+	}
+
+	private File newFileJAR(String qccFileName) {
+		return new File(m_cndirJAR, qccFileName);
+	}
+
+	private File newFileMRU(String qccFileName) {
+		return new File(m_cndirMRU, qccFileName);
+	}
+
+	private void probeLoadCp(Class<?> resourceRef, Throwable cause) {
+		final Ds ds = Ds.triedTo(TryLoadCp, cause, ArgonCacheException.class);
+		ds.a("resourceRef", resourceRef);
+		ds.a("resourceRef.classLoader", resourceRef.getClassLoader());
+		m_probe.failSoftware(ds);
+	}
+
+	private void probeSave(File dst, Throwable cause, Binary content) {
+		final Ds ds = Ds.triedTo(TrySave, cause, ArgonCacheException.class);
+		ds.a("byteCount", content.zptReadOnly);
+		m_probe.failFile(ds, dst);
+	}
+
+	private String qccFileName(IArgonDiskCacheRequest request) {
+		if (request == null) throw new IllegalArgumentException("object is null");
+		final String qccResourceId = request.qccResourceId();
+		if (qccResourceId == null || qccResourceId.length() == 0)
+			throw new IllegalArgumentException("Request resource id is empty");
+		return m_digester.digestUTF8B64URL(qccResourceId);
 	}
 
 	private void registerHit() {
@@ -114,6 +146,21 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	}
 
+	private void save(File ref, Binary content)
+			throws ArgonCacheException {
+		assert ref != null;
+		assert content != null;
+		try {
+			content.save(ref, false);
+		} catch (final ArgonPermissionException ex) {
+			probeSave(ref, ex, content);
+			throw new ArgonCacheException(failSave(ex));
+		} catch (final ArgonStreamWriteException ex) {
+			probeSave(ref, ex, content);
+			throw new ArgonCacheException(failSave(ex));
+		}
+	}
+
 	public void cancel() {
 		m_timer.cancel();
 	}
@@ -122,44 +169,50 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			throws ArgonCacheException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
 		if (request == null) throw new IllegalArgumentException("object is null");
-		final String qccResourceId = request.qccResourceId();
-		if (qccResourceId == null || qccResourceId.length() == 0)
-			throw new IllegalArgumentException("Request resource id is empty");
-		final String qccFileName = m_digester.digestUTF8B64URL(qccResourceId);
+		final String qccFileName = qccFileName(request);
 		final long tsNow = ArgonClock.tsNow();
 		final Date now = new Date(tsNow);
-		final Descriptor oMru = m_mruTable.findDescriptor(qccFileName, tsNow);
-		final boolean isValid = oMru != null && request.isValid(now, oMru.zContentValidator);
+		final File ref = newFileMRU(qccFileName);
+		Descriptor oDescriptor = null;
+		oDescriptor = m_mruTable.findDescriptor(qccFileName, tsNow);
+		final boolean isValid = oDescriptor != null && request.isValid(now, oDescriptor.zContentValidator);
 		if (isValid) {
 			registerHit();
-			return createMRUFile(oMru);
+		} else {
+			registerMiss();
+			final IArgonDiskCacheable oCacheable = supplier.getCacheable(request);
+			if (oCacheable != null) {
+				final String ztwContentValidator = ArgonText.ztw(oCacheable.getContentValidator());
+				final Binary oContent = oCacheable.getContent();
+				final Dcu dcu = Dcu.newInstance(oContent);
+				oDescriptor = m_mruTable.newDescriptor(qccFileName, ztwContentValidator, dcu, tsNow);
+				if (oContent != null) {
+					save(ref, oContent);
+				}
+			}
 		}
-		registerMiss();
-		final IArgonDiskCacheable oCacheable = supplier.find(request);
-		if (oCacheable == null) return null;
-		final String ozContentValidator = oCacheable.getContentValidator();
-		final String zContentValidator = ozContentValidator == null ? "" : ozContentValidator;
-		final Binary oContent = oCacheable.getContent();
-		final Long obcFile = obcFile(oContent);
-		final Descriptor descriptor = m_mruTable.newDescriptor(qccFileName, zContentValidator, obcFile, tsNow);
-		return createMRUFile(descriptor, oContent);
+		return (oDescriptor != null && oDescriptor.exists) ? ref : null;
 	}
 
 	public <R extends IArgonDiskCacheClasspathRequest> File find(R request)
 			throws ArgonCacheException {
-		return null;
+		if (request == null) throw new IllegalArgumentException("object is null");
+		final String qccFileName = qccFileName(request);
+		final File ref = newFileJAR(qccFileName);
+		if (ref.exists()) return ref;
+		final Binary oContent = getBinaryFromClasspath(ref, request.qccResourcePath(), request.resourceRef());
+		if (oContent != null) {
+			save(ref, oContent);
+		}
+		return oContent == null ? null : ref;
 	}
 
-	public File findByClassPath(Class<?> resourceRef, String qccFileName)
-			throws ArgonQuotaException, ArgonPermissionException, ArgonStreamReadException, ArgonStreamWriteException {
+	public File findClasspath(Class<?> resourceRef, String qccResourcePath)
+			throws ArgonCacheException {
 		if (resourceRef == null) throw new IllegalArgumentException("object is null");
-		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final InputStream oins = resourceRef.getResourceAsStream(qccFileName);
-		if (oins == null) return null;
-		final Binary src = Binary.newFromInputStream(oins, m_bcSizeEst, qccFileName, m_bcSizeQuota);
-		final File destFile = new File(m_cndirJAR, qccFileName);
-		src.save(destFile, false);
-		return destFile;
+		if (qccResourcePath == null || qccResourcePath.length() == 0)
+			throw new IllegalArgumentException("string is null or empty");
+		return find(new DefaultClasspathRequest(resourceRef, qccResourcePath));
 	}
 
 	@Override
@@ -214,6 +267,33 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	private final File m_cndirJAR;
 	private final int m_bcSizeQuota;
 	private final int m_bcSizeEst;
+
+	private static class DefaultClasspathRequest implements IArgonDiskCacheClasspathRequest {
+
+		@Override
+		public String qccResourceId() {
+			return m_ref.getName() + ":" + m_qccPath;
+		}
+
+		@Override
+		public String qccResourcePath() {
+			return m_qccPath;
+		}
+
+		@Override
+		public Class<?> resourceRef() {
+			return m_ref;
+		}
+
+		private DefaultClasspathRequest(Class<?> ref, String qccPath) {
+			assert ref != null;
+			assert qccPath != null;
+			m_ref = ref;
+			m_qccPath = qccPath;
+		}
+		private final Class<?> m_ref;
+		private final String m_qccPath;
+	}
 
 	private static class MruTask extends TimerTask {
 
@@ -330,8 +410,11 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		int pctCacheSizeGoal = DefaultCacheSizeGoal;
 		int bcSizeQuota = DefaultSizeQuota;
 		int bcSizeEst = DefaultSizeEst;
+
 		long msCheckpointTimerDelay = DefaultCheckpointTimerDelayMs;
+
 		long msCheckpointTimerPeriod = DefaultCheckpointTimerPeriodMs;
+
 		int auditCycle = DefaultAuditCycle;
 	}
 }

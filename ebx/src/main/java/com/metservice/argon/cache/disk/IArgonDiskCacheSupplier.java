@@ -12,7 +12,7 @@ import com.metservice.argon.cache.ArgonCacheException;
  */
 public interface IArgonDiskCacheSupplier<R extends IArgonDiskCacheRequest> {
 
-	public IArgonDiskCacheable find(R request)
+	public IArgonDiskCacheable getCacheable(R request)
 			throws ArgonCacheException;
 
 }
