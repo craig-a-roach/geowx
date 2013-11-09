@@ -29,7 +29,6 @@ import com.metservice.argon.ArgonZipItem;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
-import com.metservice.argon.IArgonFileProbe;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.file.ArgonFileManagement;
 import com.metservice.argon.management.IArgonSpaceId;
@@ -56,7 +55,7 @@ public class ArgonJournalController {
 
 	static final ArgonJournalIn[] ZJE = new ArgonJournalIn[0];
 
-	private static long nextSerial(IArgonFileProbe probe, File cndir, boolean recoveryEnabled) {
+	private static long nextSerial(IArgonJournalProbe probe, File cndir, boolean recoveryEnabled) {
 		assert probe != null;
 		assert cndir != null;
 		final String[] ozpt = cndir.list();
@@ -111,7 +110,7 @@ public class ArgonJournalController {
 		return null;
 	}
 
-	static boolean deleteFile(IArgonFileProbe probe, File ex) {
+	static boolean deleteFile(IArgonJournalProbe probe, File ex) {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (ex == null) throw new IllegalArgumentException("object is null");
 		if (ex.delete()) return true;
@@ -120,8 +119,8 @@ public class ArgonJournalController {
 		return false;
 	}
 
-	public static Config newConfig(IArgonFileProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace, IArgonJournalListener oLsn,
-			IArgonJournalMirror oMirror)
+	public static Config newConfig(IArgonJournalProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace,
+			IArgonJournalListener oLsn, IArgonJournalMirror oMirror)
 			throws ArgonPermissionException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (sid == null) throw new IllegalArgumentException("object is null");
@@ -231,7 +230,7 @@ public class ArgonJournalController {
 		m_nextSerial = new AtomicLong(nextSerial);
 		m_timer = timer;
 	}
-	private final IArgonFileProbe m_probe;
+	private final IArgonJournalProbe m_probe;
 	private final File m_cndir;
 	private final IArgonJournalListener m_oListener;
 	private final IArgonJournalMirror m_oMirror;
@@ -407,7 +406,7 @@ public class ArgonJournalController {
 			return sb.toString();
 		}
 
-		Iter(IArgonFileProbe probe, File cndir, int bcMaxArchive, int bcMaxInflated) {
+		Iter(IArgonJournalProbe probe, File cndir, int bcMaxArchive, int bcMaxInflated) {
 			assert probe != null;
 			assert cndir != null;
 			m_probe = probe;
@@ -433,7 +432,7 @@ public class ArgonJournalController {
 			m_jeIndex = 0;
 		}
 
-		private final IArgonFileProbe m_probe;
+		private final IArgonJournalProbe m_probe;
 		private final int m_bcMaxArchive;
 		private final int m_bcMaxInflated;
 		private final List<EntryRef> m_zlEntryRefAsc;
@@ -445,6 +444,8 @@ public class ArgonJournalController {
 
 	private static class RollTask extends TimerTask {
 
+		private static final String TryRoll = "Roll journal entry files";
+		private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 		private static final String TryCompress = "Compress journal entry files";
 		private static final String CsqRetain = "Retain uncompressed files and scrub incomplete archive";
 
@@ -478,6 +479,12 @@ public class ArgonJournalController {
 			} catch (final ArgonStreamReadException ex) {
 				m_probe.warnFile(Ds.triedTo(TryCompress, ex, CsqRetain), destFile);
 				cleanup = true;
+			} catch (final RuntimeException ex) {
+				final Ds ds = Ds.triedTo(TryCompress, ex, CsqRetain);
+				ds.a("count", count);
+				ds.a("destFile", destFile);
+				m_probe.failSoftware(ds);
+				cleanup = true;
 			} finally {
 				if (cleanup) {
 					deleteFile(m_probe, destFile);
@@ -493,50 +500,57 @@ public class ArgonJournalController {
 
 		@Override
 		public void run() {
-			final long tsNow = System.currentTimeMillis();
-			final String[] ozpt = m_cndir.list();
-			if (ozpt == null || ozpt.length == 0) return;
-			final List<EntryRef> zlERefs = new ArrayList<EntryRef>(ozpt.length);
-			for (int i = 0; i < ozpt.length; i++) {
-				final String qccFileName = ozpt[i];
-				final EntryRef oERef = EntryRef.createInstance(m_cndir, qccFileName);
-				if (oERef != null) {
-					zlERefs.add(oERef);
+			try {
+				final long tsNow = System.currentTimeMillis();
+				final String[] ozpt = m_cndir.list();
+				if (ozpt == null || ozpt.length == 0) return;
+				final List<EntryRef> zlERefs = new ArrayList<EntryRef>(ozpt.length);
+				for (int i = 0; i < ozpt.length; i++) {
+					final String qccFileName = ozpt[i];
+					final EntryRef oERef = EntryRef.createInstance(m_cndir, qccFileName);
+					if (oERef != null) {
+						zlERefs.add(oERef);
+					}
 				}
-			}
-			Collections.sort(zlERefs);
-			final int ercount = zlERefs.size();
-			long bcCompress = 0L;
-			final List<File> zlCompress = new ArrayList<File>(64);
-			boolean compressable = true;
-			for (int i = 0; i < ercount && compressable; i++) {
-				final EntryRef er = zlERefs.get(i);
-				final EntryName ename = er.entryName;
-				if (ename.wip) {
-					compressable = false;
-					continue;
+				Collections.sort(zlERefs);
+				final int ercount = zlERefs.size();
+				long bcCompress = 0L;
+				final List<File> zlCompress = new ArrayList<File>(64);
+				boolean compressable = true;
+				for (int i = 0; i < ercount && compressable; i++) {
+					final EntryRef er = zlERefs.get(i);
+					final EntryName ename = er.entryName;
+					if (ename.wip) {
+						compressable = false;
+						continue;
+					}
+					final long tsLastModified = er.file.lastModified();
+					final long msAge = tsNow - tsLastModified;
+					if (msAge < m_msCompressLag) {
+						compressable = false;
+						continue;
+					}
+					if (msAge > m_msRecoveryWindow) {
+						deleteFile(m_probe, er.file);
+						continue;
+					}
+					if (ename.qccType.equals(ArchiveType)) {
+						continue;
+					}
+					zlCompress.add(er.file);
+					final long bcFile = bcEstimate(er.file);
+					bcCompress += bcFile;
+					if (bcCompress >= m_bcNominalArchiveInflated) {
+						compress(zlCompress, ename.serial);
+						bcCompress = 0L;
+						zlCompress.clear();
+					}
 				}
-				final long tsLastModified = er.file.lastModified();
-				final long msAge = tsNow - tsLastModified;
-				if (msAge < m_msCompressLag) {
-					compressable = false;
-					continue;
-				}
-				if (msAge > m_msRecoveryWindow) {
-					deleteFile(m_probe, er.file);
-					continue;
-				}
-				if (ename.qccType.equals(ArchiveType)) {
-					continue;
-				}
-				zlCompress.add(er.file);
-				final long bcFile = bcEstimate(er.file);
-				bcCompress += bcFile;
-				if (bcCompress >= m_bcNominalArchiveInflated) {
-					compress(zlCompress, ename.serial);
-					bcCompress = 0L;
-					zlCompress.clear();
-				}
+			} catch (final RuntimeException ex) {
+				final Ds ds = Ds.triedTo(TryRoll, ex, CsqRetry);
+				ds.a("msRecoveryWindow", m_msRecoveryWindow);
+				ds.a("bcNominalArchiveInflated", m_bcNominalArchiveInflated);
+				m_probe.failSoftware(ds);
 			}
 		}
 
@@ -550,7 +564,7 @@ public class ArgonJournalController {
 			m_bcBlockEstimator = cfg.bcBlockEstimator;
 		}
 
-		private final IArgonFileProbe m_probe;
+		private final IArgonJournalProbe m_probe;
 		private final File m_cndir;
 		private final long m_msRecoveryWindow;
 		private final long m_msCompressLag;
@@ -623,7 +637,8 @@ public class ArgonJournalController {
 			return ds.s();
 		}
 
-		Config(IArgonFileProbe probe, IArgonJournalListener oLsn, IArgonJournalMirror oMirror, File cndir, String qccThreadName) {
+		Config(IArgonJournalProbe probe, IArgonJournalListener oLsn, IArgonJournalMirror oMirror, File cndir,
+				String qccThreadName) {
 			assert probe != null;
 			assert cndir != null;
 			this.probe = probe;
@@ -633,7 +648,7 @@ public class ArgonJournalController {
 			this.qccThreadName = qccThreadName;
 		}
 
-		final IArgonFileProbe probe;
+		final IArgonJournalProbe probe;
 		final IArgonJournalListener oListener;
 		final IArgonJournalMirror oMirror;
 		final File cndir;
