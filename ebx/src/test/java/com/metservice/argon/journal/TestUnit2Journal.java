@@ -17,7 +17,7 @@ import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.Binary;
 import com.metservice.argon.Ds;
-import com.metservice.argon.IArgonFileProbe;
+import com.metservice.argon.TestHelpC;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.management.IArgonSpaceId;
 
@@ -38,8 +38,8 @@ public class TestUnit2Journal {
 	@Test
 	public void t50()
 			throws InterruptedException {
-		final FileProbe probe = new FileProbe();
-		final ArgonServiceId Sid = new ArgonServiceId("unittest.metservice", "argon");
+		final Probe probe = new Probe();
+		final ArgonServiceId Sid = TestHelpC.SID;
 		final SpaceId T50 = new SpaceId("t50");
 		try {
 			final ArgonJournalController.Config cfg = ArgonJournalController.newConfig(probe, Sid, T50, null, null);
@@ -78,8 +78,8 @@ public class TestUnit2Journal {
 					act.append(je.serial() + ":" + je.qccType());
 				}
 				final String zact = act.toString();
-				Assert.assertFalse("No failures", probe.fail.get());
-				Assert.assertFalse("No warnings", probe.warn.get());
+				Assert.assertFalse("No failures", probe.failFile.get());
+				Assert.assertFalse("No warnings", probe.warnFile.get());
 				Assert.assertEquals("1:signal, 2:signal, 3:signal, 4:signal, 5:detect, 6:detect, 7:detect, 8:cube", zact);
 				jcr.commit(jcr.newTransaction(newEntry(1, "cube"))); // 9
 				jcr.cancel();
@@ -101,7 +101,7 @@ public class TestUnit2Journal {
 				acte.append(je.serial() + ":" + je.qccType());
 			}
 			final String zacte = acte.toString();
-			Assert.assertTrue("Some failures", probe.fail.get());
+			Assert.assertTrue("Some failures", probe.failFile.get());
 			Assert.assertEquals("9:cube", zacte);
 			jce.cancel();
 			Thread.sleep(3000);
@@ -120,7 +120,7 @@ public class TestUnit2Journal {
 		}
 	}
 
-	private static class FileProbe implements IArgonFileProbe {
+	private static class Probe implements IArgonJournalProbe {
 
 		@Override
 		public void failFile(Ds diagnostic, File ofile) {
@@ -130,7 +130,23 @@ public class TestUnit2Journal {
 					System.out.println(ofile);
 				}
 			}
-			fail.set(true);
+			failFile.set(true);
+		}
+
+		@Override
+		public void failSoftware(Ds diagnostic) {
+			if (show.get()) {
+				System.out.println(diagnostic);
+			}
+			failSoftware.set(true);
+		}
+
+		@Override
+		public void failSoftware(RuntimeException exRT) {
+			if (show.get()) {
+				System.out.println(Ds.format(exRT, true));
+			}
+			failSoftware.set(true);
 		}
 
 		@Override
@@ -141,15 +157,15 @@ public class TestUnit2Journal {
 					System.out.println(ofile);
 				}
 			}
-			warn.set(true);
+			warnFile.set(true);
 		}
 
-		public FileProbe() {
+		public Probe() {
 		}
-
 		final AtomicBoolean show = new AtomicBoolean(true);
-		final AtomicBoolean fail = new AtomicBoolean(false);
-		final AtomicBoolean warn = new AtomicBoolean(false);
+		final AtomicBoolean failFile = new AtomicBoolean(false);
+		final AtomicBoolean warnFile = new AtomicBoolean(false);
+		final AtomicBoolean failSoftware = new AtomicBoolean(false);
 	}
 
 	private static class SpaceId implements IArgonSpaceId {

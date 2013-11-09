@@ -11,11 +11,9 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.metservice.argon.file.ArgonCompactLoader;
-import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.file.ArgonSaver;
 
 /**
@@ -23,18 +21,20 @@ import com.metservice.argon.file.ArgonSaver;
  */
 public class TestUnit1Saver {
 
-	@Before
-	public void setupDir()
-			throws ArgonPermissionException {
-		m_cndirHome = ArgonDirectoryManagement.cndirEnsureUserWriteable("unittest.argon", "saver");
-		ArgonDirectoryManagement.removeExceptSelf(m_cndirHome);
-		m_probe = new Probe(true);
+	private static Iterator<byte[]> iArray(String... lines) {
+		return ArgonText.iterator(Arrays.asList(lines), ArgonText.ASCII, "");
+	}
+
+	private static Iterator<byte[]> iArrayN(String... lines) {
+		return ArgonText.iterator(Arrays.asList(lines), ArgonText.ASCII, "\n");
 	}
 
 	@Test
 	public void t50()
 			throws ArgonPermissionException, ArgonApiException, ArgonStreamWriteException, ArgonQuotaException,
 			ArgonStreamReadException {
+		m_cndirHome = TestHelpC.cndirScratch("saver50");
+		m_probe = new Probe(true);
 		final ArgonSaver cp = new ArgonSaver(10);
 		final File destFile = new File(m_cndirHome, "t50.txt");
 		final String s0 = ArgonCompactLoader.load(m_probe, destFile, false, 256).newStringASCII();
@@ -65,14 +65,6 @@ public class TestUnit1Saver {
 		} catch (final ArgonQuotaException ex) {
 			System.out.println("Good exception: " + ex.getMessage());
 		}
-	}
-
-	private static Iterator<byte[]> iArray(String... lines) {
-		return ArgonText.iterator(Arrays.asList(lines), ArgonText.ASCII, "");
-	}
-
-	private static Iterator<byte[]> iArrayN(String... lines) {
-		return ArgonText.iterator(Arrays.asList(lines), ArgonText.ASCII, "\n");
 	}
 
 	private File m_cndirHome;

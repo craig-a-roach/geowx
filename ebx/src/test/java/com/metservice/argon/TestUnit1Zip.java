@@ -10,10 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-
-import com.metservice.argon.file.ArgonDirectoryManagement;
 
 /**
  * @author roach
@@ -30,17 +27,10 @@ public class TestUnit1Zip {
 		return sb.toString();
 	}
 
-	@Before
-	public void setupDir()
-			throws ArgonPermissionException {
-		m_cndirHome = ArgonDirectoryManagement.cndirEnsureUserWriteable("unittest.metservice", "argon.zip");
-		ArgonDirectoryManagement.removeExceptSelf(m_cndirHome);
-	}
-
 	@Test
 	public void t30_zip()
 			throws ArgonPermissionException, ArgonStreamWriteException, ArgonQuotaException, ArgonStreamReadException {
-
+		m_cndirHome = TestHelpC.cndirScratch("zip30");
 		final File[] destFiles = new File[10];
 		for (int i = 0; i < destFiles.length; i++) {
 			final int id = i + 100;
