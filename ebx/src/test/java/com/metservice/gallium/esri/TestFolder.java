@@ -20,12 +20,10 @@ import com.metservice.argon.file.ArgonDirectoryManagement;
  */
 public class TestFolder {
 
-	public static final String WorkDir = "com.metservice.gallium.ut";
-
 	public static final TestFolder Instance = new TestFolder();
 
 	public Path newFile(String sourceFileName) {
-		return newFile(sourceFileName, WorkDir, sourceFileName);
+		return newFile(sourceFileName, CSpace.WorkDir, sourceFileName);
 	}
 
 	public Path newFile(String sourceFileName, String targetDir) {
