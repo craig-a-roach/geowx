@@ -216,12 +216,15 @@ class DiskMruTable {
 	public void tick() {
 		try {
 			if (m_purgeDue.getAndSet(false)) {
+				System.out.println("purge"); // TODO
 				purge();
 			}
 			if (m_checkpointDue.getAndSet(false)) {
+				System.out.println("checkpointDue"); // TODO
 				checkpoint();
 			}
 			if (m_auditCounter.compareAndSet(cfg.auditCycle, 0)) {
+				System.out.println("audit"); // TODO
 				audit();
 			}
 		} catch (final RuntimeException ex) {
