@@ -220,6 +220,11 @@ public class Ds {
 		return new Ds(className, null);
 	}
 
+	public static Ds report(String zHeadline) {
+		if (zHeadline == null) throw new IllegalArgumentException("object is null");
+		return new Ds(zHeadline, null);
+	}
+
 	public static Ds triedTo(String attempted, Throwable cause) {
 		return triedTo(attempted, cause, "");
 	}

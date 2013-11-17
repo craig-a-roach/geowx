@@ -41,6 +41,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	public static final String SubDirDiskCache = "diskcache";
 	public static final String SubDirMRU = "mru";
 	public static final String SubDirJAR = "jar";
+	public static final int ClasspathFileSizeLimit = Integer.MAX_VALUE;
 
 	private static final String TrySave = "Save content to file";
 	private static final String TryLoadCp = "Load content from classpath";
@@ -50,7 +51,16 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	private static void cleanJarDir(Config cfg) {
 		assert cfg != null;
-		ArgonDirectoryManagement.remove(cfg.probe, cfg.cndirJAR, true);
+		if (cfg.cleanJAR) {
+			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndirJAR, true);
+		}
+	}
+
+	private static void cleanMruDir(Config cfg) {
+		assert cfg != null;
+		if (cfg.cleanMRU) {
+			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndirMRU, true);
+		}
 	}
 
 	private static DiskMruTable newMruTable(Config cfg) {
@@ -77,6 +87,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		final ArgonDigester digester = ArgonDigester.newSHA1();
+		cleanMruDir(cfg);
 		cleanJarDir(cfg);
 		final DiskMruTable mruTable = newMruTable(cfg);
 		final MruTask task = new MruTask(mruTable);
@@ -98,7 +109,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final InputStream oins = resourceRef.getResourceAsStream(qccResourcePath);
 		if (oins == null) return null;
 		try {
-			return Binary.newFromInputStream(oins, m_bcSizeEst, qccResourcePath, m_bcSizeQuota);
+			return Binary.newFromInputStream(oins, m_bcSizeEst, qccResourcePath, ClasspathFileSizeLimit);
 		} catch (final ArgonQuotaException ex) {
 			throw new ArgonCacheException(failLoadCp(ex));
 		} catch (final ArgonStreamReadException ex) {
@@ -254,7 +265,6 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		m_digester = digester;
 		m_cndirMRU = config.cndirMRU;
 		m_cndirJAR = config.cndirJAR;
-		m_bcSizeQuota = config.bcSizeQuota;
 		m_bcSizeEst = config.bcSizeEst;
 	}
 	private final IArgonDiskCacheProbe m_probe;
@@ -265,7 +275,6 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	private final ArgonDigester m_digester;
 	private final File m_cndirMRU;
 	private final File m_cndirJAR;
-	private final int m_bcSizeQuota;
 	private final int m_bcSizeEst;
 
 	private static class DefaultClasspathRequest implements IArgonDiskCacheClasspathRequest {
@@ -314,11 +323,12 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		public static final long DefaultCacheSizeQuota = 4 * CArgon.G;
 		public static final int DefaultCacheFileLimit = 1000;
 		public static final int DefaultCacheSizeGoal = 95;
-		public static final int DefaultSizeQuota = Integer.MAX_VALUE;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
 		public static final int DefaultCheckpointTimerDelayMs = 90 * CArgon.SEC_TO_MS;
 		public static final int DefaultCheckpointTimerPeriodMs = 150 * CArgon.SEC_TO_MS;
 		public static final int DefaultAuditCycle = 5000;
+		public static final boolean DefaultCleanMRU = false;
+		public static final boolean DefaultCleanJAR = true;
 
 		public Config auditCycle(int count) {
 			auditCycle = count;
@@ -347,13 +357,29 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return this;
 		}
 
-		public Config classpathSizeQuota(int bc) {
-			bcSizeQuota = Math.max(16, bc);
+		public Config disableAuditCycle() {
+			auditCycle = -1;
 			return this;
 		}
 
-		public Config disableAuditCycle() {
-			auditCycle = -1;
+		public Config enableJARClean(boolean enable) {
+			cleanJAR = enable;
+			return this;
+		}
+
+		public Config enableMRUClean(boolean enable) {
+			cleanMRU = enable;
+			return this;
+		}
+
+		public File jarDirectory() {
+			return cndirJAR;
+		}
+
+		public Config jarDirectory(String qccPath)
+				throws ArgonPermissionException {
+			if (qccPath == null || qccPath.length() == 0) throw new IllegalArgumentException("string is null or empty");
+			cndirJAR = ArgonDirectoryManagement.cndirEnsureWriteable(qccPath);
 			return this;
 		}
 
@@ -372,13 +398,15 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		public String toString() {
 			final Ds ds = Ds.o("ArgonDiskCacheController.Config");
 			ds.a("cndirMRU", cndirMRU);
+			ds.a("cndirJAR", cndirJAR);
 			ds.a("bcCacheSizeQuota", bcCacheSizeQuota);
 			ds.a("cacheFileLimit", cacheFileLimit);
 			ds.a("pctCacheSizeGoal", pctCacheSizeGoal);
-			ds.a("bcSizeQuota", bcSizeQuota);
 			ds.a("msCheckpointTimerDelay", msCheckpointTimerDelay);
 			ds.a("msCheckpointTimerPeriod", msCheckpointTimerPeriod);
 			ds.a("auditCycle", auditCycle);
+			ds.a("cleanMRU", cleanMRU);
+			ds.a("cleanJAR", cleanJAR);
 			ds.a("idService", idService);
 			ds.a("idSpace", idSpace);
 			return ds.s();
@@ -402,19 +430,17 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final IArgonDiskCacheProbe probe;
 		final ArgonServiceId idService;
 		final IArgonSpaceId idSpace;
-		File cndirMRU;
-		final File cndirJAR;
 		final String qccThreadName;
+		File cndirMRU;
+		File cndirJAR;
 		long bcCacheSizeQuota = DefaultCacheSizeQuota;
 		int cacheFileLimit = DefaultCacheFileLimit;
 		int pctCacheSizeGoal = DefaultCacheSizeGoal;
-		int bcSizeQuota = DefaultSizeQuota;
 		int bcSizeEst = DefaultSizeEst;
-
 		long msCheckpointTimerDelay = DefaultCheckpointTimerDelayMs;
-
 		long msCheckpointTimerPeriod = DefaultCheckpointTimerPeriodMs;
-
 		int auditCycle = DefaultAuditCycle;
+		boolean cleanMRU = DefaultCleanMRU;
+		boolean cleanJAR = DefaultCleanJAR;
 	}
 }

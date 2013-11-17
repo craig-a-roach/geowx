@@ -6,9 +6,12 @@
 package com.metservice.argon.cache.disk;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -33,10 +36,11 @@ public class TestUnit1Mru {
 	public void t50() {
 		final ArgonServiceId SID = TestHelpC.SID;
 		final SpaceId SPACE = new SpaceId("t50");
-		final Probe probe = new Probe();
+		final Probe probe = new Probe(1);
 		try {
 			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
 			cfg.cacheFileLimit = 10;
+			cfg.cleanMRU = true;
 			cfg.bcCacheSizeQuota = 3 * CArgon.K * 8;
 			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
@@ -170,6 +174,28 @@ public class TestUnit1Mru {
 		}
 
 		@Override
+		public boolean isLiveDiskManagement() {
+			return true;
+		}
+
+		@Override
+		public void liveDiskManagement(String message, Object... args) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(message);
+			for (int i = 0; i < args.length; i++) {
+				sb.append("\n");
+				sb.append(args[i]);
+			}
+			liveTranscript.add(sb.toString());
+			if (show.get()) {
+				System.out.println(sb);
+			}
+			if (message.equals("mru.purge")) {
+				latchPurge.countDown();
+			}
+		}
+
+		@Override
 		public void warnFile(Ds diagnostic, File ofile) {
 			if (show.get()) {
 				System.out.println(diagnostic);
@@ -180,12 +206,15 @@ public class TestUnit1Mru {
 			warnFile.set(true);
 		}
 
-		public Probe() {
+		public Probe(int purgeCount) {
+			latchPurge = new CountDownLatch(purgeCount);
 		}
 		final AtomicBoolean show = new AtomicBoolean(true);
 		final AtomicBoolean failFile = new AtomicBoolean(false);
 		final AtomicBoolean warnFile = new AtomicBoolean(false);
 		final AtomicBoolean failSoftware = new AtomicBoolean(false);
+		final CountDownLatch latchPurge;
+		final List<String> liveTranscript = new ArrayList<>();
 	}
 
 	private static class SpaceId implements IArgonSpaceId {
