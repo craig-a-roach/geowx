@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -39,30 +40,70 @@ public class TestUnit1Mru {
 		final Probe probe = new Probe(1);
 		try {
 			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
-			cfg.cacheFileLimit = 10;
-			cfg.cleanMRU = true;
-			cfg.bcCacheSizeQuota = 3 * CArgon.K * 8;
+			cfg.mruPopulationLimit(10);
+			cfg.enableMRUClean(true);
+			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
+			cfg.mruAuditCycle(5);
+			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 3);
+			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
 			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 5000, "v1");
 			supplier.put("B", 3000, "v1");
 			supplier.put("C", 7000, "v1");
+			supplier.put("E", -1, "v1");
+			supplier.put("F", 0, "v1");
+			final Map<String, File> fmap = new HashMap<String, File>();
 			{
 				final MruRequest rq = new MruRequest("A", "v1");
 				final File oFile = dcc.find(supplier, rq);
 				Assert.assertNotNull("Found Av1", oFile);
-			}// cache 1
+				fmap.put("A", oFile);
+			}// cache 1 : A
 			{
 				final MruRequest rq = new MruRequest("C", "v1");
 				final File oFile = dcc.find(supplier, rq);
 				Assert.assertNotNull("Found Cv1", oFile);
-			}// cache 2
+				fmap.put("C", oFile);
+			}// cache 2 : A C
+			{
+				final MruRequest rq = new MruRequest("B", "v1");
+				final File oFile = dcc.find(supplier, rq);
+				Assert.assertNotNull("Found Bv1", oFile);
+				fmap.put("B", oFile);
+				probe.latchPurge.await(10, TimeUnit.SECONDS);
+				Assert.assertFalse("file A purged", fmap.get("A").exists());
+			}// cache 2: C B
+			{
+				final MruRequest rq = new MruRequest("C", "v1");
+				final File oFile = dcc.find(supplier, rq);
+				Assert.assertNotNull("Found Cv1", oFile);
+				Assert.assertEquals("Cv1 Hit", fmap.get("C").getPath(), oFile.getPath());
+				Assert.assertTrue("file C exists", fmap.get("C").exists());
+			}// cache 2: B C
+			{
+				final MruRequest rq = new MruRequest("D", "v1");
+				final File oFile = dcc.find(supplier, rq);
+				Assert.assertNull("NotFound Dv1", oFile);
+			}// cache 2: B C
+			{
+				final MruRequest rq = new MruRequest("E", "v1");
+				final File oFile = dcc.find(supplier, rq);
+				Assert.assertNull("NotFound Ev1", oFile);
+			}// cache 2: B C
+			{
+				final MruRequest rq = new MruRequest("F", "v1");
+				final File oFile = dcc.find(supplier, rq);
+				Assert.assertNull("Found Fv1", oFile);
+			}// cache 2: B C
 		} catch (final ArgonCacheException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPermissionException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPlatformException ex) {
 			Assert.fail(ex.getMessage());
+		} catch (final InterruptedException ex) {
+			Assert.fail("Purge latch not closed after 10s");
 		}
 	}
 
@@ -190,7 +231,7 @@ public class TestUnit1Mru {
 			if (show.get()) {
 				System.out.println(sb);
 			}
-			if (message.equals("mru.purge")) {
+			if (message.equals("mru.purge.reclaim")) {
 				latchPurge.countDown();
 			}
 		}

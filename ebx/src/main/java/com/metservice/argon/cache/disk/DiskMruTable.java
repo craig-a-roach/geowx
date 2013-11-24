@@ -23,7 +23,6 @@ import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
 import com.metservice.argon.cache.ArgonCacheException;
-import com.metservice.argon.file.ArgonDirectoryManagement;
 import com.metservice.argon.file.ArgonFileManagement;
 import com.metservice.argon.json.JsonArray;
 import com.metservice.argon.json.JsonDecoder;
@@ -45,10 +44,11 @@ class DiskMruTable {
 	public static final String CheckpointFileName = "checkpoint.json";
 	public static final int CheckpointQuotaBc = 1024 * CArgon.M;
 
-	public static final int GoalPctLo = 50;
-	public static final int GoalPctHi = 99;
-	public static final int FileLimitLo = 1;
-	public static final int FileLimitHi = 128 * CArgon.K;
+	public static final int WakePctLo = 51;
+	public static final int WakePctHi = 99;
+	public static final int SizeLimitLo = 1 * CArgon.K;
+	public static final int PopLimitLo = 1;
+	public static final int PopLimitHi = 128 * CArgon.K;
 
 	private static final String TryDecodeCp = "Decode MRU Checkpoint";
 	private static final String CsqScrub = "Wipe contents of cache";
@@ -91,20 +91,21 @@ class DiskMruTable {
 		return oState;
 	}
 
-	public static DiskMruTable newInstance(IArgonDiskCacheProbe probe, File cndir, long bcQuota, int popLimit, int goalPct,
-			int auditCycle) {
-		if (probe == null) throw new IllegalArgumentException("object is null");
-		if (cndir == null) throw new IllegalArgumentException("object is null");
-		final long cbcQuota = Math.max(0L, bcQuota);
-		final long kbQuota = cbcQuota / CArgon.K;
-		final int cpopLimit = Math.max(FileLimitLo, Math.min(FileLimitHi, popLimit));
-		final int cpctGoal = Math.max(GoalPctLo, Math.min(GoalPctHi, goalPct));
-		final long kbGoal = (cbcQuota * cpctGoal) / 100L / CArgon.K;
+	public static DiskMruTable newInstance(ArgonDiskCacheController.Config cfg) {
+		if (cfg == null) throw new IllegalArgumentException("object is null");
+		final long cbcLimit = Math.max(SizeLimitLo, cfg.mruSizeLimitBytes);
+		final int cpopLimit = Math.max(PopLimitLo, Math.min(PopLimitHi, cfg.mruPopulationLimit));
+		final int cpctWake = Math.max(WakePctLo, Math.min(WakePctHi, cfg.mruPurgeWakePct));
+		final int cpctGoalHi = cpctWake - 1;
+		final int cpctGoal = Math.max(WakePctLo - 1, Math.min(cpctGoalHi, cfg.mruPurgeGoalPct));
+		final long kbWake = (cbcLimit * cpctWake) / 100L / CArgon.K;
+		final long kbGoal = (cbcLimit * cpctGoal) / 100L / CArgon.K;
+		final int popWake = (cpopLimit * cpctWake) / 100;
 		final int popGoal = (cpopLimit * cpctGoal) / 100;
-		final int cauditCycle = auditCycle <= 0 ? NOAUDIT : auditCycle;
-		final Cfg cfg = new Cfg(probe, cndir, kbQuota, cpopLimit, kbGoal, popGoal, cauditCycle);
-		final State state = newState(cfg, cpopLimit);
-		return new DiskMruTable(cfg, state);
+		final int cauditCycle = cfg.mruAuditCycle <= 0 ? NOAUDIT : cfg.mruAuditCycle;
+		final Cfg mru = new Cfg(cfg.probe, cfg.cndirMRU, kbWake, popWake, kbGoal, popGoal, cauditCycle);
+		final State state = newState(mru, cpopLimit);
+		return new DiskMruTable(mru, state);
 	}
 
 	private void audit() {
@@ -147,7 +148,7 @@ class DiskMruTable {
 		if (cfg.probe.isLiveDiskManagement()) {
 			final Ds ds = Ds.report("CheckpointFile");
 			ds.a("path", destFile);
-			ds.a("byteCount", out.zptReadOnly);
+			ds.a("byteCount", out.byteCount());
 			cfg.probe.liveDiskManagement("mru.checkpoint", ds);
 		}
 	}
@@ -164,8 +165,8 @@ class DiskMruTable {
 	private List<String> newPurgeAgenda() {
 		m_lockState.lock();
 		try {
-			final boolean due = m_state.isPurgeDue();
-			if (due) return m_state.newPurgeFileNames();
+			final boolean isRequired = m_state.isPurgeRequired();
+			if (isRequired) return m_state.newPurgeFileNames();
 			return Collections.emptyList();
 		} finally {
 			m_lockState.unlock();
@@ -176,16 +177,23 @@ class DiskMruTable {
 		final List<String> zlAgenda = newPurgeAgenda();
 		final long kbPre = m_state.kbActual();
 		purge(zlAgenda);
-		if (!zlAgenda.isEmpty()) {
+		final long kbPost = m_state.kbActual();
+		final boolean trace = cfg.probe.isLiveDiskManagement();
+		if (zlAgenda.isEmpty()) {
+			if (trace) {
+				final Ds ds = Ds.report("State");
+				ds.a("kB", kbPost);
+				cfg.probe.liveDiskManagement("mru.purge.nil", ds);
+			}
+		} else {
 			m_checkpointDue.set(true);
-		}
-		if (cfg.probe.isLiveDiskManagement()) {
-			final long kbPost = m_state.kbActual();
-			final Ds ds = Ds.report("PostState");
-			ds.a("pre kB", kbPre);
-			ds.a("post kB", kbPost);
-			ds.a("agenda", zlAgenda);
-			cfg.probe.liveDiskManagement("mru.purge", ds);
+			if (trace) {
+				final Ds ds = Ds.report("PostState");
+				ds.a("pre kB", kbPre);
+				ds.a("post kB", kbPost);
+				ds.a("agenda", zlAgenda);
+				cfg.probe.liveDiskManagement("mru.purge.reclaim", ds);
+			}
 		}
 	}
 
@@ -289,21 +297,21 @@ class DiskMruTable {
 
 	private static class Cfg {
 
-		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbQuota, int popLimit, long kbGoal, int popGoal, int auditCycle) {
+		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbWake, int popWake, long kbGoal, int popGoal, int auditCycle) {
 			assert probe != null;
 			assert cndir != null;
 			this.probe = probe;
 			this.cndir = cndir;
-			this.kbQuota = kbQuota;
-			this.popLimit = popLimit;
+			this.kbWake = kbWake;
+			this.popWake = popWake;
 			this.kbGoal = kbGoal;
 			this.popGoal = popGoal;
 			this.auditCycle = auditCycle;
 		}
 		final IArgonDiskCacheProbe probe;
 		final File cndir;
-		final long kbQuota;
-		final int popLimit;
+		final long kbWake;
+		final int popWake;
 		final long kbGoal;
 		final int popGoal;
 		final int auditCycle;
@@ -344,9 +352,9 @@ class DiskMruTable {
 			return oTracker;
 		}
 
-		public boolean isPurgeDue() {
+		public boolean isPurgeRequired() {
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
-			return (m_kbActual > cfg.kbQuota) || (popCacheFileActual > cfg.popLimit);
+			return (m_kbActual > cfg.kbWake) || (popCacheFileActual > cfg.popWake);
 		}
 
 		public long kbActual() {
@@ -435,7 +443,6 @@ class DiskMruTable {
 		public State(Cfg cfg, int cap) {
 			this.cfg = cfg;
 			m_mapFileName_Tracker = new HashMap<>(cap);
-			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndir, true);
 		}
 
 		public State(Cfg cfg, JsonObject src) throws JsonSchemaException {

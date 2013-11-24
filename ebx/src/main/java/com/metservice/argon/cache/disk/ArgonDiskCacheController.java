@@ -63,12 +63,6 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		}
 	}
 
-	private static DiskMruTable newMruTable(Config cfg) {
-		assert cfg != null;
-		return DiskMruTable.newInstance(cfg.probe, cfg.cndirMRU, cfg.bcCacheSizeQuota, cfg.cacheFileLimit,
-				cfg.pctCacheSizeGoal, cfg.auditCycle);
-	}
-
 	public static Config newConfig(IArgonDiskCacheProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
@@ -89,10 +83,10 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final ArgonDigester digester = ArgonDigester.newSHA1();
 		cleanMruDir(cfg);
 		cleanJarDir(cfg);
-		final DiskMruTable mruTable = newMruTable(cfg);
+		final DiskMruTable mruTable = DiskMruTable.newInstance(cfg);
 		final MruTask task = new MruTask(mruTable);
 		final Timer timer = new Timer(cfg.qccThreadName, true);
-		timer.schedule(task, cfg.msCheckpointTimerDelay, cfg.msCheckpointTimerPeriod);
+		timer.schedule(task, cfg.mruCheckpointDelayMs, cfg.mruCheckpointPeriodMs);
 		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
 	}
 
@@ -320,45 +314,19 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	public static class Config {
 
-		public static final long DefaultCacheSizeQuota = 4 * CArgon.G;
-		public static final int DefaultCacheFileLimit = 1000;
-		public static final int DefaultCacheSizeGoal = 95;
-		public static final int DefaultSizeEst = 64 * CArgon.K;
-		public static final int DefaultCheckpointTimerDelayMs = 90 * CArgon.SEC_TO_MS;
-		public static final int DefaultCheckpointTimerPeriodMs = 150 * CArgon.SEC_TO_MS;
+		public static final long DefaultMruSizeLimitBytes = 4 * CArgon.G;
+		public static final int DefaultMruPopulationLimit = 1000;
+		public static final int DefaultMruPurgeGoalPct = 95;
+		public static final int DefaultMruPurgeWakePct = 98;
+		public static final int DefaultMruCheckpointDelayMs = 90 * CArgon.SEC_TO_MS;
+		public static final int DefaultMruCheckpointPeriodMs = 150 * CArgon.SEC_TO_MS;
 		public static final int DefaultAuditCycle = 5000;
 		public static final boolean DefaultCleanMRU = false;
 		public static final boolean DefaultCleanJAR = true;
+		public static final int DefaultSizeEst = 64 * CArgon.K;
 
-		public Config auditCycle(int count) {
-			auditCycle = count;
-			return this;
-		}
-
-		public Config cacheFileLimit(int count) {
-			cacheFileLimit = Math.max(1, count);
-			return this;
-		}
-
-		public Config cacheSizeQuota(int bc) {
-			bcCacheSizeQuota = Math.max(16, bc);
-			return this;
-		}
-
-		public Config checkpointHoldoff(TimeUnit unit, int count) {
-			if (unit == null) throw new IllegalArgumentException("object is null");
-			msCheckpointTimerDelay = unit.toMillis(count);
-			return this;
-		}
-
-		public Config checkpointPeriod(TimeUnit unit, int count) {
-			if (unit == null) throw new IllegalArgumentException("object is null");
-			msCheckpointTimerPeriod = unit.toMillis(count);
-			return this;
-		}
-
-		public Config disableAuditCycle() {
-			auditCycle = -1;
+		public Config disableMruAuditCycle() {
+			mruAuditCycle = -1;
 			return this;
 		}
 
@@ -383,6 +351,23 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return this;
 		}
 
+		public Config mruAuditCycle(int count) {
+			mruAuditCycle = count;
+			return this;
+		}
+
+		public Config mruCheckpointHoldoff(TimeUnit unit, int count) {
+			if (unit == null) throw new IllegalArgumentException("object is null");
+			mruCheckpointDelayMs = unit.toMillis(count);
+			return this;
+		}
+
+		public Config mruCheckpointPeriod(TimeUnit unit, int count) {
+			if (unit == null) throw new IllegalArgumentException("object is null");
+			mruCheckpointPeriodMs = unit.toMillis(count);
+			return this;
+		}
+
 		public File mruDirectory() {
 			return cndirMRU;
 		}
@@ -394,17 +379,38 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return this;
 		}
 
+		public Config mruPopulationLimit(int count) {
+			mruPopulationLimit = Math.max(1, count);
+			return this;
+		}
+
+		public Config mruPurgeGoalPercent(int pct) {
+			mruPurgeGoalPct = Math.min(100, Math.max(1, pct));
+			return this;
+		}
+
+		public Config mruPurgeWakePercent(int pct) {
+			mruPurgeWakePct = Math.min(100, Math.max(1, pct));
+			return this;
+		}
+
+		public Config mruSizeLimitBytes(int bc) {
+			mruSizeLimitBytes = Math.max(1, bc);
+			return this;
+		}
+
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("ArgonDiskCacheController.Config");
 			ds.a("cndirMRU", cndirMRU);
 			ds.a("cndirJAR", cndirJAR);
-			ds.a("bcCacheSizeQuota", bcCacheSizeQuota);
-			ds.a("cacheFileLimit", cacheFileLimit);
-			ds.a("pctCacheSizeGoal", pctCacheSizeGoal);
-			ds.a("msCheckpointTimerDelay", msCheckpointTimerDelay);
-			ds.a("msCheckpointTimerPeriod", msCheckpointTimerPeriod);
-			ds.a("auditCycle", auditCycle);
+			ds.a("mruSizeLimitBytes", mruSizeLimitBytes);
+			ds.a("mruPopulationLimit", mruPopulationLimit);
+			ds.a("mruPurgeGoalPct", mruPurgeGoalPct);
+			ds.a("mruPurgeWakePct", mruPurgeWakePct);
+			ds.ae("mruCheckpointDelayMs", mruCheckpointDelayMs);
+			ds.ae("mruCheckpointPeriodMs", mruCheckpointPeriodMs);
+			ds.a("mruAuditCycle", mruAuditCycle);
 			ds.a("cleanMRU", cleanMRU);
 			ds.a("cleanJAR", cleanJAR);
 			ds.a("idService", idService);
@@ -433,14 +439,15 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final String qccThreadName;
 		File cndirMRU;
 		File cndirJAR;
-		long bcCacheSizeQuota = DefaultCacheSizeQuota;
-		int cacheFileLimit = DefaultCacheFileLimit;
-		int pctCacheSizeGoal = DefaultCacheSizeGoal;
-		int bcSizeEst = DefaultSizeEst;
-		long msCheckpointTimerDelay = DefaultCheckpointTimerDelayMs;
-		long msCheckpointTimerPeriod = DefaultCheckpointTimerPeriodMs;
-		int auditCycle = DefaultAuditCycle;
+		long mruSizeLimitBytes = DefaultMruSizeLimitBytes;
+		int mruPopulationLimit = DefaultMruPopulationLimit;
+		int mruPurgeGoalPct = DefaultMruPurgeGoalPct;
+		int mruPurgeWakePct = DefaultMruPurgeWakePct;
+		long mruCheckpointDelayMs = DefaultMruCheckpointDelayMs;
+		long mruCheckpointPeriodMs = DefaultMruCheckpointPeriodMs;
+		int mruAuditCycle = DefaultAuditCycle;
 		boolean cleanMRU = DefaultCleanMRU;
 		boolean cleanJAR = DefaultCleanJAR;
+		int bcSizeEst = DefaultSizeEst;
 	}
 }
