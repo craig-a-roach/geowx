@@ -13,8 +13,13 @@ import com.metservice.argon.IArgonRunProbe;
  */
 public interface IArgonDiskCacheProbe extends IArgonFileProbe, IArgonRunProbe {
 
-	boolean isLiveDiskManagement();
+	boolean isLiveMruManagement();
 
-	void liveDiskManagement(String message, Object... args);
+	boolean isLiveMruRequest();
 
+	void liveMruManagement(String message, Object... args);
+
+	void liveMruRequestHit(String qccResourceId);
+
+	void liveMruRequestMiss(String qccResourceId);
 }

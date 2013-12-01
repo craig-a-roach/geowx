@@ -59,14 +59,14 @@ class DiskMruTable {
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
-		final boolean trace = cfg.probe.isLiveDiskManagement();
+		final boolean trace = cfg.probe.isLiveMruManagement();
 		final File srcFile = new File(cfg.cndir, CheckpointFileName);
 		final Binary oBinary = Binary.createFromFile(cfg.probe, srcFile, CheckpointQuotaBc);
 		State oState = null;
 		try {
 			if (oBinary == null) {
 				if (trace) {
-					cfg.probe.liveDiskManagement("mru.newState noCheckpoint", srcFile);
+					cfg.probe.liveMruManagement("newState.noCheckpoint", srcFile);
 				}
 			} else {
 				final JsonObject src = JsonDecoder.Default.decodeObject(oBinary.newStringUTF8());
@@ -81,12 +81,12 @@ class DiskMruTable {
 		}
 		if (oState == null) {
 			if (trace) {
-				cfg.probe.liveDiskManagement("mru.newState initialise");
+				cfg.probe.liveMruManagement("newState.initialise");
 			}
 			return new State(cfg, cap);
 		}
 		if (trace) {
-			cfg.probe.liveDiskManagement("mru.newState loadedCheckpoint");
+			cfg.probe.liveMruManagement("newState.loadedCheckpoint");
 		}
 		return oState;
 	}
@@ -119,7 +119,6 @@ class DiskMruTable {
 				m_lockState.unlock();
 			}
 		}
-		final long kbPre = m_state.kbActual();
 		final int unrefCount = zlUnreferencedAsc.size();
 		for (int i = 0; i < unrefCount; i++) {
 			final String qccFileName = zlUnreferencedAsc.get(i);
@@ -130,13 +129,14 @@ class DiskMruTable {
 				m_lockState.unlock();
 			}
 		}
-		if (cfg.probe.isLiveDiskManagement()) {
-			final long kbPost = m_state.kbActual();
-			final Ds ds = Ds.report("PostState");
-			ds.a("pre kB", kbPre);
-			ds.a("post kB", kbPost);
-			ds.a("unreferenced", zlUnreferencedAsc);
-			cfg.probe.liveDiskManagement("mru.audit", ds);
+		if (cfg.probe.isLiveMruManagement()) {
+			if (zlUnreferencedAsc.isEmpty()) {
+				cfg.probe.liveMruManagement("audit.clean");
+			} else {
+				final Ds ds = Ds.report("State");
+				ds.a("unreferenced", zlUnreferencedAsc);
+				cfg.probe.liveMruManagement("audit.delete", ds);
+			}
 		}
 	}
 
@@ -145,11 +145,12 @@ class DiskMruTable {
 		final Binary out = Binary.newFromStringUTF8(JsonEncoder.Default.encode(cp));
 		final File destFile = new File(cfg.cndir, CheckpointFileName);
 		out.save(cfg.probe, destFile, false);
-		if (cfg.probe.isLiveDiskManagement()) {
+		if (cfg.probe.isLiveMruManagement()) {
 			final Ds ds = Ds.report("CheckpointFile");
 			ds.a("path", destFile);
 			ds.a("byteCount", out.byteCount());
-			cfg.probe.liveDiskManagement("mru.checkpoint", ds);
+			ds.a("json", out); // TODO
+			cfg.probe.liveMruManagement("checkpoint", ds);
 		}
 	}
 
@@ -178,21 +179,21 @@ class DiskMruTable {
 		final long kbPre = m_state.kbActual();
 		purge(zlAgenda);
 		final long kbPost = m_state.kbActual();
-		final boolean trace = cfg.probe.isLiveDiskManagement();
+		final boolean trace = cfg.probe.isLiveMruManagement();
 		if (zlAgenda.isEmpty()) {
 			if (trace) {
 				final Ds ds = Ds.report("State");
 				ds.a("kB", kbPost);
-				cfg.probe.liveDiskManagement("mru.purge.nil", ds);
+				cfg.probe.liveMruManagement("purge.nil", ds);
 			}
 		} else {
 			m_checkpointDue.set(true);
 			if (trace) {
-				final Ds ds = Ds.report("PostState");
+				final Ds ds = Ds.report("StateChange");
 				ds.a("pre kB", kbPre);
 				ds.a("post kB", kbPost);
 				ds.a("agenda", zlAgenda);
-				cfg.probe.liveDiskManagement("mru.purge.reclaim", ds);
+				cfg.probe.liveMruManagement("purge.reclaim", ds);
 			}
 		}
 	}
@@ -280,6 +281,16 @@ class DiskMruTable {
 			ds.a("auditCounter", m_auditCounter);
 			cfg.probe.failSoftware(ds);
 		}
+	}
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o("DiskMruTable");
+		ds.a("purgeDue", m_purgeDue.get());
+		ds.a("checkpointDue", m_checkpointDue.get());
+		ds.a("auditCounter", m_auditCounter.get());
+		ds.a("state", m_state);
+		return ds.s();
 	}
 
 	public DiskMruTable(Cfg cfg, State state) {
@@ -382,11 +393,11 @@ class DiskMruTable {
 		}
 
 		public void purge(String qccFileName) {
-			final boolean trace = cfg.probe.isLiveDiskManagement();
+			final boolean trace = cfg.probe.isLiveMruManagement();
 			final Tracker oEx = m_mapFileName_Tracker.get(qccFileName);
 			if (oEx == null) {
 				if (trace) {
-					cfg.probe.liveDiskManagement("mru.purgeFile missingTracker", qccFileName);
+					cfg.probe.liveMruManagement("purgeFile missingTracker", qccFileName);
 				}
 			} else {
 				if (oEx.isPurgeSafe()) {
@@ -394,7 +405,7 @@ class DiskMruTable {
 					ArgonFileManagement.deleteFile(cfg.probe, target);
 					if (target.exists()) {
 						if (trace) {
-							cfg.probe.liveDiskManagement("mru.purgeFile trackerRetained", oEx);
+							cfg.probe.liveMruManagement("purgeFile trackerRetained", oEx);
 						}
 					} else {
 						m_mapFileName_Tracker.remove(qccFileName);
@@ -402,7 +413,7 @@ class DiskMruTable {
 					}
 				} else {
 					if (trace) {
-						cfg.probe.liveDiskManagement("mru.purgeFile trackerNotPurgeSafe", oEx);
+						cfg.probe.liveMruManagement("purgeFile trackerNotPurgeSafe", oEx);
 					}
 				}
 			}
@@ -428,13 +439,23 @@ class DiskMruTable {
 			}
 		}
 
+		@Override
+		public String toString() {
+			final Ds ds = Ds.o("DiskMruTable.State");
+			ds.a("kBActual", m_kbActual);
+			ds.a("map", m_mapFileName_Tracker);
+			return ds.s();
+		}
+
 		public List<String> zlUnreferencedAsc(String[] zptDiskFileNamesAsc) {
 			final List<String> zl = new ArrayList<>();
 			final int cc = zptDiskFileNamesAsc.length;
 			for (int i = 0; i < cc; i++) {
 				final String qccFileName = zptDiskFileNamesAsc[i];
-				if (!m_mapFileName_Tracker.containsKey(qccFileName)) {
-					zl.add(qccFileName);
+				if (!qccFileName.equals(CheckpointFileName)) {
+					if (!m_mapFileName_Tracker.containsKey(qccFileName)) {
+						zl.add(qccFileName);
+					}
 				}
 			}
 			return zl;

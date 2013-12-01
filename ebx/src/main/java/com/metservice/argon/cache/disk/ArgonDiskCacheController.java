@@ -134,21 +134,25 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	}
 
 	private String qccFileName(IArgonDiskCacheRequest request) {
-		if (request == null) throw new IllegalArgumentException("object is null");
+		assert request != null;
 		final String qccResourceId = request.qccResourceId();
 		if (qccResourceId == null || qccResourceId.length() == 0)
 			throw new IllegalArgumentException("Request resource id is empty");
 		return m_digester.digestUTF8B64URL(qccResourceId);
 	}
 
-	private void registerHit() {
-		// TODO Auto-generated method stub
-
+	private void registerHit(IArgonDiskCacheRequest request) {
+		assert request != null;
+		if (m_probe.isLiveMruRequest()) {
+			m_probe.liveMruRequestHit(request.qccResourceId());
+		}
 	}
 
-	private void registerMiss() {
-		// TODO Auto-generated method stub
-
+	private void registerMiss(IArgonDiskCacheRequest request) {
+		assert request != null;
+		if (m_probe.isLiveMruRequest()) {
+			m_probe.liveMruRequestMiss(request.qccResourceId());
+		}
 	}
 
 	private void save(File ref, Binary content)
@@ -178,13 +182,12 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final long tsNow = ArgonClock.tsNow();
 		final Date now = new Date(tsNow);
 		final File ref = newFileMRU(qccFileName);
-		Descriptor oDescriptor = null;
-		oDescriptor = m_mruTable.findDescriptor(qccFileName, tsNow);
+		Descriptor oDescriptor = m_mruTable.findDescriptor(qccFileName, tsNow);
 		final boolean isValid = oDescriptor != null && request.isValid(now, oDescriptor.zContentValidator);
 		if (isValid) {
-			registerHit();
+			registerHit(request);
 		} else {
-			registerMiss();
+			registerMiss(request);
 			final IArgonDiskCacheable oCacheable = supplier.getCacheable(request);
 			if (oCacheable != null) {
 				final String ztwContentValidator = ArgonText.ztw(oCacheable.getContentValidator());
