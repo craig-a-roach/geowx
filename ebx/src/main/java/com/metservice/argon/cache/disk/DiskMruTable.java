@@ -141,16 +141,21 @@ class DiskMruTable {
 	}
 
 	private void checkpoint() {
+		final boolean trace = cfg.probe.isLiveMruManagement();
 		final JsonObject cp = newCheckpointJson();
+		if (trace) {
+			cfg.probe.liveMruManagement("checkpoint.snapshot", cp);
+		}
 		final Binary out = Binary.newFromStringUTF8(JsonEncoder.Default.encode(cp));
 		final File destFile = new File(cfg.cndir, CheckpointFileName);
+		final long tsStart = System.currentTimeMillis();
 		out.save(cfg.probe, destFile, false);
-		if (cfg.probe.isLiveMruManagement()) {
-			final Ds ds = Ds.report("CheckpointFile");
+		if (trace) {
+			final Ds ds = Ds.report("State");
 			ds.a("path", destFile);
 			ds.a("byteCount", out.byteCount());
-			ds.a("json", out); // TODO
-			cfg.probe.liveMruManagement("checkpoint", ds);
+			ds.a("ms", (System.currentTimeMillis() - tsStart));
+			cfg.probe.liveMruManagement("checkpoint.saved", ds);
 		}
 	}
 
@@ -175,24 +180,28 @@ class DiskMruTable {
 	}
 
 	private void purge() {
+		final boolean trace = cfg.probe.isLiveMruManagement();
 		final List<String> zlAgenda = newPurgeAgenda();
 		final long kbPre = m_state.kbActual();
-		purge(zlAgenda);
-		final long kbPost = m_state.kbActual();
-		final boolean trace = cfg.probe.isLiveMruManagement();
 		if (zlAgenda.isEmpty()) {
 			if (trace) {
 				final Ds ds = Ds.report("State");
-				ds.a("kB", kbPost);
+				ds.a("kB", kbPre);
 				cfg.probe.liveMruManagement("purge.nil", ds);
 			}
 		} else {
+			if (trace) {
+				final Ds ds = Ds.report("StatePre");
+				ds.a("kB", kbPre);
+				ds.a("agenda", zlAgenda);
+				cfg.probe.liveMruManagement("purge.agenda", ds);
+			}
+			purge(zlAgenda);
 			m_checkpointDue.set(true);
 			if (trace) {
-				final Ds ds = Ds.report("StateChange");
-				ds.a("pre kB", kbPre);
-				ds.a("post kB", kbPost);
-				ds.a("agenda", zlAgenda);
+				final long kbPost = m_state.kbActual();
+				final Ds ds = Ds.report("StatePost");
+				ds.a("kB", kbPost);
 				cfg.probe.liveMruManagement("purge.reclaim", ds);
 			}
 		}
@@ -426,7 +435,7 @@ class DiskMruTable {
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
 				m_kbActual -= vTracker.kbFile();
-				vTracker.registerReload(zContentValidator, dcu);
+				vTracker.registerReload(zContentValidator, dcu, tsNow);
 			}
 			m_kbActual += vTracker.kbFile();
 			return vTracker;
@@ -517,9 +526,11 @@ class DiskMruTable {
 			}
 		}
 
-		public void registerReload(String zContentValidator, Dcu dcu) {
+		public void registerReload(String zContentValidator, Dcu dcu, long tsNow) {
 			m_zContentValidator = zContentValidator;
 			m_dcu = dcu.toInteger();
+			m_tsLastAccess = tsNow;
+			m_purgeMarked = false;
 		}
 
 		public void save(JsonObject dst) {
