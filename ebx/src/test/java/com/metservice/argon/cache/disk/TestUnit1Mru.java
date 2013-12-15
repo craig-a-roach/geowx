@@ -16,8 +16,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Assert;
@@ -170,41 +176,57 @@ public class TestUnit1Mru {
 			supplier.put("C", 5000, "v2");
 			supplier.put("E", -1, "v1");
 			supplier.put("F", 0, "v1");
+			supplier.put("G", 13000, "v1");
 			final Reflector r = new Reflector();
+			final ExecutorService xc = Executors.newFixedThreadPool(3);
+			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // HIT
+			final Future<File> fuFv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
+			final Future<File> fuEv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("E", "v1"))); // HIT
 			// cache 2: B1 C1 F0 E?
-			{
-				final MruRequest rq = new MruRequest("B", "v1");
-				final File oFile = dcc.find(supplier, rq); // HIT
+			try {
+				final File oFile = fuBv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Bv1", r.put("B", oFile));
-				Assert.assertTrue(probe.noPurge());
-				Assert.assertTrue(probe.reachedCheckpoint());
-				Assert.assertTrue(probe.noAudit());
 				Assert.assertEquals("Bv1 length", 3000, r.select("B").length());
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
 			}// cache 2: C1 F0 E? B1
-			{
-				final MruRequest rq = new MruRequest("F", "v1");
-				final File oFile = dcc.find(supplier, rq); // HIT
+			try {
+				final File oFile = fuFv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Fv1", r.put("F", oFile));
-				Assert.assertTrue(probe.noPurge());
-				Assert.assertTrue(probe.reachedCheckpoint());
-
+				Assert.assertEquals("Fv1 length", 0, r.select("F").length());
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
 			}// cache 2: C1 E? B1 F0
-			{
-				final MruRequest rq = new MruRequest("E", "v1");
-				final File oFile = dcc.find(supplier, rq); // HIT
+			try {
+				final File oFile = fuEv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNull("NotFound Ev1", r.put("E", oFile));
-				Assert.assertTrue(probe.noPurge());
-				Assert.assertTrue(probe.reachedCheckpoint());
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
 			}// cache 2: C1 B1 F0 E?
-			{
-				final MruRequest rq = new MruRequest("B", "v2");
-				final File oFile = dcc.find(supplier, rq); // MISS
+			Assert.assertTrue(probe.noPurge());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+
+			final Future<File> fuBv2 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v2"))); // MISS
+			final Future<File> fuGv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("G", "v1"))); // MISS
+			try {
+				final File oFile = fuBv2.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Bv2", r.put("B", oFile));
-				Assert.assertTrue(probe.noPurge());
-				Assert.assertTrue(probe.reachedCheckpoint());
-				Assert.assertTrue(probe.noAudit());
-				Assert.assertEquals("Bv1 length", 9000, r.select("B").length());
+				Assert.assertEquals("Bv2 length", 9000, r.select("B").length());
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
 			}// cache 3: C1 F0 E? B2
+			try {
+				final File oFile = fuGv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Gv1", r.put("G", oFile));
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}// cache 5: C1 F0 E? B2 G2 -> cache 4: F0 E? B2 G2
+
+			Assert.assertTrue(probe.reachedPurge());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+
 			dcc.cancel();
 			System.out.println(r);
 			final List<String> rqt = probe.mruRequestTranscript;
@@ -212,8 +234,12 @@ public class TestUnit1Mru {
 			Assert.assertEquals("HIT:F", rqt.get(1));
 			Assert.assertEquals("HIT:E", rqt.get(2));
 			Assert.assertEquals("MISS:B", rqt.get(3));
-		} catch (final ArgonCacheException ex) {
-			Assert.fail(ex.getMessage());
+			Assert.assertEquals("MISS:G", rqt.get(4));
+			final List<String> mgt = probe.mruManagementTranscript;
+			Assert.assertEquals("newState.loadedCheckpoint", mgt.get(0));
+			Assert.assertEquals("purge.agenda(StatePre{kB=40  agenda(0)=MglsLg7_M9hE7m1nVAes4YKJNX0})", mgt.get(1));
+			Assert.assertEquals("purge.reclaim(StatePost{kB=32})", mgt.get(2));
+			System.out.println(mgt);
 		} catch (final ArgonPermissionException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPlatformException ex) {
@@ -221,6 +247,29 @@ public class TestUnit1Mru {
 		} catch (final InterruptedException ex) {
 			Assert.fail("Latch interrupted");
 		}
+	}
+
+	private static class Agent implements Callable<File> {
+
+		@Override
+		public File call()
+				throws Exception {
+			return dcc.find(s, rq);
+		}
+
+		@Override
+		public String toString() {
+			return rq.toString();
+		}
+
+		public Agent(ArgonDiskCacheController dcc, Supplier s, MruRequest rq) {
+			this.dcc = dcc;
+			this.s = s;
+			this.rq = rq;
+		}
+		private final ArgonDiskCacheController dcc;
+		private final Supplier s;
+		private final MruRequest rq;
 	}
 
 	private static class Cacheable implements IArgonDiskCacheable {
