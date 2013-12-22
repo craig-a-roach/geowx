@@ -409,21 +409,25 @@ class DiskMruTable {
 					cfg.probe.liveMruManagement("purgeFile missingTracker", qccFileName);
 				}
 			} else {
-				if (oEx.isPurgeSafe()) {
-					final File target = newFile(qccFileName);
-					ArgonFileManagement.deleteFile(cfg.probe, target);
-					if (target.exists()) {
-						if (trace) {
-							cfg.probe.liveMruManagement("purgeFile trackerRetained", oEx);
+				if (oEx.exists()) {
+					if (oEx.isPurgeSafe()) {
+						final File target = newFile(qccFileName);
+						ArgonFileManagement.deleteFile(cfg.probe, target);
+						if (target.exists()) {
+							if (trace) {
+								cfg.probe.liveMruManagement("purgeFile trackerRetained", oEx);
+							}
+						} else {
+							m_mapFileName_Tracker.remove(qccFileName);
+							m_kbActual -= oEx.kbFile();
 						}
 					} else {
-						m_mapFileName_Tracker.remove(qccFileName);
-						m_kbActual -= oEx.kbFile();
+						if (trace) {
+							cfg.probe.liveMruManagement("purgeFile trackerNotPurgeSafe", oEx);
+						}
 					}
 				} else {
-					if (trace) {
-						cfg.probe.liveMruManagement("purgeFile trackerNotPurgeSafe", oEx);
-					}
+					m_mapFileName_Tracker.remove(qccFileName);
 				}
 			}
 		}
@@ -496,6 +500,10 @@ class DiskMruTable {
 		@Override
 		public int compareTo(Tracker rhs) {
 			return ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
+		}
+
+		public boolean exists() {
+			return Dcu.exists(m_dcu);
 		}
 
 		public boolean isPurgeSafe() {
