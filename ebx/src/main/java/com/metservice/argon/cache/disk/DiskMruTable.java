@@ -172,7 +172,7 @@ class DiskMruTable {
 		m_lockState.lock();
 		try {
 			final boolean isRequired = m_state.isPurgeRequired();
-			if (isRequired) return m_state.newPurgeFileNames();
+			if (isRequired) return m_state.newPurgeFileNamesAscAge();
 			return Collections.emptyList();
 		} finally {
 			m_lockState.unlock();
@@ -343,7 +343,7 @@ class DiskMruTable {
 			return new File(cfg.cndir, qccFileName);
 		}
 
-		private List<String> newPurgeFileNames() {
+		private List<String> newPurgeFileNamesAscAge() {
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
 			final int popReclaim = popCacheFileActual - cfg.popGoal;
 			final long kbReclaim = m_kbActual - cfg.kbGoal;
@@ -499,7 +499,12 @@ class DiskMruTable {
 
 		@Override
 		public int compareTo(Tracker rhs) {
-			return ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
+			final int c0 = ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
+			if (c0 != 0) return c0;
+			final int c1 = ArgonCompare.rev(m_dcu, rhs.m_dcu);
+			if (c1 != 0) return c1;
+			final int c2 = m_qccFileName.compareTo(rhs.m_qccFileName);
+			return c2;
 		}
 
 		public boolean exists() {

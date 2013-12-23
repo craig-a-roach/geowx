@@ -11,10 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +52,7 @@ public class TestUnit1Mru {
 		try {
 			final Probe probe = new Probe();
 			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			cfg.enableSafeNaming(false);
 			cfg.mruPopulationLimit(10);
 			cfg.enableMRUClean(true);
 			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
@@ -72,47 +71,48 @@ public class TestUnit1Mru {
 			} catch (final IOException ex) {
 				Assert.fail("Cannot create damage file..." + ex.getMessage());
 			}
-			final Reflector r = new Reflector();
+			File fA = null;
 			{
 				final MruRequest rq = new MruRequest("A", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNotNull("Found Av1", r.put("A", oFile));
+				Assert.assertNotNull("Found Av1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertEquals("A:H0M1", probe.statsReport());
+				fA = oFile;
 			}// cache 1 : A1
 			{
 				final MruRequest rq = new MruRequest("C", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNotNull("Found Cv1", r.put("C", oFile));
+				Assert.assertNotNull("Found Cv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertEquals("C:H0M1", probe.statsReport());
 			}// cache 2 : A1 C1
 			{
-				probe.allowPurgeAgenda();
+				probe.allowPurgeReclaim();
 				final MruRequest rq = new MruRequest("B", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNotNull("Found Bv1", r.put("B", oFile));
+				Assert.assertNotNull("Found Bv1", oFile);
+				Assert.assertTrue(probe.reachedPurgeAgenda());
 				Assert.assertTrue(probe.reachedPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
-				Assert.assertFalse("file A purged", r.select("A").exists());
+				Assert.assertFalse("file A purged", fA.exists());
 				Assert.assertEquals("B:H0M1", probe.statsReport());
 			}// cache 2: C1 B1
 			{
 				final MruRequest rq = new MruRequest("C", "v1");
 				final File oFile = dcc.find(supplier, rq); // HIT
-				Assert.assertNotNull("Found Cv1", r.put("C", oFile));
+				Assert.assertNotNull("Found Cv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
-				Assert.assertEquals("Cv1 Hit", r.select("C").getPath(), oFile.getPath());
-				Assert.assertTrue("file C exists", r.select("C").exists());
+				Assert.assertTrue("file C exists", oFile.exists());
 				Assert.assertEquals("C:H1M0", probe.statsReport());
 			}// cache 2: B1 C1
 			{
 				final MruRequest rq = new MruRequest("D", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNull("NotFound Dv1", r.put("D", oFile));
+				Assert.assertNull("NotFound Dv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertTrue(probe.noAudit());
@@ -121,7 +121,7 @@ public class TestUnit1Mru {
 			{
 				final MruRequest rq = new MruRequest("E", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNull("NotFound Ev1", r.put("E", oFile));
+				Assert.assertNull("NotFound Ev1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertTrue(probe.noAudit());
@@ -130,7 +130,7 @@ public class TestUnit1Mru {
 			{
 				final MruRequest rq = new MruRequest("F", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
-				Assert.assertNotNull("Found Fv1", r.put("F", oFile));
+				Assert.assertNotNull("Found Fv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertTrue(probe.reachedAudit());
@@ -139,18 +139,17 @@ public class TestUnit1Mru {
 			{
 				final MruRequest rq = new MruRequest("E", "v1");
 				final File oFile = dcc.find(supplier, rq); // HIT
-				Assert.assertNull("NotFound Ev1", r.put("E", oFile));
+				Assert.assertNull("NotFound Ev1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
 				Assert.assertTrue(probe.reachedCheckpoint());
 				Assert.assertTrue(probe.noAudit());
 				Assert.assertEquals("E:H1M0", probe.statsReport());
 			}// cache 2: B1 C1 F0 E?
 			dcc.cancel();
-			System.out.println(r);
 			final List<String> mgt = probe.mruManagementTranscript;
 			Assert.assertEquals("newState.noCheckpoint", mgt.get(0));
 			Assert.assertEquals("newState.initialise", mgt.get(1));
-			Assert.assertEquals("purge.agenda(StatePre{kB=24  agenda(0)=bc1M4j2I4u6VaLpUbAB8Y9kTHBs})", mgt.get(2));
+			Assert.assertEquals("purge.agenda(StatePre{kB=24  agenda(0)=A})", mgt.get(2));
 			Assert.assertEquals("purge.reclaim(StatePost{kB=16})", mgt.get(3));
 			Assert.assertEquals("audit.delete(State{unreferenced(0)=wilful_damage})", mgt.get(4));
 		} catch (final ArgonCacheException ex) {
@@ -165,6 +164,7 @@ public class TestUnit1Mru {
 		try {
 			final Probe probe = new Probe();
 			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			cfg.enableSafeNaming(false);
 			cfg.mruPopulationLimit(10);
 			cfg.enableMRUClean(false);
 			cfg.mruSizeLimitBytes(5 * CArgon.K * 8);
@@ -179,7 +179,6 @@ public class TestUnit1Mru {
 			supplier.put("F", 0, "v1");
 			supplier.put("G", 13000, "v1");
 			supplier.put("H", 17000, "v1");
-			final Reflector r = new Reflector();
 			final ExecutorService xc = Executors.newFixedThreadPool(3);
 			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // HIT
 			final Future<File> fuFv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
@@ -187,21 +186,21 @@ public class TestUnit1Mru {
 			// cache 2: B1 C1 F0 E?
 			try {
 				final File oFile = fuBv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Bv1", r.put("B", oFile));
-				Assert.assertEquals("Bv1 length", 3000, r.select("B").length());
+				Assert.assertNotNull("Found Bv1", oFile);
+				Assert.assertEquals("Bv1 length", 3000, oFile.length());
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}// cache 2: C1 F0 E? B1
 			try {
 				final File oFile = fuFv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Fv1", r.put("F", oFile));
-				Assert.assertEquals("Fv1 length", 0, r.select("F").length());
+				Assert.assertNotNull("Found Fv1", oFile);
+				Assert.assertEquals("Fv1 length", 0, oFile.length());
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}// cache 2: C1 E? B1 F0
 			try {
 				final File oFile = fuEv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNull("NotFound Ev1", r.put("E", oFile));
+				Assert.assertNull("NotFound Ev1", oFile);
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}// cache 2: C1 B1 F0 E?
@@ -210,23 +209,24 @@ public class TestUnit1Mru {
 			Assert.assertTrue(probe.noAudit());
 			Assert.assertEquals("B:H1M0 E:H1M0 F:H1M0", probe.statsReport());
 
-			probe.allowPurgeAgenda();
+			probe.allowPurgeReclaim();
 			final Future<File> fuBv2 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v2"))); // MISS
 			final Future<File> fuGv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("G", "v1"))); // MISS
 			try {
 				final File oFile = fuBv2.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Bv2", r.put("B", oFile));
-				Assert.assertEquals("Bv2 length", 9000, r.select("B").length());
+				Assert.assertNotNull("Found Bv2", oFile);
+				Assert.assertEquals("Bv2 length", 9000, oFile.length());
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}// cache 3: C1 F0 E? B2
 			try {
 				final File oFile = fuGv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Gv1", r.put("G", oFile));
+				Assert.assertNotNull("Found Gv1", oFile);
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}// cache 5: C1 F0 E? B2 G2 -> cache 4: F0 E? B2 G2
 
+			Assert.assertTrue(probe.reachedPurgeAgenda());
 			Assert.assertTrue(probe.reachedPurgeReclaim());
 			Assert.assertTrue(probe.reachedCheckpoint());
 			Assert.assertTrue(probe.noAudit());
@@ -237,33 +237,34 @@ public class TestUnit1Mru {
 			final Future<File> fuHv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("H", "v1"))); // MISS
 			try {
 				final File oFile = fuHv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Hv1", r.put("H", oFile));
-			} catch (ExecutionException | TimeoutException ex) {
-				Assert.fail(ex.getMessage());
-			} // cache 4: F0 E? B2 G2 -> cache 7: F0 E? B2 G2 H3
-			final Future<File> fu2Fv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
-			try {
-				final File oFile = fu2Fv1.get(10, TimeUnit.SECONDS);
-				Assert.assertNotNull("Found Fv1", r.put("F", oFile));
+				Assert.assertNotNull("Found Hv1", oFile);
 			} catch (ExecutionException | TimeoutException ex) {
 				Assert.fail(ex.getMessage());
 			}
-			probe.allowPurgeAgenda();
+			// cache 7: F0 E? B2 G2 H3
+			Assert.assertEquals("H:H0M1", probe.statsReport());
+			Assert.assertTrue(probe.reachedPurgeAgenda());
+			final Future<File> fu2Fv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
+			try {
+				final File oFile = fu2Fv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Fv1", oFile);
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}
+			probe.allowPurgeReclaim();
 			Assert.assertTrue(probe.reachedPurgeReclaim());
 			Assert.assertTrue(probe.reachedCheckpoint());
-			Assert.assertEquals("F:H1M0 H:H0M1", probe.statsReport());
+			Assert.assertEquals("F:H1M0", probe.statsReport());
 			// cache 3: H3 F0
 
 			dcc.cancel();
-			System.out.println(r);
 			final List<String> mgt = probe.mruManagementTranscript;
 			Assert.assertEquals("newState.loadedCheckpoint", mgt.get(0));
-			Assert.assertEquals("purge.agenda(StatePre{kB=40  agenda(0)=MglsLg7_M9hE7m1nVAes4YKJNX0})", mgt.get(1));
+			Assert.assertEquals("purge.agenda(StatePre{kB=40  agenda(0)=C})", mgt.get(1));
 			Assert.assertEquals("purge.reclaim(StatePost{kB=32})", mgt.get(2));
-			Assert.assertEquals("purge.agenda(StatePre{" + "\n" + "kB=56" + "\n" + "agenda(0)=5p8g6faDkg0_tDKavZUeh4sfk3I"
-					+ "\n" + "agenda(1)=4BhK3t-ROwdmJmRtP1LDtJw5rW0" + "\n" + "agenda(2)=rk8oHfWl0P88rWNx921cKbbZU-w"
-					+ "\n" + "agenda(3)=o2pnGPVFJNhGiU-wS1uIW05D5js" + "\n" + "}StatePre)", mgt.get(3));
-			Assert.assertEquals("purge.reclaim(StatePost{kB=24})", mgt.get(3));
+			Assert.assertEquals("purge.agenda(StatePre{kB=56  agenda(0)=F  agenda(1)=E  agenda(2)=B  agenda(3)=G})",
+					mgt.get(3));
+			Assert.assertEquals("purge.reclaim(StatePost{kB=24})", mgt.get(4));
 		} catch (final ArgonPermissionException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPlatformException ex) {
@@ -376,9 +377,11 @@ public class TestUnit1Mru {
 
 	private static class Probe implements IArgonDiskCacheProbe {
 
-		public void allowPurgeAgenda()
+		public void allowPurgeReclaim()
 				throws InterruptedException {
-			boxPurgeAgenda.put("ALLOW");
+			if (!boxPurgeReclaimProceed.offer("PURGE", 60, TimeUnit.SECONDS)) {
+				System.err.println("Could not enable mru reclaim within 60 secs");
+			}
 		}
 
 		@Override
@@ -422,15 +425,21 @@ public class TestUnit1Mru {
 		public void liveMruManagement(String message, Object... args) {
 			final String qargs = "(" + ArgonJoiner.zComma(args) + ")";
 			if (show.get()) {
-				System.out.println("mru." + message + qargs);
+				System.out.println("pre mru." + message + qargs);
 			}
+			boolean showpost = false;
 			try {
 				if (message.equals("purge.agenda")) {
 					mruManagementTranscript.add(message + qargs);
-					boxPurgeAgenda.poll(25, TimeUnit.SECONDS);
+					boxPurgeAgendaReached.put("PURGE");
+					if (boxPurgeReclaimProceed.poll(60, TimeUnit.SECONDS) == null) {
+						System.err.println("Did not receive mru reclaim proceed within 60 secs");
+					}
+					showpost = true;
 				} else if (message.equals("purge.reclaim")) {
 					mruManagementTranscript.add(message + qargs);
-					boxPurgeReclaim.put("PURGE");
+					boxPurgeReclaimReached.put("PURGE");
+					showpost = true;
 				} else if (message.equals("audit.delete")) {
 					mruManagementTranscript.add(message + qargs);
 					boxAudit.put("AUDIT");
@@ -443,6 +452,9 @@ public class TestUnit1Mru {
 				}
 			} catch (final InterruptedException ex) {
 				System.out.println("MruManagement Interrupted");
+			}
+			if (showpost && show.get()) {
+				System.out.println("post mru." + message);
 			}
 		}
 
@@ -483,12 +495,12 @@ public class TestUnit1Mru {
 
 		public boolean noPurgeAgenda()
 				throws InterruptedException {
-			return boxPurgeAgenda.peek() == null;
+			return boxPurgeAgendaReached.peek() == null;
 		}
 
 		public boolean noPurgeReclaim()
 				throws InterruptedException {
-			return boxPurgeReclaim.peek() == null;
+			return boxPurgeReclaimReached.peek() == null;
 		}
 
 		public boolean reachedAudit()
@@ -501,9 +513,14 @@ public class TestUnit1Mru {
 			return boxCheckpoint.poll(7, TimeUnit.SECONDS) != null;
 		}
 
+		public boolean reachedPurgeAgenda()
+				throws InterruptedException {
+			return boxPurgeAgendaReached.poll(17, TimeUnit.SECONDS) != null;
+		}
+
 		public boolean reachedPurgeReclaim()
 				throws InterruptedException {
-			return boxPurgeReclaim.poll(17, TimeUnit.SECONDS) != null;
+			return boxPurgeReclaimReached.poll(17, TimeUnit.SECONDS) != null;
 		}
 
 		public String statsReport() {
@@ -552,60 +569,14 @@ public class TestUnit1Mru {
 		final AtomicBoolean warnFile = new AtomicBoolean(false);
 		final AtomicBoolean failSoftware = new AtomicBoolean(false);
 		final BlockingQueue<String> boxCheckpoint = new LinkedBlockingQueue<>(1);
-		final BlockingQueue<String> boxPurgeAgenda = new LinkedBlockingQueue<>(1);
-		final BlockingQueue<String> boxPurgeReclaim = new LinkedBlockingQueue<>(1);
+		final BlockingQueue<String> boxPurgeAgendaReached = new LinkedBlockingQueue<>(1);
+		final BlockingQueue<String> boxPurgeReclaimProceed = new LinkedBlockingQueue<>(1);
+		final BlockingQueue<String> boxPurgeReclaimReached = new LinkedBlockingQueue<>(1);
 		final BlockingQueue<String> boxAudit = new LinkedBlockingQueue<>(1);
 		final List<String> mruManagementTranscript = new ArrayList<>();
 		private final Lock m_lockHM = new ReentrantLock();
 		final Map<String, Integer> m_hit = new HashMap<String, Integer>();
 		final Map<String, Integer> m_miss = new HashMap<String, Integer>();
-	}
-
-	private static class Reflector {
-
-		public File put(String rid, File oFile) {
-			if (oFile == null) {
-				notfound.add(rid);
-			} else {
-				found.put(rid, oFile);
-			}
-			return oFile;
-		}
-
-		public File select(String rid) {
-			if (rid == null || rid.length() == 0) throw new IllegalArgumentException("string is null or empty");
-			final File oFile = found.get(rid);
-			if (oFile == null) throw new IllegalArgumentException("Unknown resource '" + rid + "'");
-			return oFile;
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("Found");
-			final List<String> fk = new ArrayList<>(found.keySet());
-			final int fkc = fk.size();
-			Collections.sort(fk);
-			for (int i = 0; i < fkc; i++) {
-				final String rid = fk.get(i);
-				final String fn = found.get(rid).getName();
-				sb.append("\n").append(rid).append('=').append(fn);
-			}
-			sb.append("\nNotFound:");
-			final List<String> nfk = new ArrayList<>(notfound);
-			final int nfkc = nfk.size();
-			Collections.sort(nfk);
-			for (int i = 0; i < nfkc; i++) {
-				final String rid = nfk.get(i);
-				sb.append(' ').append(rid);
-			}
-			return sb.toString();
-		}
-
-		public Reflector() {
-		}
-		final Map<String, File> found = new HashMap<String, File>();
-		final Set<String> notfound = new HashSet<String>();
 	}
 
 	private static class SpaceId implements IArgonSpaceId {

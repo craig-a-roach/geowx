@@ -22,6 +22,7 @@ import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.ArgonText;
+import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
@@ -80,14 +81,14 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	public static ArgonDiskCacheController newInstance(Config cfg)
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
-		final ArgonDigester digester = ArgonDigester.newSHA1();
+		final ArgonDigester oDigester = cfg.safeNaming ? ArgonDigester.newSHA1() : null;
 		cleanMruDir(cfg);
 		cleanJarDir(cfg);
 		final DiskMruTable mruTable = DiskMruTable.newInstance(cfg);
 		final MruTask task = new MruTask(mruTable);
 		final Timer timer = new Timer(cfg.qccThreadName, true);
 		timer.schedule(task, cfg.mruCheckpointDelayMs, cfg.mruCheckpointPeriodMs);
-		return new ArgonDiskCacheController(cfg, mruTable, timer, digester);
+		return new ArgonDiskCacheController(cfg, mruTable, timer, oDigester);
 	}
 
 	private String failLoadCp(Throwable ex) {
@@ -138,7 +139,8 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		final String qccResourceId = request.qccResourceId();
 		if (qccResourceId == null || qccResourceId.length() == 0)
 			throw new IllegalArgumentException("Request resource id is empty");
-		return m_digester.digestUTF8B64URL(qccResourceId);
+		if (m_oDigester == null) return ArgonTransformer.zPosixSanitized(qccResourceId);
+		return m_oDigester.digestUTF8B64URL(qccResourceId);
 	}
 
 	private void registerHit(IArgonDiskCacheRequest request) {
@@ -249,17 +251,16 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return m_idSpace;
 	}
 
-	private ArgonDiskCacheController(Config config, DiskMruTable mruTable, Timer timer, ArgonDigester digester) {
+	private ArgonDiskCacheController(Config config, DiskMruTable mruTable, Timer timer, ArgonDigester oDigester) {
 		assert config != null;
 		assert mruTable != null;
 		assert timer != null;
-		assert digester != null;
 		m_probe = config.probe;
 		m_idService = config.idService;
 		m_idSpace = config.idSpace;
 		m_mruTable = mruTable;
 		m_timer = timer;
-		m_digester = digester;
+		m_oDigester = oDigester;
 		m_cndirMRU = config.cndirMRU;
 		m_cndirJAR = config.cndirJAR;
 		m_bcSizeEst = config.bcSizeEst;
@@ -269,7 +270,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	private final IArgonSpaceId m_idSpace;
 	private final DiskMruTable m_mruTable;
 	private final Timer m_timer;
-	private final ArgonDigester m_digester;
+	private final ArgonDigester m_oDigester;
 	private final File m_cndirMRU;
 	private final File m_cndirJAR;
 	private final int m_bcSizeEst;
@@ -326,6 +327,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		public static final int DefaultAuditCycle = 5000;
 		public static final boolean DefaultCleanMRU = false;
 		public static final boolean DefaultCleanJAR = true;
+		public static final boolean DefaultSafeNaming = true;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
 
 		public Config disableMruAuditCycle() {
@@ -340,6 +342,11 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 		public Config enableMRUClean(boolean enable) {
 			cleanMRU = enable;
+			return this;
+		}
+
+		public Config enableSafeNaming(boolean enable) {
+			safeNaming = enable;
 			return this;
 		}
 
@@ -416,6 +423,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			ds.a("mruAuditCycle", mruAuditCycle);
 			ds.a("cleanMRU", cleanMRU);
 			ds.a("cleanJAR", cleanJAR);
+			ds.a("safeNaming", safeNaming);
 			ds.a("idService", idService);
 			ds.a("idSpace", idSpace);
 			return ds.s();
@@ -451,6 +459,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		int mruAuditCycle = DefaultAuditCycle;
 		boolean cleanMRU = DefaultCleanMRU;
 		boolean cleanJAR = DefaultCleanJAR;
+		boolean safeNaming = DefaultSafeNaming;
 		int bcSizeEst = DefaultSizeEst;
 	}
 }
