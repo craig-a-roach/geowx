@@ -49,6 +49,7 @@ class DiskMruTable {
 	public static final int SizeLimitLo = 1 * CArgon.K;
 	public static final int PopLimitLo = 1;
 	public static final int PopLimitHi = 128 * CArgon.K;
+	public static final long MinLifeMsLo = 3000;
 
 	private static final String TryDecodeCp = "Decode MRU Checkpoint";
 	private static final String CsqScrub = "Wipe contents of cache";
@@ -103,7 +104,8 @@ class DiskMruTable {
 		final int popWake = (cpopLimit * cpctWake) / 100;
 		final int popGoal = (cpopLimit * cpctGoal) / 100;
 		final int cauditCycle = cfg.mruAuditCycle <= 0 ? NOAUDIT : cfg.mruAuditCycle;
-		final Cfg mru = new Cfg(cfg.probe, cfg.cndirMRU, kbWake, popWake, kbGoal, popGoal, cauditCycle);
+		final long msLife = Math.max(MinLifeMsLo, cfg.mruMinLifeMs);
+		final Cfg mru = new Cfg(cfg.probe, cfg.cndirMRU, kbWake, popWake, kbGoal, popGoal, cauditCycle, msLife);
 		final State state = newState(mru, cpopLimit);
 		return new DiskMruTable(mru, state);
 	}
@@ -168,20 +170,34 @@ class DiskMruTable {
 		}
 	}
 
-	private List<String> newPurgeAgenda() {
+	private List<String> newPurgeAgenda(long tsNow) {
 		m_lockState.lock();
 		try {
 			final boolean isRequired = m_state.isPurgeRequired();
-			if (isRequired) return m_state.newPurgeFileNamesAscAge();
+			if (isRequired) return m_state.newPurgeFileNamesAscAge(tsNow);
 			return Collections.emptyList();
 		} finally {
 			m_lockState.unlock();
 		}
 	}
 
-	private void purge() {
+	private void purge(List<String> zlAgenda) {
+		assert zlAgenda != null;
+		final int agendaCount = zlAgenda.size();
+		for (int i = 0; i < agendaCount; i++) {
+			final String qccFileName = zlAgenda.get(i);
+			m_lockState.lock();
+			try {
+				m_state.purge(qccFileName);
+			} finally {
+				m_lockState.unlock();
+			}
+		}
+	}
+
+	private void purge(long tsNow) {
 		final boolean trace = cfg.probe.isLiveMruManagement();
-		final List<String> zlAgenda = newPurgeAgenda();
+		final List<String> zlAgenda = newPurgeAgenda(tsNow);
 		final long kbPre = m_state.kbActual();
 		if (zlAgenda.isEmpty()) {
 			if (trace) {
@@ -203,20 +219,6 @@ class DiskMruTable {
 				final Ds ds = Ds.report("StatePost");
 				ds.a("kB", kbPost);
 				cfg.probe.liveMruManagement("purge.reclaim", ds);
-			}
-		}
-	}
-
-	private void purge(List<String> zlAgenda) {
-		assert zlAgenda != null;
-		final int agendaCount = zlAgenda.size();
-		for (int i = 0; i < agendaCount; i++) {
-			final String qccFileName = zlAgenda.get(i);
-			m_lockState.lock();
-			try {
-				m_state.purge(qccFileName);
-			} finally {
-				m_lockState.unlock();
 			}
 		}
 	}
@@ -273,9 +275,10 @@ class DiskMruTable {
 	}
 
 	public void tick() {
+		final long tsNow = System.currentTimeMillis();
 		try {
 			if (m_purgeDue.getAndSet(false)) {
-				purge();
+				purge(tsNow);
 			}
 			if (m_checkpointDue.getAndSet(false)) {
 				checkpoint();
@@ -317,7 +320,8 @@ class DiskMruTable {
 
 	private static class Cfg {
 
-		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbWake, int popWake, long kbGoal, int popGoal, int auditCycle) {
+		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbWake, int popWake, long kbGoal, int popGoal, int auditCycle,
+				long msLife) {
 			assert probe != null;
 			assert cndir != null;
 			this.probe = probe;
@@ -327,6 +331,7 @@ class DiskMruTable {
 			this.kbGoal = kbGoal;
 			this.popGoal = popGoal;
 			this.auditCycle = auditCycle;
+			this.msLife = msLife;
 		}
 		final IArgonDiskCacheProbe probe;
 		final File cndir;
@@ -335,6 +340,7 @@ class DiskMruTable {
 		final long kbGoal;
 		final int popGoal;
 		final int auditCycle;
+		final long msLife;
 	}
 
 	private static class State {
@@ -343,7 +349,8 @@ class DiskMruTable {
 			return new File(cfg.cndir, qccFileName);
 		}
 
-		private List<String> newPurgeFileNamesAscAge() {
+		private List<String> newPurgeFileNamesAscAge(long tsNow) {
+			final boolean trace = cfg.probe.isLiveMruManagement();
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
 			final int popReclaim = popCacheFileActual - cfg.popGoal;
 			final long kbReclaim = m_kbActual - cfg.kbGoal;
@@ -354,12 +361,21 @@ class DiskMruTable {
 			final int trackerCount = zlTrackersAsc.size();
 			long kbNeo = m_kbActual;
 			int popNeo = popCacheFileActual;
-			for (int i = 0; i < trackerCount && (kbNeo > cfg.kbGoal || popNeo > cfg.popGoal); i++) {
+			boolean ageLimited = false;
+			for (int i = 0; i < trackerCount && !ageLimited && (kbNeo > cfg.kbGoal || popNeo > cfg.popGoal); i++) {
 				final Tracker tracker = zlTrackersAsc.get(i);
-				zlNames.add(tracker.qccFileName());
-				tracker.purgeMark();
-				kbNeo -= tracker.kbFile();
-				popNeo--;
+				final long msAge = tsNow - tracker.tsLastAccess();
+				if (msAge < cfg.msLife) {
+					ageLimited = true;
+					if (trace) {
+						cfg.probe.liveMruManagement("purge.ageLimited");
+					}
+				} else {
+					zlNames.add(tracker.qccFileName());
+					tracker.purgeMark();
+					kbNeo -= tracker.kbFile();
+					popNeo--;
+				}
 			}
 			return zlNames;
 		}
@@ -406,7 +422,7 @@ class DiskMruTable {
 			final Tracker oEx = m_mapFileName_Tracker.get(qccFileName);
 			if (oEx == null) {
 				if (trace) {
-					cfg.probe.liveMruManagement("purgeFile missingTracker", qccFileName);
+					cfg.probe.liveMruManagement("purge.file.missingTracker", qccFileName);
 				}
 			} else {
 				if (oEx.exists()) {
@@ -415,7 +431,7 @@ class DiskMruTable {
 						ArgonFileManagement.deleteFile(cfg.probe, target);
 						if (target.exists()) {
 							if (trace) {
-								cfg.probe.liveMruManagement("purgeFile trackerRetained", oEx);
+								cfg.probe.liveMruManagement("purge.file.trackerRetained", oEx);
 							}
 						} else {
 							m_mapFileName_Tracker.remove(qccFileName);
@@ -423,7 +439,7 @@ class DiskMruTable {
 						}
 					} else {
 						if (trace) {
-							cfg.probe.liveMruManagement("purgeFile trackerNotPurgeSafe", oEx);
+							cfg.probe.liveMruManagement("purge.file.trackerNotPurgeSafe", oEx);
 						}
 					}
 				} else {
@@ -562,6 +578,10 @@ class DiskMruTable {
 			ds.a("contentValidator", m_zContentValidator);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
+		}
+
+		public long tsLastAccess() {
+			return m_tsLastAccess;
 		}
 
 		public Tracker(JsonObject src) throws JsonSchemaException {

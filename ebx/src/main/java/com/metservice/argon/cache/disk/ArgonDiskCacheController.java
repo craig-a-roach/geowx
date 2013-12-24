@@ -121,6 +121,11 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		return new File(m_cndirMRU, qccFileName);
 	}
 
+	private IArgonSensor newSensorCacheHitRate() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private void probeLoadCp(Class<?> resourceRef, Throwable cause) {
 		final Ds ds = Ds.triedTo(TryLoadCp, cause, ArgonCacheException.class);
 		ds.a("resourceRef", resourceRef);
@@ -227,7 +232,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	@Override
 	public IArgonSensor findSensor(ArgonSensorId id) {
-		// TODO Auto-generated method stub
+		if (id.equals(SensorCacheHitRate)) return newSensorCacheHitRate();
 		return null;
 	}
 
@@ -329,6 +334,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		public static final boolean DefaultCleanJAR = true;
 		public static final boolean DefaultSafeNaming = true;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
+		public static final long DefaultMinLifeMs = 60 * CArgon.SEC_TO_MS;
 
 		public Config disableMruAuditCycle() {
 			mruAuditCycle = -1;
@@ -389,6 +395,12 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			return this;
 		}
 
+		public Config mruMinLife(TimeUnit unit, int count) {
+			if (unit == null) throw new IllegalArgumentException("object is null");
+			mruMinLifeMs = unit.toMillis(count);
+			return this;
+		}
+
 		public Config mruPopulationLimit(int count) {
 			mruPopulationLimit = Math.max(1, count);
 			return this;
@@ -418,8 +430,9 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 			ds.a("mruPopulationLimit", mruPopulationLimit);
 			ds.a("mruPurgeGoalPct", mruPurgeGoalPct);
 			ds.a("mruPurgeWakePct", mruPurgeWakePct);
-			ds.ae("mruCheckpointDelayMs", mruCheckpointDelayMs);
-			ds.ae("mruCheckpointPeriodMs", mruCheckpointPeriodMs);
+			ds.ae("mruCheckpointDelay", mruCheckpointDelayMs);
+			ds.ae("mruCheckpointPeriod", mruCheckpointPeriodMs);
+			ds.ae("mruMinLife", mruMinLifeMs);
 			ds.a("mruAuditCycle", mruAuditCycle);
 			ds.a("cleanMRU", cleanMRU);
 			ds.a("cleanJAR", cleanJAR);
@@ -456,6 +469,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		int mruPurgeWakePct = DefaultMruPurgeWakePct;
 		long mruCheckpointDelayMs = DefaultMruCheckpointDelayMs;
 		long mruCheckpointPeriodMs = DefaultMruCheckpointPeriodMs;
+		long mruMinLifeMs = DefaultMinLifeMs;
 		int mruAuditCycle = DefaultAuditCycle;
 		boolean cleanMRU = DefaultCleanMRU;
 		boolean cleanJAR = DefaultCleanJAR;

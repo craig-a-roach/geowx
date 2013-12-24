@@ -46,7 +46,7 @@ import com.metservice.argon.management.IArgonSpaceId;
 public class TestUnit1Mru {
 
 	@Test
-	public void t50_main() {
+	public void t20_main() {
 		final ArgonServiceId SID = TestHelpC.SID;
 		final SpaceId SPACE = new SpaceId("t50");
 		try {
@@ -59,6 +59,7 @@ public class TestUnit1Mru {
 			cfg.mruAuditCycle(5);
 			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
 			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.mruMinLife(TimeUnit.SECONDS, 3);
 			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 5000, "v1");
@@ -168,9 +169,10 @@ public class TestUnit1Mru {
 			cfg.mruPopulationLimit(10);
 			cfg.enableMRUClean(false);
 			cfg.mruSizeLimitBytes(5 * CArgon.K * 8);
-			cfg.mruAuditCycle(5);
+			cfg.mruAuditCycle(3);
 			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
 			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.mruMinLife(TimeUnit.SECONDS, 3);
 			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("B", 9000, "v2");
@@ -254,6 +256,7 @@ public class TestUnit1Mru {
 			probe.allowPurgeReclaim();
 			Assert.assertTrue(probe.reachedPurgeReclaim());
 			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
 			Assert.assertEquals("F:H1M0", probe.statsReport());
 			// cache 3: H3 F0
 
@@ -264,7 +267,8 @@ public class TestUnit1Mru {
 			Assert.assertEquals("purge.reclaim(StatePost{kB=32})", mgt.get(2));
 			Assert.assertEquals("purge.agenda(StatePre{kB=56  agenda(0)=F  agenda(1)=E  agenda(2)=B  agenda(3)=G})",
 					mgt.get(3));
-			Assert.assertEquals("purge.reclaim(StatePost{kB=24})", mgt.get(4));
+			Assert.assertEquals("purge.file.trackerNotPurgeSafe", mgt.get(4));
+			Assert.assertEquals("purge.reclaim(StatePost{kB=24})", mgt.get(5));
 		} catch (final ArgonPermissionException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPlatformException ex) {
@@ -272,6 +276,90 @@ public class TestUnit1Mru {
 		} catch (final InterruptedException ex) {
 			Assert.fail("Latch interrupted");
 		}
+	}
+
+	@Test
+	public void t50_age() {
+		final ArgonServiceId SID = TestHelpC.SID;
+		final SpaceId SPACE = new SpaceId("t50");
+		try {
+			final Probe probe = new Probe();
+			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			cfg.enableSafeNaming(false);
+			cfg.mruPopulationLimit(10);
+			cfg.enableMRUClean(true);
+			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
+			cfg.mruAuditCycle(4);
+			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
+			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.mruMinLife(TimeUnit.SECONDS, 10);
+			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
+			final Supplier supplier = new Supplier();
+			supplier.put("A", 3000, "v1");
+			supplier.put("B", 13000, "v1");
+			supplier.put("C", 9000, "v1");
+			final ExecutorService xc = Executors.newFixedThreadPool(2);
+			final Future<File> fuAv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("A", "v1"))); // MISS
+			try {
+				final File oFile = fuAv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Av1", oFile);
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}// cache 1: A1
+			Assert.assertTrue(probe.noPurgeAgenda());
+			Assert.assertTrue(probe.noPurgeReclaim());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+			Assert.assertEquals("A:H0M1", probe.statsReport());
+
+			probe.allowPurgeReclaim();
+
+			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // MISS
+			try {
+				final File oFile = fuBv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Bv1", oFile);
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}// cache 3: A1 B2
+			Assert.assertTrue(probe.reachedPurgeAgeLimited());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+			Assert.assertEquals("B:H0M1", probe.statsReport());
+
+			System.out.print("Ageing for 10sec...");
+			Thread.sleep(10000);
+			System.out.println("Done");
+
+			final Future<File> fuCv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("C", "v1"))); // MISS
+			try {
+				final File oFile = fuCv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Cv1", oFile);
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}// cache 5: A1 B2 C2 -> cache 2: C2
+
+			Assert.assertTrue(probe.reachedPurgeAgenda());
+			Assert.assertTrue(probe.reachedPurgeReclaim());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+			Assert.assertEquals("C:H0M1", probe.statsReport());
+
+			dcc.cancel();
+			final List<String> mgt = probe.mruManagementTranscript;
+			Assert.assertEquals("newState.noCheckpoint", mgt.get(0));
+			Assert.assertEquals("newState.initialise", mgt.get(1));
+			Assert.assertEquals("purge.ageLimited", mgt.get(2));
+			Assert.assertEquals("purge.agenda(StatePre{kB=40  agenda(0)=A  agenda(1)=B})", mgt.get(3));
+			Assert.assertEquals("purge.reclaim(StatePost{kB=16})", mgt.get(4));
+
+		} catch (final ArgonPermissionException ex) {
+			Assert.fail(ex.getMessage());
+		} catch (final ArgonPlatformException ex) {
+			Assert.fail(ex.getMessage());
+		} catch (final InterruptedException ex) {
+			Assert.fail("Latch interrupted");
+		}
+
 	}
 
 	private static class Agent implements Callable<File> {
@@ -440,6 +528,11 @@ public class TestUnit1Mru {
 					mruManagementTranscript.add(message + qargs);
 					boxPurgeReclaimReached.put("PURGE");
 					showpost = true;
+				} else if (message.startsWith("purge.file.")) {
+					mruManagementTranscript.add(message);
+				} else if (message.equals("purge.ageLimited")) {
+					mruManagementTranscript.add(message);
+					boxPurgeAgeLimited.put("LIMITED");
 				} else if (message.equals("audit.delete")) {
 					mruManagementTranscript.add(message + qargs);
 					boxAudit.put("AUDIT");
@@ -513,14 +606,19 @@ public class TestUnit1Mru {
 			return boxCheckpoint.poll(7, TimeUnit.SECONDS) != null;
 		}
 
+		public boolean reachedPurgeAgeLimited()
+				throws InterruptedException {
+			return boxPurgeAgeLimited.poll(27, TimeUnit.SECONDS) != null;
+		}
+
 		public boolean reachedPurgeAgenda()
 				throws InterruptedException {
-			return boxPurgeAgendaReached.poll(17, TimeUnit.SECONDS) != null;
+			return boxPurgeAgendaReached.poll(27, TimeUnit.SECONDS) != null;
 		}
 
 		public boolean reachedPurgeReclaim()
 				throws InterruptedException {
-			return boxPurgeReclaimReached.poll(17, TimeUnit.SECONDS) != null;
+			return boxPurgeReclaimReached.poll(27, TimeUnit.SECONDS) != null;
 		}
 
 		public String statsReport() {
@@ -572,6 +670,7 @@ public class TestUnit1Mru {
 		final BlockingQueue<String> boxPurgeAgendaReached = new LinkedBlockingQueue<>(1);
 		final BlockingQueue<String> boxPurgeReclaimProceed = new LinkedBlockingQueue<>(1);
 		final BlockingQueue<String> boxPurgeReclaimReached = new LinkedBlockingQueue<>(1);
+		final BlockingQueue<String> boxPurgeAgeLimited = new LinkedBlockingQueue<>(1);
 		final BlockingQueue<String> boxAudit = new LinkedBlockingQueue<>(1);
 		final List<String> mruManagementTranscript = new ArrayList<>();
 		private final Lock m_lockHM = new ReentrantLock();
