@@ -11,8 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -36,6 +38,8 @@ import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
+import com.metservice.argon.IArgonSensor;
+import com.metservice.argon.IArgonSensorRatio;
 import com.metservice.argon.TestHelpC;
 import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.management.IArgonSpaceId;
@@ -48,7 +52,7 @@ public class TestUnit1Mru {
 	@Test
 	public void t20_main() {
 		final ArgonServiceId SID = TestHelpC.SID;
-		final SpaceId SPACE = new SpaceId("t50");
+		final SpaceId SPACE = new SpaceId("t20");
 		try {
 			final Probe probe = new Probe();
 			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
@@ -153,6 +157,13 @@ public class TestUnit1Mru {
 			Assert.assertEquals("purge.agenda(StatePre{kB=24  agenda(0)=A})", mgt.get(2));
 			Assert.assertEquals("purge.reclaim(StatePost{kB=16})", mgt.get(3));
 			Assert.assertEquals("audit.delete(State{unreferenced(0)=wilful_damage})", mgt.get(4));
+
+			final IArgonSensor oSensor = dcc.findSensor(dcc.getSensorId(0));
+			Assert.assertNotNull(oSensor);
+			Assert.assertTrue(oSensor instanceof IArgonSensorRatio);
+			final float sensorRatio = ((IArgonSensorRatio) oSensor).ratio();
+			Assert.assertTrue(!Float.isNaN(sensorRatio) && sensorRatio > 0.0 && sensorRatio < 1.0f);
+
 		} catch (final ArgonCacheException ex) {
 			Assert.fail(ex.getMessage());
 		} catch (final ArgonPermissionException ex) {
@@ -181,6 +192,7 @@ public class TestUnit1Mru {
 			supplier.put("F", 0, "v1");
 			supplier.put("G", 13000, "v1");
 			supplier.put("H", 17000, "v1");
+			supplier.put("J", 7000, "v1");
 			final ExecutorService xc = Executors.newFixedThreadPool(3);
 			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // HIT
 			final Future<File> fuFv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
@@ -259,6 +271,25 @@ public class TestUnit1Mru {
 			Assert.assertTrue(probe.noAudit());
 			Assert.assertEquals("F:H1M0", probe.statsReport());
 			// cache 3: H3 F0
+
+			final Future<File> fuJav1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // MISS
+			final Future<File> fuJbv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // HIT
+			final Future<File> fuJcv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // HIT
+			try {
+				final File oFileA = fuJav1.get(10, TimeUnit.SECONDS);
+				final File oFileB = fuJbv1.get(10, TimeUnit.SECONDS);
+				final File oFileC = fuJcv1.get(10, TimeUnit.SECONDS);
+				Assert.assertNotNull("Found Jav1", oFileA);
+				Assert.assertNotNull("Found Jbv1", oFileB);
+				Assert.assertNotNull("Found Jcv1", oFileC);
+			} catch (ExecutionException | TimeoutException ex) {
+				Assert.fail(ex.getMessage());
+			}
+			Assert.assertTrue(probe.noPurgeAgenda());
+			Assert.assertTrue(probe.reachedCheckpoint());
+			Assert.assertTrue(probe.noAudit());
+			Assert.assertEquals("J:H2M1", probe.statsReport());
+			// cache 4: H3 F0 J1
 
 			dcc.cancel();
 			final List<String> mgt = probe.mruManagementTranscript;
@@ -624,9 +655,10 @@ public class TestUnit1Mru {
 		public String statsReport() {
 			m_lockHM.lock();
 			try {
-				final List<String> keys = new ArrayList<String>();
-				keys.addAll(m_hit.keySet());
-				keys.addAll(m_miss.keySet());
+				final Set<String> hm = new HashSet<>();
+				hm.addAll(m_hit.keySet());
+				hm.addAll(m_miss.keySet());
+				final List<String> keys = new ArrayList<String>(hm);
 				Collections.sort(keys);
 				final int kc = keys.size();
 				final StringBuilder sb = new StringBuilder();
@@ -696,7 +728,8 @@ public class TestUnit1Mru {
 
 		@Override
 		public IArgonDiskCacheable getCacheable(MruRequest request)
-				throws ArgonCacheException {
+				throws ArgonCacheException, InterruptedException {
+			Thread.sleep(1000L);
 			return m_map.get(request.qccResourceId);
 		}
 

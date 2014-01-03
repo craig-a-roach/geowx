@@ -14,7 +14,6 @@ public interface IArgonSensor {
 
 	public String description();
 
-	public Date getLastModified();
+	public Date getLastSampleTime();
 
-	public String unitOfMeasure();
 }

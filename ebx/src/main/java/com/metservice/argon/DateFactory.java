@@ -151,6 +151,11 @@ public class DateFactory {
 		return "GMT" + qnctw;
 	}
 
+	public static Date createDate(long ts) {
+		if (ts < 0L) return null;
+		return new Date(ts);
+	}
+
 	public static boolean isMarkerMalformedT8(String t) {
 		final int len = t.length();
 		return (len != 20) || isMarkerMalformed(t);

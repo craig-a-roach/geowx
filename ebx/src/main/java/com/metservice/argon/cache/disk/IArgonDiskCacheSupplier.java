@@ -13,6 +13,6 @@ import com.metservice.argon.cache.ArgonCacheException;
 public interface IArgonDiskCacheSupplier<R extends IArgonDiskCacheRequest> {
 
 	public IArgonDiskCacheable getCacheable(R request)
-			throws ArgonCacheException;
+			throws ArgonCacheException, InterruptedException;
 
 }

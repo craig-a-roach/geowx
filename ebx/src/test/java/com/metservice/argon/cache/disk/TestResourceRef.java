@@ -3,12 +3,15 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.management;
+package com.metservice.argon.cache.disk;
 
 /**
  * @author roach
  */
-public interface IArgonFetcherQuery {
+public class TestResourceRef {
 
-	public String getSignature();
+	public static final TestResourceRef Instance = new TestResourceRef();
+
+	private TestResourceRef() {
+	}
 }

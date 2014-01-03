@@ -8,8 +8,8 @@ package com.metservice.argon;
 /**
  * @author roach
  */
-public interface IArgonCountSensor {
+public interface IArgonSensorRatio extends IArgonSensor {
 
-	public long value();
+	public float ratio();
 
 }

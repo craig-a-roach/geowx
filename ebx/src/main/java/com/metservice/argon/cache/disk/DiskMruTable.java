@@ -274,8 +274,7 @@ class DiskMruTable {
 		}
 	}
 
-	public void tick() {
-		final long tsNow = System.currentTimeMillis();
+	public void tick(long tsNow) {
 		try {
 			if (m_purgeDue.getAndSet(false)) {
 				purge(tsNow);
