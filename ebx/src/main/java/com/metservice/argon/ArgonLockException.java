@@ -3,13 +3,14 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.management;
+package com.metservice.argon;
 
 /**
  * @author roach
  */
-public interface IArgonSpaceId {
+public class ArgonLockException extends Exception {
 
-	public String format();
-
+	public ArgonLockException(String message) {
+		super(message);
+	}
 }

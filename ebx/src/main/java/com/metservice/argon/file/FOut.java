@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonLockException;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.IArgonFileProbe;
@@ -20,6 +20,22 @@ import com.metservice.argon.IArgonFileProbe;
  * @author roach
  */
 class FOut {
+
+	public static FOut newInstance(IArgonFileProbe probe, File destFile, boolean lock)
+			throws ArgonPermissionException, ArgonLockException {
+		final FileOutputStream fos = UArgonFile.newFileOutputStream(probe, destFile);
+		final FileChannel fch = fos.getChannel();
+		boolean lockFailed = true;
+		try {
+			final FileLock oflock = lock ? UArgonFile.newLockExclusive(probe, destFile, fch) : null;
+			lockFailed = false;
+			return new FOut(destFile, fos, fch, oflock);
+		} finally {
+			if (lockFailed) {
+				UArgonFile.close(probe, destFile, fos);
+			}
+		}
+	}
 
 	public void close(IArgonFileProbe probe) {
 		assert probe != null;
@@ -65,22 +81,6 @@ class FOut {
 			sb.append("locked");
 		}
 		return sb.toString();
-	}
-
-	public static FOut newInstance(IArgonFileProbe probe, File destFile, boolean lock)
-			throws ArgonPermissionException, ArgonApiException {
-		final FileOutputStream fos = UArgonFile.newFileOutputStream(probe, destFile);
-		final FileChannel fch = fos.getChannel();
-		boolean lockFailed = true;
-		try {
-			final FileLock oflock = lock ? UArgonFile.newLockExclusive(probe, destFile, fch) : null;
-			lockFailed = false;
-			return new FOut(destFile, fos, fch, oflock);
-		} finally {
-			if (lockFailed) {
-				UArgonFile.close(probe, destFile, fos);
-			}
-		}
 	}
 
 	private FOut(File destFile, FileOutputStream fos, FileChannel fch, FileLock oflock) {

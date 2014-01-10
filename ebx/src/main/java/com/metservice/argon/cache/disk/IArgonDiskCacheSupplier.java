@@ -5,6 +5,8 @@
  */
 package com.metservice.argon.cache.disk;
 
+import java.util.Date;
+
 import com.metservice.argon.cache.ArgonCacheException;
 
 /**
@@ -13,6 +15,9 @@ import com.metservice.argon.cache.ArgonCacheException;
 public interface IArgonDiskCacheSupplier<R extends IArgonDiskCacheRequest> {
 
 	public IArgonDiskCacheable getCacheable(R request)
+			throws ArgonCacheException, InterruptedException;
+
+	public IArgonDiskCacheable getCacheableConditional(R request, Date lastModified)
 			throws ArgonCacheException, InterruptedException;
 
 }

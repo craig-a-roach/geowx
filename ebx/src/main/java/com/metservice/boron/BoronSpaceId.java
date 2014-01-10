@@ -10,7 +10,7 @@ import java.util.Hashtable;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 
-import com.metservice.argon.management.IArgonSpaceId;
+import com.metservice.argon.IArgonSpaceId;
 
 /**
  * @author roach

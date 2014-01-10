@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonLockException;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.ArgonStreamWriteException;
@@ -102,16 +102,16 @@ class UArgonFile {
 	}
 
 	public static FileLock newLockExclusive(IArgonFileProbe probe, File file, FileChannel fch)
-			throws ArgonApiException {
+			throws ArgonLockException {
 		assert probe != null;
 		assert file != null;
 		assert fch != null;
 		try {
 			return fch.lock();
 		} catch (final IOException ex) {
-			final Ds ds = Ds.triedTo("Lock file; exclusive", ex, ArgonApiException.class);
+			final Ds ds = Ds.triedTo("Lock file; exclusive", ex, ArgonLockException.class);
 			probe.failFile(ds, file);
-			throw new ArgonApiException("Could not lock-exclusive '" + file + "'");
+			throw new ArgonLockException("Could not lock-exclusive '" + file + "'");
 		}
 	}
 

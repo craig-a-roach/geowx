@@ -9,6 +9,7 @@ import java.io.PrintStream;
 
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonServiceId;
+import com.metservice.argon.IArgonSpaceId;
 
 /**
  * @author roach

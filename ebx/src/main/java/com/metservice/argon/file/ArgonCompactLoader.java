@@ -11,7 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 
-import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonLockException;
 import com.metservice.argon.ArgonQuotaException;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.Binary;
@@ -46,7 +46,7 @@ public class ArgonCompactLoader {
 	}
 
 	public static Binary load(IArgonFileProbe probe, File path, boolean lock, int bcQuota)
-			throws ArgonApiException, ArgonQuotaException, ArgonStreamReadException {
+			throws ArgonLockException, ArgonQuotaException, ArgonStreamReadException {
 		return FIn.loadBinary(probe, path, lock, bcQuota);
 	}
 

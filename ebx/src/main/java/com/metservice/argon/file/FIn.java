@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonLockException;
 import com.metservice.argon.ArgonQuotaException;
 import com.metservice.argon.ArgonStreamReadException;
 import com.metservice.argon.Binary;
@@ -22,6 +22,28 @@ import com.metservice.argon.IArgonFileProbe;
  * @author roach
  */
 class FIn {
+
+	public static Binary loadBinary(IArgonFileProbe probe, File srcFile, boolean lock, int bcQuota)
+			throws ArgonLockException, ArgonQuotaException, ArgonStreamReadException {
+		final FIn fin = FIn.newInstance(probe, srcFile, lock);
+		return fin.load(probe, bcQuota);
+	}
+
+	public static FIn newInstance(IArgonFileProbe probe, File srcFile, boolean lock)
+			throws ArgonLockException {
+		final FileInputStream ofis = UArgonFile.createFileInputStream(srcFile);
+		final FileChannel ofch = (ofis == null) ? null : ofis.getChannel();
+		boolean lockFailed = true;
+		try {
+			final FileLock oflock = (lock && ofch != null) ? UArgonFile.newLockExclusive(probe, srcFile, ofch) : null;
+			lockFailed = false;
+			return new FIn(srcFile, ofis, ofch, oflock);
+		} finally {
+			if (lockFailed) {
+				UArgonFile.close(probe, srcFile, ofis);
+			}
+		}
+	}
 
 	private Binary load(IArgonFileProbe probe, int bcQuota)
 			throws ArgonQuotaException, ArgonStreamReadException {
@@ -78,28 +100,6 @@ class FIn {
 			sb.append("locked");
 		}
 		return sb.toString();
-	}
-
-	public static Binary loadBinary(IArgonFileProbe probe, File srcFile, boolean lock, int bcQuota)
-			throws ArgonApiException, ArgonQuotaException, ArgonStreamReadException {
-		final FIn fin = FIn.newInstance(probe, srcFile, lock);
-		return fin.load(probe, bcQuota);
-	}
-
-	public static FIn newInstance(IArgonFileProbe probe, File srcFile, boolean lock)
-			throws ArgonApiException {
-		final FileInputStream ofis = UArgonFile.createFileInputStream(srcFile);
-		final FileChannel ofch = (ofis == null) ? null : ofis.getChannel();
-		boolean lockFailed = true;
-		try {
-			final FileLock oflock = (lock && ofch != null) ? UArgonFile.newLockExclusive(probe, srcFile, ofch) : null;
-			lockFailed = false;
-			return new FIn(srcFile, ofis, ofch, oflock);
-		} finally {
-			if (lockFailed) {
-				UArgonFile.close(probe, srcFile, ofis);
-			}
-		}
 	}
 
 	private FIn(File srcFile, FileInputStream ofis, FileChannel ofch, FileLock oflock) {

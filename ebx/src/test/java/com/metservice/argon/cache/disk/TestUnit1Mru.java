@@ -40,9 +40,9 @@ import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonSensor;
 import com.metservice.argon.IArgonSensorRatio;
+import com.metservice.argon.IArgonSpaceId;
 import com.metservice.argon.TestHelpC;
 import com.metservice.argon.cache.ArgonCacheException;
-import com.metservice.argon.management.IArgonSpaceId;
 
 /**
  * @author roach
@@ -465,11 +465,6 @@ public class TestUnit1Mru {
 	}
 
 	private static class MruRequest implements IArgonDiskCacheMruRequest {
-
-		@Override
-		public String getContentValidator(Date now) {
-			return zContentValidator;
-		}
 
 		@Override
 		public boolean isValid(Date now, String zContentValidator) {

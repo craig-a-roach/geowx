@@ -15,9 +15,9 @@ import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonPlatformException;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.Ds;
+import com.metservice.argon.IArgonSpaceId;
 import com.metservice.argon.TestHelpC;
 import com.metservice.argon.cache.ArgonCacheException;
-import com.metservice.argon.management.IArgonSpaceId;
 
 /**
  * @author roach

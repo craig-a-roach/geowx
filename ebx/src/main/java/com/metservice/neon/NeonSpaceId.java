@@ -12,7 +12,7 @@ import javax.management.ObjectName;
 
 import com.metservice.argon.ArgonNumber;
 import com.metservice.argon.CArgon;
-import com.metservice.argon.management.IArgonSpaceId;
+import com.metservice.argon.IArgonSpaceId;
 
 /**
  * @author roach

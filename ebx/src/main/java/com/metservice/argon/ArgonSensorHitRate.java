@@ -3,13 +3,11 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.management;
+package com.metservice.argon;
 
 import java.util.Date;
 
-import com.metservice.argon.DateFactory;
-import com.metservice.argon.Elapsed;
-import com.metservice.argon.IArgonSensorRatio;
+import com.metservice.argon.management.IArgonSensorClocked;
 
 /**
  * @author roach

@@ -9,7 +9,7 @@ import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
-import com.metservice.argon.ArgonApiException;
+import com.metservice.argon.ArgonLockException;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.IArgonFileProbe;
@@ -20,7 +20,7 @@ import com.metservice.argon.IArgonFileProbe;
 public class ArgonSaver {
 
 	public void save(IArgonFileProbe probe, File destFile, boolean lock, Iterator<byte[]> iArray)
-			throws ArgonPermissionException, ArgonApiException, ArgonStreamWriteException {
+			throws ArgonPermissionException, ArgonLockException, ArgonStreamWriteException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
 		if (destFile == null) throw new IllegalArgumentException("object is null");
 		if (iArray == null) throw new IllegalArgumentException("object is null");

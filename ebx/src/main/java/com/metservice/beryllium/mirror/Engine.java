@@ -78,7 +78,7 @@ class Engine {
 		final BerylliumPathQuery uri = new BerylliumPathQuery(CUri.Demand, q);
 		final DemandK tracker = new DemandK(probe, task);
 		final PeerAddress a = cfg.peerAddress;
-		final BerylliumDownloadHttpExchange hex = BerylliumDownloadHttpExchange.newInstance(a, uri);
+		final BerylliumDownloadHttpExchange hex = BerylliumDownloadHttpExchange.newInstance(a.httpAddress(), uri, null);
 		hex.sendFrom(m_httpClient, tracker, probe);
 		if (probe.isLiveMirror()) {
 			probe.liveMirror("SEND", uri, "TO", a);

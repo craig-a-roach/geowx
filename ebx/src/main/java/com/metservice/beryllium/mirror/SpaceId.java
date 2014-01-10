@@ -6,7 +6,7 @@
 package com.metservice.beryllium.mirror;
 
 import com.metservice.argon.ArgonNumber;
-import com.metservice.argon.management.IArgonSpaceId;
+import com.metservice.argon.IArgonSpaceId;
 
 class SpaceId implements IArgonSpaceId {
 

@@ -5,13 +5,12 @@
  */
 package com.metservice.argon.cache.disk;
 
-import com.metservice.argon.IArgonFileProbe;
-import com.metservice.argon.IArgonRunProbe;
+import com.metservice.argon.IArgonFileRunProbe;
 
 /**
  * @author roach
  */
-public interface IArgonDiskCacheProbe extends IArgonFileProbe, IArgonRunProbe {
+public interface IArgonDiskCacheProbe extends IArgonFileRunProbe {
 
 	boolean isLiveMruManagement();
 

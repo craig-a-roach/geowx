@@ -7,7 +7,7 @@ package com.metservice.beryllium.mirror;
 
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.Ds;
-import com.metservice.argon.management.IArgonSpaceId;
+import com.metservice.argon.IArgonSpaceId;
 
 class MirrorCfg {
 

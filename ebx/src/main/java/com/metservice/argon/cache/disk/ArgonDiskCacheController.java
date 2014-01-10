@@ -18,6 +18,7 @@ import com.metservice.argon.ArgonNameLock;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonPlatformException;
 import com.metservice.argon.ArgonQuotaException;
+import com.metservice.argon.ArgonSensorHitRate;
 import com.metservice.argon.ArgonSensorId;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.ArgonStreamReadException;
@@ -27,14 +28,14 @@ import com.metservice.argon.ArgonTransformer;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.Ds;
+import com.metservice.argon.Elapsed;
 import com.metservice.argon.ElapsedFactory;
 import com.metservice.argon.IArgonSensor;
 import com.metservice.argon.IArgonSensorMap;
+import com.metservice.argon.IArgonSpaceId;
 import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.cache.disk.DiskMruTable.Descriptor;
 import com.metservice.argon.file.ArgonDirectoryManagement;
-import com.metservice.argon.management.ArgonSensorHitRate;
-import com.metservice.argon.management.IArgonSpaceId;
 
 /**
  * @author roach
@@ -43,9 +44,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 
 	public static final String ThreadPrefix = "argon-cache-disk-";
 	public static final String SubDirDiskCache = "diskcache";
-	public static final String SubDirMRU = "mru";
-	public static final String SubDirJAR = "jar";
-	public static final int ClasspathFileSizeLimit = Integer.MAX_VALUE;
+	public static final String SubDir = "mru";
 
 	private static final String TrySave = "Save content to file";
 	private static final String TryLoadCp = "Load content from classpath";
@@ -72,6 +71,12 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 				"Smoothed ratio of MRU cache hits to misses");
 	}
 
+	private static String qccResourceId(Class<?> resourceRef, String qccResourcePath) {
+		assert resourceRef != null;
+		assert qccResourcePath != null && qccResourcePath.length() > 0;
+		return resourceRef.getPackage().getName() + "." + qccResourcePath;
+	}
+
 	public static Config newConfig(IArgonDiskCacheProbe probe, ArgonServiceId sid, IArgonSpaceId idSpace)
 			throws ArgonPermissionException {
 		if (probe == null) throw new IllegalArgumentException("object is null");
@@ -79,7 +84,7 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		if (idSpace == null) throw new IllegalArgumentException("object is null");
 		final String spc = idSpace.format();
 		final File cndirMRU = ArgonDirectoryManagement.cndirEnsureUserWriteable(sid.qtwVendor, sid.qtwService, SubDirDiskCache,
-				spc, SubDirMRU);
+				spc, SubDir);
 		final File cndirJAR = ArgonDirectoryManagement.cndirEnsureUserWriteable(sid.qtwVendor, sid.qtwService, SubDirDiskCache,
 				spc, SubDirJAR);
 		final String qccThreadName = ThreadPrefix + idSpace.format();
@@ -122,8 +127,9 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		}
 	}
 
-	private boolean isValid(IArgonDiskCacheMruRequest request, Date now, Descriptor oDescriptor) {
-		return oDescriptor != null && request.isValid(now, oDescriptor.zContentValidator);
+	private boolean isFresh(Descriptor oDescriptor, Date now, Elapsed oMaxAge) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	private File newFileJAR(String qccFileName) {
@@ -151,11 +157,8 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		m_probe.failFile(ds, dst);
 	}
 
-	private String qccFileName(IArgonDiskCacheRequest request) {
-		assert request != null;
-		final String qccResourceId = request.qccResourceId();
-		if (qccResourceId == null || qccResourceId.length() == 0)
-			throw new IllegalArgumentException("Request resource id is empty");
+	private String qccFileName(String qccResourceId) {
+		assert qccResourceId != null && qccResourceId.length() > 0;
 		if (m_oDigester == null) return ArgonTransformer.zPosixSanitized(qccResourceId);
 		return m_oDigester.digestUTF8B64URL(qccResourceId);
 	}
@@ -195,16 +198,17 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		m_timer.cancel();
 	}
 
-	public <R extends IArgonDiskCacheMruRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
+	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
 			throws ArgonCacheException, InterruptedException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
 		if (request == null) throw new IllegalArgumentException("object is null");
-		final String qccFileName = qccFileName(request);
+		final String qccResourceId = request.qccResourceId();
+		final String qccFileName = qccFileName(qccResourceId);
 		final long tsNow = ArgonClock.tsNow();
 		final Date now = new Date(tsNow);
 		final File ref = newFileMRU(qccFileName);
 		Descriptor oDescriptor = m_mruTable.findDescriptor(qccFileName, tsNow);
-		if (isValid(request, now, oDescriptor)) {
+		if (isFresh(now, oMaxAge, oDescriptor)) {
 			registerMruHit(request, tsNow);
 			return oFile(oDescriptor, ref);
 		}
@@ -232,16 +236,19 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		}
 	}
 
-	public <R extends IArgonDiskCacheClasspathRequest> File find(R request)
+	public File findClasspath(Class<?> resourceRef, String qccResourcePath)
 			throws ArgonCacheException, InterruptedException {
-		if (request == null) throw new IllegalArgumentException("object is null");
-		final String qccFileName = qccFileName(request);
+		if (resourceRef == null) throw new IllegalArgumentException("object is null");
+		if (qccResourcePath == null || qccResourcePath.length() == 0)
+			throw new IllegalArgumentException("string is null or empty");
+		final String qccResourceId = qccResourceId(resourceRef, qccResourcePath);
+		final String qccFileName = qccFileName(qccResourceId);
 		final File ref = newFileJAR(qccFileName);
 		if (ref.exists()) return ref;
 		m_lockJAR.lock(qccFileName);
 		try {
 			if (ref.exists()) return ref;
-			final Binary oContent = getBinaryFromClasspath(ref, request.qccResourcePath(), request.resourceRef());
+			final Binary oContent = getBinaryFromClasspath(ref, qccResourcePath, resourceRef);
 			if (oContent != null) {
 				save(ref, oContent);
 			}
@@ -249,14 +256,6 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 		} finally {
 			m_lockJAR.unlock(qccFileName);
 		}
-	}
-
-	public File findClasspath(Class<?> resourceRef, String qccResourcePath)
-			throws ArgonCacheException, InterruptedException {
-		if (resourceRef == null) throw new IllegalArgumentException("object is null");
-		if (qccResourcePath == null || qccResourcePath.length() == 0)
-			throw new IllegalArgumentException("string is null or empty");
-		return find(new DefaultClasspathRequest(resourceRef, qccResourcePath));
 	}
 
 	@Override
@@ -314,33 +313,6 @@ public class ArgonDiskCacheController implements IArgonSensorMap {
 	private final int m_bcSizeEst;
 	private final ArgonNameLock m_lockMRU = new ArgonNameLock();
 	private final ArgonNameLock m_lockJAR = new ArgonNameLock();
-
-	private static class DefaultClasspathRequest implements IArgonDiskCacheClasspathRequest {
-
-		@Override
-		public String qccResourceId() {
-			return m_ref.getPackage().getName() + "." + m_qccPath;
-		}
-
-		@Override
-		public String qccResourcePath() {
-			return m_qccPath;
-		}
-
-		@Override
-		public Class<?> resourceRef() {
-			return m_ref;
-		}
-
-		private DefaultClasspathRequest(Class<?> ref, String qccPath) {
-			assert ref != null;
-			assert qccPath != null;
-			m_ref = ref;
-			m_qccPath = qccPath;
-		}
-		private final Class<?> m_ref;
-		private final String m_qccPath;
-	}
 
 	private static class MruTask extends TimerTask {
 

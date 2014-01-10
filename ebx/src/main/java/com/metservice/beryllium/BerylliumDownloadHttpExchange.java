@@ -34,16 +34,6 @@ public class BerylliumDownloadHttpExchange extends BerylliumHttpExchange {
 		return neo;
 	}
 
-	public static BerylliumDownloadHttpExchange newInstance(IBerylliumHttpAddressable ha, BerylliumPath uri) {
-		if (ha == null) throw new IllegalArgumentException("object is null");
-		return newInstance(ha.httpAddress(), uri, null);
-	}
-
-	public static BerylliumDownloadHttpExchange newInstance(IBerylliumHttpAddressable ha, BerylliumPathQuery uri) {
-		if (ha == null) throw new IllegalArgumentException("object is null");
-		return newInstance(ha.httpAddress(), uri, null);
-	}
-
 	private void onCompleteStatusOK(String oqlctwContentType, Binary content, Date oLastModified) {
 		if (oqlctwContentType == null) {
 			final Ds ds = Ds.invalidBecause(RsnMissingContentType, CsqOnMalformedResponse);

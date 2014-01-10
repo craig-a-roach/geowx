@@ -8,6 +8,7 @@ package com.metservice.argon.management;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.metservice.argon.ArgonSensorHitRate;
 import com.metservice.argon.CArgon;
 import com.metservice.argon.DateFactory;
 import com.metservice.argon.DateFormatter;
