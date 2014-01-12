@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import com.metservice.argon.ArgonCompare;
 import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
+import com.metservice.argon.DateFactory;
 import com.metservice.argon.Ds;
 import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.file.ArgonFileManagement;
@@ -37,7 +39,8 @@ class DiskMruTable {
 
 	static final String p_fileName = "fn";
 	static final String p_lastAccess = "la";
-	static final String p_contentValidator = "cv";
+	static final String p_lastModified = "lm";
+	static final String p_expires = "ex";
 	static final String p_dcu = "u";
 	static final String p_trackers = "trackers";
 
@@ -57,17 +60,18 @@ class DiskMruTable {
 	private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 	private static final String[] NONAMES = new String[0];
 	private static final int NOAUDIT = Integer.MAX_VALUE;
+	private static final long TSNIL = 0L;
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
-		final boolean trace = cfg.probe.isLiveMruManagement();
+		final boolean trace = cfg.probe.isLiveManagement();
 		final File srcFile = new File(cfg.cndir, CheckpointFileName);
 		final Binary oBinary = Binary.createFromFile(cfg.probe, srcFile, CheckpointQuotaBc);
 		State oState = null;
 		try {
 			if (oBinary == null) {
 				if (trace) {
-					cfg.probe.liveMruManagement("newState.noCheckpoint", srcFile);
+					cfg.probe.liveManagement("newState.noCheckpoint", srcFile);
 				}
 			} else {
 				final JsonObject src = JsonDecoder.Default.decodeObject(oBinary.newStringUTF8());
@@ -82,30 +86,30 @@ class DiskMruTable {
 		}
 		if (oState == null) {
 			if (trace) {
-				cfg.probe.liveMruManagement("newState.initialise");
+				cfg.probe.liveManagement("newState.initialise");
 			}
 			return new State(cfg, cap);
 		}
 		if (trace) {
-			cfg.probe.liveMruManagement("newState.loadedCheckpoint");
+			cfg.probe.liveManagement("newState.loadedCheckpoint");
 		}
 		return oState;
 	}
 
-	public static DiskMruTable newInstance(ArgonDiskCacheController.Config cfg) {
+	public static DiskMruTable newInstance(ArgonDiskMruCacheController.Config cfg) {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
-		final long cbcLimit = Math.max(SizeLimitLo, cfg.mruSizeLimitBytes);
-		final int cpopLimit = Math.max(PopLimitLo, Math.min(PopLimitHi, cfg.mruPopulationLimit));
-		final int cpctWake = Math.max(WakePctLo, Math.min(WakePctHi, cfg.mruPurgeWakePct));
+		final long cbcLimit = Math.max(SizeLimitLo, cfg.sizeLimitBytes);
+		final int cpopLimit = Math.max(PopLimitLo, Math.min(PopLimitHi, cfg.populationLimit));
+		final int cpctWake = Math.max(WakePctLo, Math.min(WakePctHi, cfg.purgeWakePct));
 		final int cpctGoalHi = cpctWake - 1;
-		final int cpctGoal = Math.max(WakePctLo - 1, Math.min(cpctGoalHi, cfg.mruPurgeGoalPct));
+		final int cpctGoal = Math.max(WakePctLo - 1, Math.min(cpctGoalHi, cfg.purgeGoalPct));
 		final long kbWake = (cbcLimit * cpctWake) / 100L / CArgon.K;
 		final long kbGoal = (cbcLimit * cpctGoal) / 100L / CArgon.K;
 		final int popWake = (cpopLimit * cpctWake) / 100;
 		final int popGoal = (cpopLimit * cpctGoal) / 100;
-		final int cauditCycle = cfg.mruAuditCycle <= 0 ? NOAUDIT : cfg.mruAuditCycle;
-		final long msLife = Math.max(MinLifeMsLo, cfg.mruMinLifeMs);
-		final Cfg mru = new Cfg(cfg.probe, cfg.cndirMRU, kbWake, popWake, kbGoal, popGoal, cauditCycle, msLife);
+		final int cauditCycle = cfg.auditCycle <= 0 ? NOAUDIT : cfg.auditCycle;
+		final long msLife = Math.max(MinLifeMsLo, cfg.minLifeMs);
+		final Cfg mru = new Cfg(cfg.probe, cfg.cndir, kbWake, popWake, kbGoal, popGoal, cauditCycle, msLife);
 		final State state = newState(mru, cpopLimit);
 		return new DiskMruTable(mru, state);
 	}
@@ -131,22 +135,22 @@ class DiskMruTable {
 				m_lockState.unlock();
 			}
 		}
-		if (cfg.probe.isLiveMruManagement()) {
+		if (cfg.probe.isLiveManagement()) {
 			if (zlUnreferencedAsc.isEmpty()) {
-				cfg.probe.liveMruManagement("audit.clean");
+				cfg.probe.liveManagement("audit.clean");
 			} else {
 				final Ds ds = Ds.report("State");
 				ds.a("unreferenced", zlUnreferencedAsc);
-				cfg.probe.liveMruManagement("audit.delete", ds);
+				cfg.probe.liveManagement("audit.delete", ds);
 			}
 		}
 	}
 
 	private void checkpoint() {
-		final boolean trace = cfg.probe.isLiveMruManagement();
+		final boolean trace = cfg.probe.isLiveManagement();
 		final JsonObject cp = newCheckpointJson();
 		if (trace) {
-			cfg.probe.liveMruManagement("checkpoint.snapshot", cp);
+			cfg.probe.liveManagement("checkpoint.snapshot", cp);
 		}
 		final Binary out = Binary.newFromStringUTF8(JsonEncoder.Default.encode(cp));
 		final File destFile = new File(cfg.cndir, CheckpointFileName);
@@ -157,7 +161,7 @@ class DiskMruTable {
 			ds.a("path", destFile);
 			ds.a("byteCount", out.byteCount());
 			ds.a("ms", (System.currentTimeMillis() - tsStart));
-			cfg.probe.liveMruManagement("checkpoint.saved", ds);
+			cfg.probe.liveManagement("checkpoint.saved", ds);
 		}
 	}
 
@@ -196,21 +200,21 @@ class DiskMruTable {
 	}
 
 	private void purge(long tsNow) {
-		final boolean trace = cfg.probe.isLiveMruManagement();
+		final boolean trace = cfg.probe.isLiveManagement();
 		final List<String> zlAgenda = newPurgeAgenda(tsNow);
 		final long kbPre = m_state.kbActual();
 		if (zlAgenda.isEmpty()) {
 			if (trace) {
 				final Ds ds = Ds.report("State");
 				ds.a("kB", kbPre);
-				cfg.probe.liveMruManagement("purge.nil", ds);
+				cfg.probe.liveManagement("purge.nil", ds);
 			}
 		} else {
 			if (trace) {
 				final Ds ds = Ds.report("StatePre");
 				ds.a("kB", kbPre);
 				ds.a("agenda", zlAgenda);
-				cfg.probe.liveMruManagement("purge.agenda", ds);
+				cfg.probe.liveManagement("purge.agenda", ds);
 			}
 			purge(zlAgenda);
 			m_checkpointDue.set(true);
@@ -218,7 +222,7 @@ class DiskMruTable {
 				final long kbPost = m_state.kbActual();
 				final Ds ds = Ds.report("StatePost");
 				ds.a("kB", kbPost);
-				cfg.probe.liveMruManagement("purge.reclaim", ds);
+				cfg.probe.liveManagement("purge.reclaim", ds);
 			}
 		}
 	}
@@ -242,10 +246,9 @@ class DiskMruTable {
 		}
 	}
 
-	public Descriptor newDescriptor(String qccFileName, String ztwContentValidator, Dcu dcu, long tsNow)
+	public Descriptor newDescriptor(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow)
 			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		if (ztwContentValidator == null) throw new IllegalArgumentException("object is null");
 		if (dcu == null) throw new IllegalArgumentException("object is null");
 		m_lockState.lock();
 		try {
@@ -254,7 +257,7 @@ class DiskMruTable {
 				m_auditCounter.incrementAndGet();
 			}
 			final long kbEx = m_state.kbActual();
-			final Tracker tracker = m_state.putTracker(qccFileName, ztwContentValidator, dcu, tsNow);
+			final Tracker tracker = m_state.putTracker(qccFileName, dcu, oLastModified, oExpires, tsNow);
 			final long kbDelta = m_state.kbActual() - kbEx;
 			if (kbDelta > 0L) {
 				m_purgeDue.set(true);
@@ -319,7 +322,7 @@ class DiskMruTable {
 
 	private static class Cfg {
 
-		Cfg(IArgonDiskCacheProbe probe, File cndir, long kbWake, int popWake, long kbGoal, int popGoal, int auditCycle,
+		Cfg(IArgonDiskMruCacheProbe probe, File cndir, long kbWake, int popWake, long kbGoal, int popGoal, int auditCycle,
 				long msLife) {
 			assert probe != null;
 			assert cndir != null;
@@ -332,7 +335,7 @@ class DiskMruTable {
 			this.auditCycle = auditCycle;
 			this.msLife = msLife;
 		}
-		final IArgonDiskCacheProbe probe;
+		final IArgonDiskMruCacheProbe probe;
 		final File cndir;
 		final long kbWake;
 		final int popWake;
@@ -349,7 +352,7 @@ class DiskMruTable {
 		}
 
 		private List<String> newPurgeFileNamesAscAge(long tsNow) {
-			final boolean trace = cfg.probe.isLiveMruManagement();
+			final boolean trace = cfg.probe.isLiveManagement();
 			final int popCacheFileActual = m_mapFileName_Tracker.size();
 			final int popReclaim = popCacheFileActual - cfg.popGoal;
 			final long kbReclaim = m_kbActual - cfg.kbGoal;
@@ -367,7 +370,7 @@ class DiskMruTable {
 				if (msAge < cfg.msLife) {
 					ageLimited = true;
 					if (trace) {
-						cfg.probe.liveMruManagement("purge.ageLimited");
+						cfg.probe.liveManagement("purge.ageLimited");
 					}
 				} else {
 					zlNames.add(tracker.qccFileName());
@@ -417,11 +420,11 @@ class DiskMruTable {
 		}
 
 		public void purge(String qccFileName) {
-			final boolean trace = cfg.probe.isLiveMruManagement();
+			final boolean trace = cfg.probe.isLiveManagement();
 			final Tracker oEx = m_mapFileName_Tracker.get(qccFileName);
 			if (oEx == null) {
 				if (trace) {
-					cfg.probe.liveMruManagement("purge.file.missingTracker", qccFileName);
+					cfg.probe.liveManagement("purge.file.missingTracker", qccFileName);
 				}
 			} else {
 				if (oEx.exists()) {
@@ -430,7 +433,7 @@ class DiskMruTable {
 						ArgonFileManagement.deleteFile(cfg.probe, target);
 						if (target.exists()) {
 							if (trace) {
-								cfg.probe.liveMruManagement("purge.file.trackerRetained", oEx);
+								cfg.probe.liveManagement("purge.file.trackerRetained", oEx);
 							}
 						} else {
 							m_mapFileName_Tracker.remove(qccFileName);
@@ -438,7 +441,7 @@ class DiskMruTable {
 						}
 					} else {
 						if (trace) {
-							cfg.probe.liveMruManagement("purge.file.trackerNotPurgeSafe", oEx);
+							cfg.probe.liveManagement("purge.file.trackerNotPurgeSafe", oEx);
 						}
 					}
 				} else {
@@ -447,14 +450,14 @@ class DiskMruTable {
 			}
 		}
 
-		public Tracker putTracker(String qccFileName, String zContentValidator, Dcu dcu, long tsNow) {
+		public Tracker putTracker(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, zContentValidator, dcu, tsNow);
+				vTracker = new Tracker(qccFileName, dcu, oLastModified, oExpires, tsNow);
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
 				m_kbActual -= vTracker.kbFile();
-				vTracker.registerReload(zContentValidator, dcu, tsNow);
+				vTracker.registerReload(dcu, oLastModified, oExpires, tsNow);
 			}
 			m_kbActual += vTracker.kbFile();
 			return vTracker;
@@ -512,6 +515,18 @@ class DiskMruTable {
 
 	private static class Tracker implements Comparable<Tracker> {
 
+		private static Date oLastModified(long tsnLastModified) {
+			return tsnLastModified == TSNIL ? null : DateFactory.newDate(tsnLastModified);
+		}
+
+		private static long tsExpires(Date oExpires, long tsNow) {
+			return oExpires == null ? tsNow : oExpires.getTime();
+		}
+
+		private static long tsnLastModified(Dcu dcu, Date oLastModified) {
+			return oLastModified == null || !dcu.exists() ? TSNIL : oLastModified.getTime();
+		}
+
 		@Override
 		public int compareTo(Tracker rhs) {
 			final int c0 = ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
@@ -536,7 +551,8 @@ class DiskMruTable {
 
 		public Descriptor newDescriptor() {
 			final boolean exists = Dcu.exists(m_dcu);
-			return new Descriptor(m_qccFileName, m_tsLastAccess, m_zContentValidator, exists);
+			final Date oLastModified = oLastModified(m_tsnLastModified);
+			return new Descriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, exists);
 		}
 
 		public void purgeMark() {
@@ -554,10 +570,11 @@ class DiskMruTable {
 			}
 		}
 
-		public void registerReload(String zContentValidator, Dcu dcu, long tsNow) {
-			m_zContentValidator = zContentValidator;
+		public void registerReload(Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
 			m_dcu = dcu.toInteger();
 			m_tsLastAccess = tsNow;
+			m_tsnLastModified = tsnLastModified(dcu, oLastModified);
+			m_tsExpires = tsExpires(oExpires, tsNow);
 			m_purgeMarked = false;
 		}
 
@@ -565,7 +582,8 @@ class DiskMruTable {
 			dst.putString(p_fileName, m_qccFileName);
 			dst.putTime(p_lastAccess, m_tsLastAccess);
 			dst.putInteger(p_dcu, m_dcu);
-			dst.putString(p_contentValidator, m_zContentValidator);
+			dst.putTime(p_lastModified, m_tsnLastModified);
+			dst.putTime(p_expires, m_tsExpires);
 		}
 
 		@Override
@@ -574,7 +592,10 @@ class DiskMruTable {
 			ds.a("fileName", m_qccFileName);
 			ds.at8("lastAccess", m_tsLastAccess);
 			ds.a("dcu", m_dcu);
-			ds.a("contentValidator", m_zContentValidator);
+			if (m_tsnLastModified != TSNIL) {
+				ds.at8("lastModified", m_tsnLastModified);
+			}
+			ds.at8("expires", m_tsExpires);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
 		}
@@ -588,19 +609,23 @@ class DiskMruTable {
 			m_qccFileName = src.accessor(p_fileName).datumQtwString();
 			m_tsLastAccess = src.accessor(p_lastAccess).datumTs();
 			m_dcu = src.accessor(p_dcu).datumInteger();
-			m_zContentValidator = src.accessor(p_contentValidator).datumZtwString();
+			m_tsnLastModified = src.accessor(p_lastModified).datumTs();
+			m_tsExpires = src.accessor(p_expires).datumTs();
 		}
 
-		public Tracker(String qccFileName, String zContentValidator, Dcu dcu, long tsNow) {
+		public Tracker(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
+			assert qccFileName != null && qccFileName.length() > 0;
 			m_qccFileName = qccFileName;
 			m_tsLastAccess = tsNow;
 			m_dcu = dcu.toInteger();
-			m_zContentValidator = zContentValidator;
+			m_tsnLastModified = tsnLastModified(dcu, oLastModified);
+			m_tsExpires = tsExpires(oExpires, tsNow);
 		}
 		private final String m_qccFileName;
 		private long m_tsLastAccess;
 		private int m_dcu;
-		private String m_zContentValidator;
+		private long m_tsnLastModified;
+		private long m_tsExpires;
 		private boolean m_purgeMarked;
 	}
 
@@ -628,24 +653,26 @@ class DiskMruTable {
 		public String toString() {
 			final Ds ds = Ds.o("DiskMruTable.Descriptor");
 			ds.a("fileName", qccFileName);
+			ds.at8("lastModified", oLastModified);
 			ds.at8("lastAccess", tsLastAccess);
-			ds.a("contentValidator", zContentValidator);
+			ds.at8("expires", tsExpires);
 			ds.a("exists", exists);
 			return ds.s();
 		}
 
-		private Descriptor(String qccFileName, long tsLastAccess, String zContentValidator, boolean exists) {
+		private Descriptor(String qccFileName, Date oLastModified, long tsLastAccess, long tsExpires, boolean exists) {
 			assert qccFileName != null && qccFileName.length() > 0;
-			assert zContentValidator != null;
 			this.qccFileName = qccFileName;
+			this.oLastModified = oLastModified;
 			this.tsLastAccess = tsLastAccess;
-			this.zContentValidator = zContentValidator;
+			this.tsExpires = tsExpires;
 			this.exists = exists;
 		}
 		public final String qccFileName;
-		public long tsLastAccess;
-		public String zContentValidator;
-		public boolean exists;
+		public final Date oLastModified;
+		public final long tsLastAccess;
+		public final long tsExpires;
+		public final boolean exists;
 	}
 
 }

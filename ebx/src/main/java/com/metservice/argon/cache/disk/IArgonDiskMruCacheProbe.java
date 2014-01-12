@@ -10,15 +10,15 @@ import com.metservice.argon.IArgonFileRunProbe;
 /**
  * @author roach
  */
-public interface IArgonDiskCacheProbe extends IArgonFileRunProbe {
+public interface IArgonDiskMruCacheProbe extends IArgonFileRunProbe {
 
-	boolean isLiveMruManagement();
+	boolean isLiveManagement();
 
-	boolean isLiveMruRequest();
+	boolean isLiveRequest();
 
-	void liveMruManagement(String message, Object... args);
+	void liveManagement(String message, Object... args);
 
-	void liveMruRequestHit(String qccResourceId);
+	void liveRequestHit(String qccResourceId);
 
-	void liveMruRequestMiss(String qccResourceId);
+	void liveRequestMiss(String qccResourceId);
 }

@@ -31,7 +31,7 @@ public class TestUnit1Saver {
 
 	@Test
 	public void t50()
-			throws ArgonPermissionException, ArgonApiException, ArgonStreamWriteException, ArgonQuotaException,
+			throws ArgonPermissionException, ArgonLockException, ArgonStreamWriteException, ArgonQuotaException,
 			ArgonStreamReadException {
 		m_cndirHome = TestHelpC.cndirScratch("saver50");
 		m_probe = new Probe(true);

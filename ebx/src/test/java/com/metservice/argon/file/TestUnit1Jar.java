@@ -3,7 +3,7 @@
  * in a retrievable system, transmitted or reproduced in any way without the prior written permission of the
  * Meteorological Service of New Zealand
  */
-package com.metservice.argon.cache.disk;
+package com.metservice.argon.file;
 
 import java.io.File;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -11,13 +11,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.metservice.argon.ArgonDiskException;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonPlatformException;
+import com.metservice.argon.ArgonQuotaException;
 import com.metservice.argon.ArgonServiceId;
 import com.metservice.argon.Ds;
+import com.metservice.argon.IArgonFileRunProbe;
 import com.metservice.argon.IArgonSpaceId;
 import com.metservice.argon.TestHelpC;
-import com.metservice.argon.cache.ArgonCacheException;
 
 /**
  * @author roach
@@ -30,16 +32,18 @@ public class TestUnit1Jar {
 		final SpaceId SPACE = new SpaceId("t50");
 		final Probe probe = new Probe();
 		try {
-			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			final ArgonClasspathExtractor.Config cfg = ArgonClasspathExtractor.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
-			cfg.enableJARClean(true);
-			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
+			cfg.enableClean(true);
+			final ArgonClasspathExtractor dcc = ArgonClasspathExtractor.newInstance(cfg);
 			try {
-				final File oFile = dcc.findClasspath(TestResourceRef.class, "alpha.txt");
+				final File oFile = dcc.find(TestResourceRef.class, "alpha.txt");
 				Assert.assertNotNull("Found alpha", oFile);
 				Assert.assertTrue("alpha exists", oFile.exists());
 				Assert.assertEquals("alpha length", 3, oFile.length());
-			} catch (final ArgonCacheException ex) {
+			} catch (final ArgonQuotaException ex) {
+				Assert.fail(ex.getMessage());
+			} catch (final ArgonDiskException ex) {
 				Assert.fail(ex.getMessage());
 			}
 		} catch (final ArgonPermissionException ex) {
@@ -51,7 +55,7 @@ public class TestUnit1Jar {
 		}
 	}
 
-	private static class Probe implements IArgonDiskCacheProbe {
+	private static class Probe implements IArgonFileRunProbe {
 
 		@Override
 		public void failFile(Ds diagnostic, File ofile) {
@@ -78,28 +82,6 @@ public class TestUnit1Jar {
 				System.out.println(Ds.format(exRT, true));
 			}
 			failSoftware.set(true);
-		}
-
-		@Override
-		public boolean isLiveMruManagement() {
-			return false;
-		}
-
-		@Override
-		public boolean isLiveMruRequest() {
-			return false;
-		}
-
-		@Override
-		public void liveMruManagement(String message, Object... args) {
-		}
-
-		@Override
-		public void liveMruRequestHit(String qccResourceId) {
-		}
-
-		@Override
-		public void liveMruRequestMiss(String qccResourceId) {
 		}
 
 		@Override

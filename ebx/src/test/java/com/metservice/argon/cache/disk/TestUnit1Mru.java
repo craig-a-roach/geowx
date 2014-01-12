@@ -55,16 +55,16 @@ public class TestUnit1Mru {
 		final SpaceId SPACE = new SpaceId("t20");
 		try {
 			final Probe probe = new Probe();
-			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
 			cfg.mruPopulationLimit(10);
-			cfg.enableMRUClean(true);
+			cfg.enableClean(true);
 			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
-			cfg.mruAuditCycle(5);
+			cfg.auditCycle(5);
 			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
 			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
 			cfg.mruMinLife(TimeUnit.SECONDS, 3);
-			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
+			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 5000, "v1");
 			supplier.put("B", 3000, "v1");
@@ -175,16 +175,16 @@ public class TestUnit1Mru {
 		}
 		try {
 			final Probe probe = new Probe();
-			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
 			cfg.mruPopulationLimit(10);
-			cfg.enableMRUClean(false);
+			cfg.enableClean(false);
 			cfg.mruSizeLimitBytes(5 * CArgon.K * 8);
-			cfg.mruAuditCycle(3);
+			cfg.auditCycle(3);
 			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
 			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
 			cfg.mruMinLife(TimeUnit.SECONDS, 3);
-			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
+			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("B", 9000, "v2");
 			supplier.put("C", 5000, "v2");
@@ -315,16 +315,16 @@ public class TestUnit1Mru {
 		final SpaceId SPACE = new SpaceId("t50");
 		try {
 			final Probe probe = new Probe();
-			final ArgonDiskCacheController.Config cfg = ArgonDiskCacheController.newConfig(probe, SID, SPACE);
+			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
 			cfg.mruPopulationLimit(10);
-			cfg.enableMRUClean(true);
+			cfg.enableClean(true);
 			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
-			cfg.mruAuditCycle(4);
+			cfg.auditCycle(4);
 			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
 			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
 			cfg.mruMinLife(TimeUnit.SECONDS, 10);
-			final ArgonDiskCacheController dcc = ArgonDiskCacheController.newInstance(cfg);
+			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 3000, "v1");
 			supplier.put("B", 13000, "v1");
@@ -406,12 +406,12 @@ public class TestUnit1Mru {
 			return rq.toString();
 		}
 
-		public Agent(ArgonDiskCacheController dcc, Supplier s, MruRequest rq) {
+		public Agent(ArgonDiskMruCacheController dcc, Supplier s, MruRequest rq) {
 			this.dcc = dcc;
 			this.s = s;
 			this.rq = rq;
 		}
-		private final ArgonDiskCacheController dcc;
+		private final ArgonDiskMruCacheController dcc;
 		private final Supplier s;
 		private final MruRequest rq;
 	}
@@ -489,7 +489,7 @@ public class TestUnit1Mru {
 		public final String zContentValidator;
 	}
 
-	private static class Probe implements IArgonDiskCacheProbe {
+	private static class Probe implements IArgonDiskMruCacheProbe {
 
 		public void allowPurgeReclaim()
 				throws InterruptedException {
@@ -526,17 +526,17 @@ public class TestUnit1Mru {
 		}
 
 		@Override
-		public boolean isLiveMruManagement() {
+		public boolean isLiveManagement() {
 			return true;
 		}
 
 		@Override
-		public boolean isLiveMruRequest() {
+		public boolean isLiveRequest() {
 			return true;
 		}
 
 		@Override
-		public void liveMruManagement(String message, Object... args) {
+		public void liveManagement(String message, Object... args) {
 			final String qargs = "(" + ArgonJoiner.zComma(args) + ")";
 			if (show.get()) {
 				System.out.println("pre mru." + message + qargs);
@@ -578,7 +578,7 @@ public class TestUnit1Mru {
 		}
 
 		@Override
-		public void liveMruRequestHit(String qccResourceId) {
+		public void liveRequestHit(String qccResourceId) {
 			if (show.get()) {
 				System.out.println("HIT:" + qccResourceId);
 			}
@@ -593,7 +593,7 @@ public class TestUnit1Mru {
 		}
 
 		@Override
-		public void liveMruRequestMiss(String qccResourceId) {
+		public void liveRequestMiss(String qccResourceId) {
 			if (show.get()) {
 				System.out.println("MISS:" + qccResourceId);
 			}

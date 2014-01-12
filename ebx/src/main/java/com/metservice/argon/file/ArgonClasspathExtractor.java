@@ -29,8 +29,7 @@ import com.metservice.argon.IArgonSpaceId;
  */
 public class ArgonClasspathExtractor {
 
-	public static final String SubDir = "extracts";
-	public static final int FileSizeLimit = Integer.MAX_VALUE;
+	public static final String SubDir = "cpextracts";
 
 	private static final String TrySave = "Save content to file";
 	private static final String TryLoad = "Load content from classpath";
@@ -70,16 +69,14 @@ public class ArgonClasspathExtractor {
 	}
 
 	private Binary getBinaryFromClasspath(File ref, String qccResourcePath, Class<?> resourceRef)
-			throws ArgonPlatformException {
+			throws ArgonQuotaException, ArgonDiskException {
 		final InputStream oins = resourceRef.getResourceAsStream(qccResourcePath);
 		if (oins == null) return null;
 		try {
-			return Binary.newFromInputStream(oins, m_bcSizeEst, qccResourcePath, FileSizeLimit);
-		} catch (final ArgonQuotaException ex) {
-			throw new ArgonPlatformException(failLoad(ex));
+			return Binary.newFromInputStream(oins, m_bcSizeEst, qccResourcePath, m_bcSizeLimit);
 		} catch (final ArgonStreamReadException ex) {
 			probeLoad(resourceRef, ex);
-			throw new ArgonPlatformException(failLoad(ex));
+			throw new ArgonDiskException(failLoad(ex));
 		}
 	}
 
@@ -122,7 +119,7 @@ public class ArgonClasspathExtractor {
 	}
 
 	public File find(Class<?> resourceRef, String qccResourcePath)
-			throws ArgonPlatformException, ArgonDiskException, InterruptedException {
+			throws ArgonQuotaException, ArgonDiskException, InterruptedException {
 		if (resourceRef == null) throw new IllegalArgumentException("object is null");
 		if (qccResourcePath == null || qccResourcePath.length() == 0)
 			throw new IllegalArgumentException("string is null or empty");
@@ -149,11 +146,13 @@ public class ArgonClasspathExtractor {
 		m_oDigester = oDigester;
 		m_cndir = config.cndir;
 		m_bcSizeEst = config.bcSizeEst;
+		m_bcSizeLimit = config.bcSizeLimit;
 	}
 	private final IArgonFileRunProbe m_probe;
 	private final ArgonDigester m_oDigester;
 	private final File m_cndir;
 	private final int m_bcSizeEst;
+	private final int m_bcSizeLimit;
 	private final ArgonNameLock m_lock = new ArgonNameLock();
 
 	public static class Config {
@@ -161,6 +160,7 @@ public class ArgonClasspathExtractor {
 		public static final boolean DefaultClean = true;
 		public static final boolean DefaultSafeNaming = true;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
+		public static final int DefaultSizeLimit = Integer.MAX_VALUE;
 
 		public File directory() {
 			return cndir;
@@ -180,6 +180,16 @@ public class ArgonClasspathExtractor {
 
 		public Config enableSafeNaming(boolean enable) {
 			safeNaming = enable;
+			return this;
+		}
+
+		public Config sizeEstimate(int bc) {
+			bcSizeEst = Math.max(1, bc);
+			return this;
+		}
+
+		public Config sizeLimit(int bc) {
+			bcSizeLimit = Math.max(1, bc);
 			return this;
 		}
 
@@ -210,6 +220,7 @@ public class ArgonClasspathExtractor {
 		boolean clean = DefaultClean;
 		boolean safeNaming = DefaultSafeNaming;
 		int bcSizeEst = DefaultSizeEst;
+		int bcSizeLimit = DefaultSizeLimit;
 	}
 
 }
