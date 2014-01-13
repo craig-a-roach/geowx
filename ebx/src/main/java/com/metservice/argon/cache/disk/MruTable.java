@@ -35,7 +35,7 @@ import com.metservice.argon.json.JsonSchemaException;
 /**
  * @author roach
  */
-class DiskMruTable {
+class MruTable {
 
 	static final String p_fileName = "fn";
 	static final String p_lastAccess = "la";
@@ -96,7 +96,7 @@ class DiskMruTable {
 		return oState;
 	}
 
-	public static DiskMruTable newInstance(ArgonDiskMruCacheController.Config cfg) {
+	public static MruTable newInstance(ArgonDiskMruCacheController.Config cfg) {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		final long cbcLimit = Math.max(SizeLimitLo, cfg.sizeLimitBytes);
 		final int cpopLimit = Math.max(PopLimitLo, Math.min(PopLimitHi, cfg.populationLimit));
@@ -111,7 +111,7 @@ class DiskMruTable {
 		final long msLife = Math.max(MinLifeMsLo, cfg.minLifeMs);
 		final Cfg mru = new Cfg(cfg.probe, cfg.cndir, kbWake, popWake, kbGoal, popGoal, cauditCycle, msLife);
 		final State state = newState(mru, cpopLimit);
-		return new DiskMruTable(mru, state);
+		return new MruTable(mru, state);
 	}
 
 	private void audit() {
@@ -234,7 +234,7 @@ class DiskMruTable {
 		return ozpt;
 	}
 
-	public Descriptor findDescriptor(String qccFileName, long tsNow) {
+	public MruDescriptor findDescriptor(String qccFileName, long tsNow) {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
 		m_lockState.lock();
 		try {
@@ -246,7 +246,7 @@ class DiskMruTable {
 		}
 	}
 
-	public Descriptor newDescriptor(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow)
+	public MruDescriptor newDescriptor(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow)
 			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
 		if (dcu == null) throw new IllegalArgumentException("object is null");
@@ -307,7 +307,7 @@ class DiskMruTable {
 		return ds.s();
 	}
 
-	public DiskMruTable(Cfg cfg, State state) {
+	public MruTable(Cfg cfg, State state) {
 		assert cfg != null;
 		assert state != null;
 		this.cfg = cfg;
@@ -549,10 +549,10 @@ class DiskMruTable {
 			return Dcu.kbUsage(m_dcu);
 		}
 
-		public Descriptor newDescriptor() {
+		public MruDescriptor newDescriptor() {
 			final boolean exists = Dcu.exists(m_dcu);
 			final Date oLastModified = oLastModified(m_tsnLastModified);
-			return new Descriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, exists);
+			return new MruDescriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, exists);
 		}
 
 		public void purgeMark() {
@@ -645,34 +645,6 @@ class DiskMruTable {
 		}
 		public final long dcuActual;
 		public final int popActual;
-	}
-
-	public static class Descriptor {
-
-		@Override
-		public String toString() {
-			final Ds ds = Ds.o("DiskMruTable.Descriptor");
-			ds.a("fileName", qccFileName);
-			ds.at8("lastModified", oLastModified);
-			ds.at8("lastAccess", tsLastAccess);
-			ds.at8("expires", tsExpires);
-			ds.a("exists", exists);
-			return ds.s();
-		}
-
-		private Descriptor(String qccFileName, Date oLastModified, long tsLastAccess, long tsExpires, boolean exists) {
-			assert qccFileName != null && qccFileName.length() > 0;
-			this.qccFileName = qccFileName;
-			this.oLastModified = oLastModified;
-			this.tsLastAccess = tsLastAccess;
-			this.tsExpires = tsExpires;
-			this.exists = exists;
-		}
-		public final String qccFileName;
-		public final Date oLastModified;
-		public final long tsLastAccess;
-		public final long tsExpires;
-		public final boolean exists;
 	}
 
 }

@@ -57,13 +57,13 @@ public class TestUnit1Mru {
 			final Probe probe = new Probe();
 			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
-			cfg.mruPopulationLimit(10);
+			cfg.populationLimit(10);
 			cfg.enableClean(true);
-			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
+			cfg.sizeLimitBytes(3 * CArgon.K * 8);
 			cfg.auditCycle(5);
-			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
-			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
-			cfg.mruMinLife(TimeUnit.SECONDS, 3);
+			cfg.checkpointHoldoff(TimeUnit.SECONDS, 1);
+			cfg.checkpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.minLife(TimeUnit.SECONDS, 3);
 			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 5000, "v1");
@@ -72,7 +72,7 @@ public class TestUnit1Mru {
 			supplier.put("E", -1, "v1");
 			supplier.put("F", 0, "v1");
 			try {
-				new File(cfg.cndirMRU, "wilful_damage").createNewFile();
+				new File(cfg.cndir, "wilful_damage").createNewFile();
 			} catch (final IOException ex) {
 				Assert.fail("Cannot create damage file..." + ex.getMessage());
 			}
@@ -177,13 +177,13 @@ public class TestUnit1Mru {
 			final Probe probe = new Probe();
 			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
-			cfg.mruPopulationLimit(10);
+			cfg.populationLimit(10);
 			cfg.enableClean(false);
-			cfg.mruSizeLimitBytes(5 * CArgon.K * 8);
+			cfg.sizeLimitBytes(5 * CArgon.K * 8);
 			cfg.auditCycle(3);
-			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
-			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
-			cfg.mruMinLife(TimeUnit.SECONDS, 3);
+			cfg.checkpointHoldoff(TimeUnit.SECONDS, 1);
+			cfg.checkpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.minLife(TimeUnit.SECONDS, 3);
 			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("B", 9000, "v2");
@@ -317,13 +317,13 @@ public class TestUnit1Mru {
 			final Probe probe = new Probe();
 			final ArgonDiskMruCacheController.Config cfg = ArgonDiskMruCacheController.newConfig(probe, SID, SPACE);
 			cfg.enableSafeNaming(false);
-			cfg.mruPopulationLimit(10);
+			cfg.populationLimit(10);
 			cfg.enableClean(true);
-			cfg.mruSizeLimitBytes(3 * CArgon.K * 8);
+			cfg.sizeLimitBytes(3 * CArgon.K * 8);
 			cfg.auditCycle(4);
-			cfg.mruCheckpointHoldoff(TimeUnit.SECONDS, 1);
-			cfg.mruCheckpointPeriod(TimeUnit.SECONDS, 2);
-			cfg.mruMinLife(TimeUnit.SECONDS, 10);
+			cfg.checkpointHoldoff(TimeUnit.SECONDS, 1);
+			cfg.checkpointPeriod(TimeUnit.SECONDS, 2);
+			cfg.minLife(TimeUnit.SECONDS, 10);
 			final ArgonDiskMruCacheController dcc = ArgonDiskMruCacheController.newInstance(cfg);
 			final Supplier supplier = new Supplier();
 			supplier.put("A", 3000, "v1");
