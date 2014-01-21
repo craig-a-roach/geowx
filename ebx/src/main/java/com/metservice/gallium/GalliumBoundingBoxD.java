@@ -50,6 +50,10 @@ public class GalliumBoundingBoxD implements Comparable<GalliumBoundingBoxD> {
 		return c3;
 	}
 
+	public boolean contains(double y, double x) {
+		return (x >= m_xLo && y >= m_yLo && x < m_xHi && y < m_yHi);
+	}
+
 	public boolean equals(GalliumBoundingBoxD rhs) {
 		if (rhs == this) return true;
 		if (rhs == null) return false;

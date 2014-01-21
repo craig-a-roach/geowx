@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.metservice.gallium.GalliumPoly.Builder;
+import com.metservice.gallium.GalliumPoly.Polygon;
 
 /**
  * @author roach
@@ -16,6 +17,33 @@ import com.metservice.gallium.GalliumPoly.Builder;
 public class TestUnit1Poly {
 
 	private static final float Epsilon = Math.ulp(1.0f);
+
+	@Test
+	public void a40_contains() {
+		final java.awt.Polygon polygon = new java.awt.Polygon();
+		polygon.addPoint(1, 3);
+		polygon.addPoint(3, 2);
+		polygon.addPoint(0, 1);
+		polygon.addPoint(1, 3);
+		System.out.println(polygon.contains(1.2, 2.4));
+		System.out.println(polygon.contains(1.5, 2.8));
+		System.out.println(polygon.contains(0.5, 1.4));
+		System.out.println(polygon.contains(0.5, 2.4));
+		System.out.println(polygon.contains(2.5, 2.8));
+
+		final Builder b = GalliumPoly.newBuilder(3);
+		b.addTail(3, 1);
+		b.addTail(2, 3);
+		b.addTail(1, 0);
+		b.setClosed();
+		final Polygon p = GalliumPoly.createInstance(b).newPolygon();
+		Assert.assertTrue(p.contains(2.4f, 1.2f));
+		Assert.assertFalse(p.contains(1.5f, 2.8f));
+		Assert.assertTrue(p.contains(1.4f, 0.5f));
+		Assert.assertFalse(p.contains(2.4f, 0.5f));
+		Assert.assertFalse(p.contains(2.8f, 2.5f));
+		Assert.assertFalse(p.contains(3.4f, 0.5f));
+	}
 
 	@Test
 	public void t10_bounds() {

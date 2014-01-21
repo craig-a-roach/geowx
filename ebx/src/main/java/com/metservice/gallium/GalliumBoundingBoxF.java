@@ -59,6 +59,10 @@ public class GalliumBoundingBoxF implements Comparable<GalliumBoundingBoxF> {
 		return c3;
 	}
 
+	public boolean contains(float y, float x) {
+		return (x >= m_xLo && y >= m_yLo && x < m_xHi && y < m_yHi);
+	}
+
 	public boolean equals(GalliumBoundingBoxF rhs) {
 		if (rhs == this) return true;
 		if (rhs == null) return false;

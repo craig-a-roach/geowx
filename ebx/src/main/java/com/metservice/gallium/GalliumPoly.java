@@ -62,7 +62,8 @@ public class GalliumPoly implements Comparable<GalliumPoly> {
 			throw new IllegalArgumentException("array is null or empty");
 		final int len = xptCoordsImmutable.length;
 		final int card = len / 2;
-		if (card < 2) throw new IllegalArgumentException("require 4 or more coords, but only " + len);
+		final int min = isClosed ? 3 : 2;
+		if (card < min) throw new IllegalArgumentException("require " + min + " or more coords, but only " + len);
 		final GalliumBoundingBoxF bounds = newBounds(xptCoordsImmutable, card);
 		return new GalliumPoly(xptCoordsImmutable, card, isClosed, bounds);
 	}
@@ -88,6 +89,11 @@ public class GalliumPoly implements Comparable<GalliumPoly> {
 		return 0;
 	}
 
+	public Polygon createPolygon() {
+		if (m_isClosed) return new Polygon();
+		return null;
+	}
+
 	public String describePoints() {
 		final StringBuilder sb = new StringBuilder();
 		for (int ip = 0, iy = 0, ix = 1; ip < m_card; ip++, iy += 2, ix += 2) {
@@ -101,6 +107,12 @@ public class GalliumPoly implements Comparable<GalliumPoly> {
 			sb.append("CLOSE");
 		}
 		return sb.toString();
+	}
+
+	public Polygon newPolygon() {
+		final Polygon oNeo = createPolygon();
+		if (oNeo == null) throw new IllegalStateException("polyline not closed");
+		return oNeo;
 	}
 
 	public int pointCount() {
@@ -133,10 +145,10 @@ public class GalliumPoly implements Comparable<GalliumPoly> {
 		m_isClosed = isClosed;
 		m_bounds = bounds;
 	}
+
 	private final float[] m_x2ptCoordsYX;
 	private final int m_card;
 	private final boolean m_isClosed;
-
 	private final GalliumBoundingBoxF m_bounds;
 
 	public static class Builder {
@@ -229,5 +241,68 @@ public class GalliumPoly implements Comparable<GalliumPoly> {
 		private float[] m_yx;
 		private int m_count;
 		private boolean m_isClosed;
+	}
+
+	public class Polygon {
+
+		public boolean contains(float y, float x) {
+			if (!m_bounds.contains(y, x)) return false;
+			final int n = m_x2ptCoordsYX.length;
+			int ie = 0;
+			int iy = n - 2, ix = n - 1;
+			float headY = m_x2ptCoordsYX[iy], tailY = headY;
+			float headX = m_x2ptCoordsYX[ix], tailX = headX;
+			int hits = 0;
+			for (iy = 0, ix = 1; ie < m_card; ie++, iy += 2, ix += 2, tailY = headY, tailX = headX) {
+				headY = m_x2ptCoordsYX[iy];
+				headX = m_x2ptCoordsYX[ix];
+				if (headY == tailY) {
+					continue;
+				}
+				final float leftX;
+				if (headX < tailX) {
+					if (x >= tailX) {
+						continue;
+					}
+					leftX = headX;
+				} else {
+					if (x >= headX) {
+						continue;
+					}
+					leftX = tailX;
+				}
+				final float dX, dY;
+				if (headY < tailY) {
+					if (y < headY || y >= tailY) {
+						continue;
+					}
+					if (x < leftX) {
+						hits++;
+						continue;
+					}
+					dX = x - headX;
+					dY = y - headY;
+				} else {
+					if (y < tailY || y >= headY) {
+						continue;
+					}
+					if (x < leftX) {
+						hits++;
+						continue;
+					}
+					dX = x - tailX;
+					dY = y - tailY;
+				}
+				final float crossX = dY / (tailY - headY) * (tailX - headX);
+				if (dX < crossX) {
+					hits++;
+				}
+			}
+
+			return ((hits & 1) != 0);
+		}
+
+		private Polygon() {
+		}
 	}
 }
