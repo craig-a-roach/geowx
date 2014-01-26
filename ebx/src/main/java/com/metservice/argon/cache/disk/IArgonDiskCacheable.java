@@ -19,4 +19,6 @@ public interface IArgonDiskCacheable {
 	public Date getExpires();
 
 	public Date getLastModified();
+
+	public Date getResponseAt();
 }

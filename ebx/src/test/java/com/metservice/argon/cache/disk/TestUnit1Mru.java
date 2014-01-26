@@ -35,8 +35,11 @@ import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonPlatformException;
 import com.metservice.argon.ArgonServiceId;
+import com.metservice.argon.ArgonText;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
+import com.metservice.argon.DateFactory;
+import com.metservice.argon.DateFormatter;
 import com.metservice.argon.Ds;
 import com.metservice.argon.IArgonSensor;
 import com.metservice.argon.IArgonSensorRatio;
@@ -78,7 +81,7 @@ public class TestUnit1Mru {
 			}
 			File fA = null;
 			{
-				final MruRequest rq = new MruRequest("A", "v1");
+				final Request rq = new Request("A", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNotNull("Found Av1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -87,7 +90,7 @@ public class TestUnit1Mru {
 				fA = oFile;
 			}// cache 1 : A1
 			{
-				final MruRequest rq = new MruRequest("C", "v1");
+				final Request rq = new Request("C", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNotNull("Found Cv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -96,7 +99,7 @@ public class TestUnit1Mru {
 			}// cache 2 : A1 C1
 			{
 				probe.allowPurgeReclaim();
-				final MruRequest rq = new MruRequest("B", "v1");
+				final Request rq = new Request("B", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNotNull("Found Bv1", oFile);
 				Assert.assertTrue(probe.reachedPurgeAgenda());
@@ -106,7 +109,7 @@ public class TestUnit1Mru {
 				Assert.assertEquals("B:H0M1", probe.statsReport());
 			}// cache 2: C1 B1
 			{
-				final MruRequest rq = new MruRequest("C", "v1");
+				final Request rq = new Request("C", "v1");
 				final File oFile = dcc.find(supplier, rq); // HIT
 				Assert.assertNotNull("Found Cv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -115,7 +118,7 @@ public class TestUnit1Mru {
 				Assert.assertEquals("C:H1M0", probe.statsReport());
 			}// cache 2: B1 C1
 			{
-				final MruRequest rq = new MruRequest("D", "v1");
+				final Request rq = new Request("D", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNull("NotFound Dv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -124,7 +127,7 @@ public class TestUnit1Mru {
 				Assert.assertEquals("D:H0M1", probe.statsReport());
 			}// cache 2: B1 C1
 			{
-				final MruRequest rq = new MruRequest("E", "v1");
+				final Request rq = new Request("E", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNull("NotFound Ev1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -133,7 +136,7 @@ public class TestUnit1Mru {
 				Assert.assertEquals("E:H0M1", probe.statsReport());
 			}// cache 2: B1 C1 E?
 			{
-				final MruRequest rq = new MruRequest("F", "v1");
+				final Request rq = new Request("F", "v1");
 				final File oFile = dcc.find(supplier, rq); // MISS
 				Assert.assertNotNull("Found Fv1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -142,7 +145,7 @@ public class TestUnit1Mru {
 				Assert.assertEquals("F:H0M1", probe.statsReport());
 			}// cache 2: B1 C1 E? F0
 			{
-				final MruRequest rq = new MruRequest("E", "v1");
+				final Request rq = new Request("E", "v1");
 				final File oFile = dcc.find(supplier, rq); // HIT
 				Assert.assertNull("NotFound Ev1", oFile);
 				Assert.assertTrue(probe.noPurgeReclaim());
@@ -194,9 +197,9 @@ public class TestUnit1Mru {
 			supplier.put("H", 17000, "v1");
 			supplier.put("J", 7000, "v1");
 			final ExecutorService xc = Executors.newFixedThreadPool(3);
-			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // HIT
-			final Future<File> fuFv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
-			final Future<File> fuEv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("E", "v1"))); // HIT
+			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new Request("B", "v1"))); // HIT
+			final Future<File> fuFv1 = xc.submit(new Agent(dcc, supplier, new Request("F", "v1"))); // HIT
+			final Future<File> fuEv1 = xc.submit(new Agent(dcc, supplier, new Request("E", "v1"))); // HIT
 			// cache 2: B1 C1 F0 E?
 			try {
 				final File oFile = fuBv1.get(10, TimeUnit.SECONDS);
@@ -224,8 +227,8 @@ public class TestUnit1Mru {
 			Assert.assertEquals("B:H1M0 E:H1M0 F:H1M0", probe.statsReport());
 
 			probe.allowPurgeReclaim();
-			final Future<File> fuBv2 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v2"))); // MISS
-			final Future<File> fuGv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("G", "v1"))); // MISS
+			final Future<File> fuBv2 = xc.submit(new Agent(dcc, supplier, new Request("B", "v2"))); // MISS
+			final Future<File> fuGv1 = xc.submit(new Agent(dcc, supplier, new Request("G", "v1"))); // MISS
 			try {
 				final File oFile = fuBv2.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Bv2", oFile);
@@ -248,7 +251,7 @@ public class TestUnit1Mru {
 
 			// cache 4: F0 E? B2 G2
 			Assert.assertTrue(probe.noPurgeAgenda());
-			final Future<File> fuHv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("H", "v1"))); // MISS
+			final Future<File> fuHv1 = xc.submit(new Agent(dcc, supplier, new Request("H", "v1"))); // MISS
 			try {
 				final File oFile = fuHv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Hv1", oFile);
@@ -258,7 +261,7 @@ public class TestUnit1Mru {
 			// cache 7: F0 E? B2 G2 H3
 			Assert.assertEquals("H:H0M1", probe.statsReport());
 			Assert.assertTrue(probe.reachedPurgeAgenda());
-			final Future<File> fu2Fv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("F", "v1"))); // HIT
+			final Future<File> fu2Fv1 = xc.submit(new Agent(dcc, supplier, new Request("F", "v1"))); // HIT
 			try {
 				final File oFile = fu2Fv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Fv1", oFile);
@@ -272,9 +275,9 @@ public class TestUnit1Mru {
 			Assert.assertEquals("F:H1M0", probe.statsReport());
 			// cache 3: H3 F0
 
-			final Future<File> fuJav1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // MISS
-			final Future<File> fuJbv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // HIT
-			final Future<File> fuJcv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("J", "v1"))); // HIT
+			final Future<File> fuJav1 = xc.submit(new Agent(dcc, supplier, new Request("J", "v1"))); // MISS
+			final Future<File> fuJbv1 = xc.submit(new Agent(dcc, supplier, new Request("J", "v1"))); // HIT
+			final Future<File> fuJcv1 = xc.submit(new Agent(dcc, supplier, new Request("J", "v1"))); // HIT
 			try {
 				final File oFileA = fuJav1.get(10, TimeUnit.SECONDS);
 				final File oFileB = fuJbv1.get(10, TimeUnit.SECONDS);
@@ -330,7 +333,7 @@ public class TestUnit1Mru {
 			supplier.put("B", 13000, "v1");
 			supplier.put("C", 9000, "v1");
 			final ExecutorService xc = Executors.newFixedThreadPool(2);
-			final Future<File> fuAv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("A", "v1"))); // MISS
+			final Future<File> fuAv1 = xc.submit(new Agent(dcc, supplier, new Request("A", "v1"))); // MISS
 			try {
 				final File oFile = fuAv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Av1", oFile);
@@ -345,7 +348,7 @@ public class TestUnit1Mru {
 
 			probe.allowPurgeReclaim();
 
-			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("B", "v1"))); // MISS
+			final Future<File> fuBv1 = xc.submit(new Agent(dcc, supplier, new Request("B", "v1"))); // MISS
 			try {
 				final File oFile = fuBv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Bv1", oFile);
@@ -361,7 +364,7 @@ public class TestUnit1Mru {
 			Thread.sleep(10000);
 			System.out.println("Done");
 
-			final Future<File> fuCv1 = xc.submit(new Agent(dcc, supplier, new MruRequest("C", "v1"))); // MISS
+			final Future<File> fuCv1 = xc.submit(new Agent(dcc, supplier, new Request("C", "v1"))); // MISS
 			try {
 				final File oFile = fuCv1.get(10, TimeUnit.SECONDS);
 				Assert.assertNotNull("Found Cv1", oFile);
@@ -406,27 +409,17 @@ public class TestUnit1Mru {
 			return rq.toString();
 		}
 
-		public Agent(ArgonDiskMruCacheController dcc, Supplier s, MruRequest rq) {
+		public Agent(ArgonDiskMruCacheController dcc, Supplier s, Request rq) {
 			this.dcc = dcc;
 			this.s = s;
 			this.rq = rq;
 		}
 		private final ArgonDiskMruCacheController dcc;
 		private final Supplier s;
-		private final MruRequest rq;
+		private final Request rq;
 	}
 
 	private static class Cacheable implements IArgonDiskCacheable {
-
-		private static Binary createBinary(int bc) {
-			if (bc < 0) return null;
-			final byte[] payload = new byte[bc];
-			for (int i = 0; i < bc; i++) {
-				final int ib = 32 + (i % 64);
-				payload[i] = (byte) ib;
-			}
-			return Binary.newFromTransient(payload);
-		}
 
 		@Override
 		public Binary getContent() {
@@ -434,59 +427,43 @@ public class TestUnit1Mru {
 		}
 
 		@Override
-		public String getContentValidator() {
-			return m_ozValidator;
+		public Date getExpires() {
+			return m_oExpires;
+		}
+
+		@Override
+		public Date getLastModified() {
+			return m_oLastModified;
 		}
 
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
-			sb.append("<");
-			if (m_ozValidator == null) {
-				sb.append("nil");
-			} else {
-				sb.append(m_ozValidator);
-			}
-			sb.append(">");
 			if (m_oContent == null) {
-				sb.append("na");
+				sb.append("no content");
 			} else {
+				sb.append("bytes=");
 				sb.append(m_oContent.byteCount());
+			}
+			if (m_oLastModified != null) {
+				sb.append(", modified=");
+				sb.append(DateFormatter.newYMDHMSFromTs(m_oLastModified.getTime()));
+			}
+			if (m_oExpires != null) {
+				sb.append(", expires=");
+				sb.append(DateFormatter.newYMDHMSFromTs(m_oExpires.getTime()));
 			}
 			return sb.toString();
 		}
 
-		public Cacheable(int bcPayload, String ozValidator) {
-			m_oContent = createBinary(bcPayload);
-			m_ozValidator = ozValidator;
+		public Cacheable(Binary oContent, Date oLastModified, Date oExpires) {
+			m_oContent = oContent;
+			m_oLastModified = oLastModified;
+			m_oExpires = oExpires;
 		}
 		private final Binary m_oContent;
-		private final String m_ozValidator;
-	}
-
-	private static class MruRequest implements IArgonDiskCacheMruRequest {
-
-		@Override
-		public boolean isValid(Date now, String zContentValidator) {
-			return (this.zContentValidator.compareTo(zContentValidator) <= 0);
-		}
-
-		@Override
-		public String qccResourceId() {
-			return qccResourceId;
-		}
-
-		@Override
-		public String toString() {
-			return qccResourceId + "(" + zContentValidator + ")";
-		}
-
-		public MruRequest(String qccResourceId, String zContentValidator) {
-			this.qccResourceId = qccResourceId;
-			this.zContentValidator = zContentValidator;
-		}
-		public final String qccResourceId;
-		public final String zContentValidator;
+		private final Date m_oLastModified;
+		private final Date m_oExpires;
 	}
 
 	private static class Probe implements IArgonDiskMruCacheProbe {
@@ -705,6 +682,24 @@ public class TestUnit1Mru {
 		final Map<String, Integer> m_miss = new HashMap<String, Integer>();
 	}
 
+	private static class Request implements IArgonDiskCacheRequest {
+
+		@Override
+		public String qccResourceId() {
+			return qccResourceId;
+		}
+
+		@Override
+		public String toString() {
+			return qccResourceId;
+		}
+
+		public Request(String qccResourceId) {
+			this.qccResourceId = qccResourceId;
+		}
+		public final String qccResourceId;
+	}
+
 	private static class SpaceId implements IArgonSpaceId {
 
 		@Override
@@ -719,29 +714,97 @@ public class TestUnit1Mru {
 		private final String m_qId;
 	}
 
-	private static class Supplier implements IArgonDiskCacheSupplier<MruRequest> {
+	private static class Supplier implements IArgonDiskCacheSupplier<Request> {
 
 		@Override
-		public IArgonDiskCacheable getCacheable(MruRequest request)
+		public IArgonDiskCacheable getCacheable(Request request)
 				throws ArgonCacheException, InterruptedException {
 			Thread.sleep(1000L);
-			return m_map.get(request.qccResourceId);
+			final SupplyItem oItem = m_map.get(request.qccResourceId);
+			if (oItem == null) return null;
+			return new Cacheable(oItem.createBinary(), oItem.getLastModified(), oItem.getExpires());
 		}
 
-		public void put(String qccResourceId, int bcPayload, String ozValidator) {
-			final Cacheable cacheable = new Cacheable(bcPayload, ozValidator);
-			m_map.put(qccResourceId, cacheable);
+		@Override
+		public IArgonDiskCacheable getCacheableConditional(Request request, Date lastModified)
+				throws ArgonCacheException, InterruptedException {
+			Thread.sleep(1000L);
+			final SupplyItem oItem = m_map.get(request.qccResourceId);
+			if (oItem == null) return null;
+			final boolean modified = lastModified.compareTo(oItem.getLastModified()) < 0;
+			if (modified) return new Cacheable(oItem.createBinary(), oItem.getLastModified(), oItem.getExpires());
+			return new Cacheable(null, oItem.getLastModified(), oItem.getExpires());
+		}
+
+		@Override
+		public Date getNow() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		public void put(String qccResourceId, int bcPayload, String ozLastModified, String ozExpires) {
+			final SupplyItem item = new SupplyItem(bcPayload, ozLastModified, ozExpires);
+			m_map.put(qccResourceId, item);
 		}
 
 		@Override
 		public String toString() {
 			final Ds ds = Ds.o("Supplier");
-			ds.a("rid_cacheable", m_map);
+			ds.a("rid_item", m_map);
 			return ds.s();
 		}
 
 		public Supplier() {
 		}
-		private final Map<String, Cacheable> m_map = new HashMap<>();
+
+		private final Map<String, SupplyItem> m_map = new HashMap<>();
+	}
+
+	private static class SupplyItem {
+
+		public Binary createBinary() {
+			if (m_bc < 0) return null;
+			final byte[] payload = new byte[m_bc];
+			for (int i = 0; i < m_bc; i++) {
+				final int ib = 32 + (i % 64);
+				payload[i] = (byte) ib;
+			}
+			return Binary.newFromTransient(payload);
+		}
+
+		public Date getExpires() {
+			return m_oExpires;
+		}
+
+		public Date getLastModified() {
+			return m_oLastModified;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("bytes=");
+			sb.append(m_bc);
+			if (m_oLastModified != null) {
+				sb.append(", modified=");
+				sb.append(DateFormatter.newYMDHMSFromTs(m_oLastModified.getTime()));
+			}
+			if (m_oExpires != null) {
+				sb.append(", expires=");
+				sb.append(DateFormatter.newYMDHMSFromTs(m_oExpires.getTime()));
+			}
+			return sb.toString();
+		}
+
+		public SupplyItem(int bc, String ozLastModified, String ozExpires) {
+			m_bc = bc;
+			final String oqtwLastModified = ArgonText.oqtw(ozLastModified);
+			final String oqtwExpires = ArgonText.oqtw(ozExpires);
+			m_oLastModified = oqtwLastModified == null ? null : DateFactory.newDateConstantFromTX(oqtwLastModified);
+			m_oExpires = oqtwExpires == null ? null : DateFactory.newDateConstantFromTX(oqtwExpires);
+		}
+		private final int m_bc;
+		private final Date m_oLastModified;
+		private final Date m_oExpires;
 	}
 }

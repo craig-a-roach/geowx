@@ -45,6 +45,7 @@ class MruAccessor {
 		final Binary oContent = oCacheable.getContent();
 		final Date oLastModified = oCacheable.getLastModified();
 		final Date oExpires = oCacheable.getExpires();
+		final Date oResponseAt = oCacheable.getResponseAt();
 		final Dcu dcu = Dcu.newInstance(oContent);
 		final MruDescriptor neo = m_table.newDescriptor(goal.qccFileName, dcu, oLastModified, oExpires, tsNow);
 		final File oRef = neo.createRef(m_cndir);
