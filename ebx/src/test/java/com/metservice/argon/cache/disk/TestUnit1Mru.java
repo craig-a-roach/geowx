@@ -437,6 +437,11 @@ public class TestUnit1Mru {
 		}
 
 		@Override
+		public Date getResponseAt() {
+			return m_oResponseAt;
+		}
+
+		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
 			if (m_oContent == null) {
@@ -444,6 +449,10 @@ public class TestUnit1Mru {
 			} else {
 				sb.append("bytes=");
 				sb.append(m_oContent.byteCount());
+			}
+			if (m_oResponseAt != null) {
+				sb.append(", responseAt=");
+				sb.append(DateFormatter.newYMDHMSFromTs(m_oResponseAt.getTime()));
 			}
 			if (m_oLastModified != null) {
 				sb.append(", modified=");
@@ -456,12 +465,14 @@ public class TestUnit1Mru {
 			return sb.toString();
 		}
 
-		public Cacheable(Binary oContent, Date oLastModified, Date oExpires) {
+		public Cacheable(Binary oContent, Date oResponseAt, Date oLastModified, Date oExpires) {
 			m_oContent = oContent;
+			m_oResponseAt = oResponseAt;
 			m_oLastModified = oLastModified;
 			m_oExpires = oExpires;
 		}
 		private final Binary m_oContent;
+		private final Date m_oResponseAt;
 		private final Date m_oLastModified;
 		private final Date m_oExpires;
 	}

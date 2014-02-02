@@ -145,6 +145,7 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 		public static final boolean DefaultSafeNaming = true;
 		public static final int DefaultSizeEst = 64 * CArgon.K;
 		public static final long DefaultMinLifeMs = 60 * CArgon.SEC_TO_MS;
+		public static final long DefaultImpliedFreshMs = 3 * CArgon.MIN_TO_MS;
 
 		public Config auditCycle(int count) {
 			auditCycle = count;
@@ -189,6 +190,12 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 			return this;
 		}
 
+		public Config impliedFresh(TimeUnit unit, int count) {
+			if (unit == null) throw new IllegalArgumentException("object is null");
+			impliedFreshMs = unit.toMillis(count);
+			return this;
+		}
+
 		public Config minLife(TimeUnit unit, int count) {
 			if (unit == null) throw new IllegalArgumentException("object is null");
 			minLifeMs = unit.toMillis(count);
@@ -226,6 +233,7 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 			ds.ae("checkpointDelay", checkpointDelayMs);
 			ds.ae("checkpointPeriod", checkpointPeriodMs);
 			ds.ae("minLife", minLifeMs);
+			ds.ae("impliedFresh", impliedFreshMs);
 			ds.a("auditCycle", auditCycle);
 			ds.a("clean", clean);
 			ds.a("safeNaming", safeNaming);
@@ -258,6 +266,7 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 		long checkpointDelayMs = DefaultCheckpointDelayMs;
 		long checkpointPeriodMs = DefaultCheckpointPeriodMs;
 		long minLifeMs = DefaultMinLifeMs;
+		long impliedFreshMs = DefaultImpliedFreshMs;
 		int auditCycle = DefaultAuditCycle;
 		boolean clean = DefaultClean;
 		boolean safeNaming = DefaultSafeNaming;

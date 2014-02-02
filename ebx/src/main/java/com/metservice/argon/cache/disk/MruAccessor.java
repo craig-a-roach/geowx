@@ -28,6 +28,10 @@ class MruAccessor {
 
 	private static final String TrySave = "Save content to file";
 
+	private static long tsResponseAt(Date oResponseAt, long tsNow) {
+		return oResponseAt == null ? tsNow : oResponseAt.getTime();
+	}
+
 	public static MruAccessor newInstance(ArgonDiskMruCacheController.Config cfg, MruTable table, ArgonSensorHitRate sensor) {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		if (table == null) throw new IllegalArgumentException("object is null");
@@ -36,18 +40,21 @@ class MruAccessor {
 		if (cfg.clean) {
 			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndir, true);
 		}
-		return new MruAccessor(cfg.probe, cfg.cndir, table, sensor, oDigester);
+		return new MruAccessor(cfg.probe, cfg.cndir, cfg.impliedFreshMs, table, sensor, oDigester);
 	}
 
 	private <R extends IArgonDiskCacheRequest> File createRef(Goal<R> goal, IArgonDiskCacheable oCacheable, long tsNow)
 			throws ArgonCacheException {
 		if (oCacheable == null) return null;
 		final Binary oContent = oCacheable.getContent();
-		final Date oLastModified = oCacheable.getLastModified();
+		final Dcu dcu = Dcu.newInstance(oContent);
+		final Date oLastModified = dcu.exists() ? oCacheable.getLastModified() : null;
 		final Date oExpires = oCacheable.getExpires();
 		final Date oResponseAt = oCacheable.getResponseAt();
-		final Dcu dcu = Dcu.newInstance(oContent);
-		final MruDescriptor neo = m_table.newDescriptor(goal.qccFileName, dcu, oLastModified, oExpires, tsNow);
+		final long tsResponseAt = tsResponseAt(oResponseAt, tsNow);
+		final Tsn lastModified = Tsn.newInstance(oLastModified);
+		final long tsExpires = tsExpires(oExpires, tsResponseAt);
+		final MruDescriptor neo = m_table.newDescriptor(goal.qccFileName, tsNow, dcu, lastModified, tsExpires);
 		final File oRef = neo.createRef(m_cndir);
 		if (oContent != null && oRef != null) {
 			save(oRef, oContent);
@@ -120,6 +127,10 @@ class MruAccessor {
 		}
 	}
 
+	private long tsExpires(Date oExpires, long tsResponseAt) {
+		return oExpires == null ? (tsResponseAt + m_impliedFreshMs) : oExpires.getTime();
+	}
+
 	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
 			throws ArgonCacheException, InterruptedException {
 		if (supplier == null) throw new IllegalArgumentException("object is null");
@@ -141,13 +152,14 @@ class MruAccessor {
 		}
 	}
 
-	private MruAccessor(IArgonDiskMruCacheProbe probe, File cndir, MruTable table, ArgonSensorHitRate sensor,
-			ArgonDigester oDigester) {
+	private MruAccessor(IArgonDiskMruCacheProbe probe, File cndir, long impliedFreshMs, MruTable table,
+			ArgonSensorHitRate sensor, ArgonDigester oDigester) {
 		assert probe != null;
 		assert cndir != null;
 		assert table != null;
 		m_probe = probe;
 		m_cndir = cndir;
+		m_impliedFreshMs = impliedFreshMs;
 		m_table = table;
 		m_sensor = sensor;
 		m_oDigester = oDigester;
@@ -155,6 +167,7 @@ class MruAccessor {
 
 	private final IArgonDiskMruCacheProbe m_probe;
 	private final File m_cndir;
+	private final long m_impliedFreshMs;
 	private final MruTable m_table;
 	private final ArgonSensorHitRate m_sensor;
 	private final ArgonDigester m_oDigester;

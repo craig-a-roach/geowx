@@ -22,7 +22,6 @@ import com.metservice.argon.ArgonCompare;
 import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.Binary;
 import com.metservice.argon.CArgon;
-import com.metservice.argon.DateFactory;
 import com.metservice.argon.Ds;
 import com.metservice.argon.cache.ArgonCacheException;
 import com.metservice.argon.file.ArgonFileManagement;
@@ -60,7 +59,6 @@ class MruTable {
 	private static final String CsqRetry = "Abandon this attempt then retry at scheduled frequency";
 	private static final String[] NONAMES = new String[0];
 	private static final int NOAUDIT = Integer.MAX_VALUE;
-	private static final long TSNIL = 0L;
 
 	private static State newState(Cfg cfg, int cap) {
 		assert cfg != null;
@@ -246,7 +244,7 @@ class MruTable {
 		}
 	}
 
-	public MruDescriptor newDescriptor(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow)
+	public MruDescriptor newDescriptor(String qccFileName, long tsAccess, Dcu dcu, Tsn lastModified, long tsExpires)
 			throws ArgonCacheException {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
 		if (dcu == null) throw new IllegalArgumentException("object is null");
@@ -257,7 +255,7 @@ class MruTable {
 				m_auditCounter.incrementAndGet();
 			}
 			final long kbEx = m_state.kbActual();
-			final Tracker tracker = m_state.putTracker(qccFileName, dcu, oLastModified, oExpires, tsNow);
+			final Tracker tracker = m_state.putTracker(qccFileName, tsAccess, dcu, lastModified, tsExpires);
 			final long kbDelta = m_state.kbActual() - kbEx;
 			if (kbDelta > 0L) {
 				m_purgeDue.set(true);
@@ -450,14 +448,14 @@ class MruTable {
 			}
 		}
 
-		public Tracker putTracker(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
+		public Tracker putTracker(String qccFileName, long tsAccess, Dcu dcu, Tsn lastModified, long tsExpires) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, dcu, oLastModified, oExpires, tsNow);
+				vTracker = new Tracker(qccFileName, tsAccess, dcu, lastModified, tsExpires);
 				m_mapFileName_Tracker.put(qccFileName, vTracker);
 			} else {
 				m_kbActual -= vTracker.kbFile();
-				vTracker.registerReload(dcu, oLastModified, oExpires, tsNow);
+				vTracker.registerReload(tsAccess, dcu, lastModified, tsExpires);
 			}
 			m_kbActual += vTracker.kbFile();
 			return vTracker;
@@ -515,18 +513,6 @@ class MruTable {
 
 	private static class Tracker implements Comparable<Tracker> {
 
-		private static Date oLastModified(long tsnLastModified) {
-			return tsnLastModified == TSNIL ? null : DateFactory.newDate(tsnLastModified);
-		}
-
-		private static long tsExpires(Date oExpires, long tsNow) {
-			return oExpires == null ? tsNow : oExpires.getTime();
-		}
-
-		private static long tsnLastModified(Dcu dcu, Date oLastModified) {
-			return oLastModified == null || !dcu.exists() ? TSNIL : oLastModified.getTime();
-		}
-
 		@Override
 		public int compareTo(Tracker rhs) {
 			final int c0 = ArgonCompare.fwd(m_tsLastAccess, rhs.m_tsLastAccess);
@@ -550,8 +536,8 @@ class MruTable {
 		}
 
 		public MruDescriptor newDescriptor() {
+			final Date oLastModified = Tsn.getDate(m_tsnLastModified);
 			final boolean exists = Dcu.exists(m_dcu);
-			final Date oLastModified = oLastModified(m_tsnLastModified);
 			return new MruDescriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, exists);
 		}
 
@@ -570,11 +556,11 @@ class MruTable {
 			}
 		}
 
-		public void registerReload(Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
+		public void registerReload(long tsAccess, Dcu dcu, Tsn lastModified, long tsExpires) {
+			m_tsLastAccess = tsAccess;
 			m_dcu = dcu.toInteger();
-			m_tsLastAccess = tsNow;
-			m_tsnLastModified = tsnLastModified(dcu, oLastModified);
-			m_tsExpires = tsExpires(oExpires, tsNow);
+			m_tsnLastModified = lastModified.toLong();
+			m_tsExpires = tsExpires;
 			m_purgeMarked = false;
 		}
 
@@ -592,9 +578,7 @@ class MruTable {
 			ds.a("fileName", m_qccFileName);
 			ds.at8("lastAccess", m_tsLastAccess);
 			ds.a("dcu", m_dcu);
-			if (m_tsnLastModified != TSNIL) {
-				ds.at8("lastModified", m_tsnLastModified);
-			}
+			ds.a("lastModified", Tsn.toString(m_tsnLastModified));
 			ds.at8("expires", m_tsExpires);
 			ds.a("purgeMarked", m_purgeMarked);
 			return ds.s();
@@ -613,13 +597,13 @@ class MruTable {
 			m_tsExpires = src.accessor(p_expires).datumTs();
 		}
 
-		public Tracker(String qccFileName, Dcu dcu, Date oLastModified, Date oExpires, long tsNow) {
+		public Tracker(String qccFileName, long tsAccess, Dcu dcu, Tsn lastModified, long tsExpires) {
 			assert qccFileName != null && qccFileName.length() > 0;
 			m_qccFileName = qccFileName;
-			m_tsLastAccess = tsNow;
+			m_tsLastAccess = tsAccess;
 			m_dcu = dcu.toInteger();
-			m_tsnLastModified = tsnLastModified(dcu, oLastModified);
-			m_tsExpires = tsExpires(oExpires, tsNow);
+			m_tsnLastModified = lastModified.toLong();
+			m_tsExpires = tsExpires;
 		}
 		private final String m_qccFileName;
 		private long m_tsLastAccess;
