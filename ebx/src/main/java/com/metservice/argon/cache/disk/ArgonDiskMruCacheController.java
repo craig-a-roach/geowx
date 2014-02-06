@@ -35,8 +35,15 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 	public static final ArgonSensorId SensorMruCacheHitRate = new ArgonSensorId("MruCacheHitRate");
 	private static final ArgonSensorId[] SENSORS = { SensorMruCacheHitRate };
 
-	private static ArgonSensorHitRate newSensor() {
-		return new ArgonSensorHitRate(ElapsedFactory.newElapsed(15, TimeUnit.MINUTES),
+	private static void initDirectory(Config cfg) {
+		if (cfg.clean) {
+			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndir, true);
+		}
+	}
+
+	private static ArgonSensorHitRate newSensor(Config cfg) {
+		final long msSensorBase = cfg.checkpointPeriodMs * 10;
+		return new ArgonSensorHitRate(ElapsedFactory.newElapsed(msSensorBase, TimeUnit.MILLISECONDS),
 				"Smoothed ratio of MRU cache hits to misses");
 	}
 
@@ -54,8 +61,9 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 	public static ArgonDiskMruCacheController newInstance(Config cfg)
 			throws ArgonPlatformException {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
+		initDirectory(cfg);
 		final MruTable table = MruTable.newInstance(cfg);
-		final ArgonSensorHitRate sensor = newSensor();
+		final ArgonSensorHitRate sensor = newSensor(cfg);
 		final MruAccessor accessor = MruAccessor.newInstance(cfg, table, sensor);
 		final MruTask task = new MruTask(table, sensor);
 		final Timer timer = new Timer(cfg.qccThreadName, true);

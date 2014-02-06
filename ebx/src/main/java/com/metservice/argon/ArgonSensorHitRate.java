@@ -14,17 +14,19 @@ import com.metservice.argon.management.IArgonSensorClocked;
  */
 public class ArgonSensorHitRate implements IArgonSensorRatio, IArgonSensorClocked {
 
-	private static final long TsNil = -1L;
+	private static final long TsNil = DateFactory.TsNil;
 	private static final long MinIntervalMs = 1000L;
 
-	private float rateLk() {
-		if (m_hitCount == 0 && m_missCount == 0) return Float.NaN;
+	private boolean hasSamples() {
+		return m_hitCount > 0 || m_missCount > 0;
+	}
+
+	private float rateSampledLk() {
 		return m_hitCount / ((float) (m_hitCount + m_missCount));
 	}
 
-	private void updateLk(long msInterval) {
-		final float rate = rateLk();
-		if (Float.isNaN(rate)) return;
+	private void updateSampledLk(long msInterval) {
+		final float rate = rateSampledLk();
 		final double ewmaNeo;
 		if (Float.isNaN(m_ewmaRate)) {
 			ewmaNeo = rate;
@@ -45,9 +47,6 @@ public class ArgonSensorHitRate implements IArgonSensorRatio, IArgonSensorClocke
 				m_missCount++;
 			}
 			m_tsLastSample = tsNow;
-			if (m_tsLastUpdate == TsNil) {
-				m_tsLastUpdate = tsNow;
-			}
 		}
 	}
 
@@ -64,17 +63,20 @@ public class ArgonSensorHitRate implements IArgonSensorRatio, IArgonSensorClocke
 	@Override
 	public float ratio() {
 		synchronized (this) {
-			return Float.isNaN(m_ewmaRate) ? rateLk() : m_ewmaRate;
+			if (!Float.isNaN(m_ewmaRate)) return m_ewmaRate;
+			return hasSamples() ? rateSampledLk() : Float.NaN;
 		}
 	}
 
 	@Override
 	public void tick(long tsNow) {
 		synchronized (this) {
-			if (m_tsLastUpdate != TsNil) {
+			if (m_tsLastUpdate == TsNil) {
+				m_tsLastUpdate = tsNow;
+			} else {
 				final long msInterval = tsNow - m_tsLastUpdate;
-				if (msInterval >= MinIntervalMs) {
-					updateLk(msInterval);
+				if (msInterval >= MinIntervalMs && hasSamples()) {
+					updateSampledLk(msInterval);
 					m_tsLastUpdate = tsNow;
 				}
 			}

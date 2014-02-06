@@ -17,6 +17,7 @@ import java.util.regex.Pattern;
 public class DateFactory {
 
 	public static final Pattern DefaultFields = Pattern.compile("\\d+");
+	public static final long TsNil = -1L;
 
 	private static boolean isAlpha(String qnctw) {
 		assert qnctw != null;

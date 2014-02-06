@@ -236,9 +236,10 @@ class MruTable {
 		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
 		m_lockState.lock();
 		try {
-			m_checkpointDue.set(true);
 			final Tracker oTracker = m_state.findTracker(qccFileName, tsNow);
-			return (oTracker == null) ? null : oTracker.newDescriptor();
+			if (oTracker == null) return null;
+			m_checkpointDue.set(true);
+			return oTracker.newDescriptor();
 		} finally {
 			m_lockState.unlock();
 		}

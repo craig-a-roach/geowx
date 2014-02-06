@@ -19,7 +19,6 @@ import com.metservice.argon.Binary;
 import com.metservice.argon.DateFactory;
 import com.metservice.argon.Ds;
 import com.metservice.argon.cache.ArgonCacheException;
-import com.metservice.argon.file.ArgonDirectoryManagement;
 
 /**
  * @author roach
@@ -37,9 +36,6 @@ class MruAccessor {
 		if (table == null) throw new IllegalArgumentException("object is null");
 		if (sensor == null) throw new IllegalArgumentException("object is null");
 		final ArgonDigester oDigester = cfg.safeNaming ? ArgonDigester.newSHA1() : null;
-		if (cfg.clean) {
-			ArgonDirectoryManagement.remove(cfg.probe, cfg.cndir, true);
-		}
 		return new MruAccessor(cfg.probe, cfg.cndir, cfg.impliedFreshMs, table, sensor, oDigester);
 	}
 

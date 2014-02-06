@@ -39,7 +39,7 @@ public class TestUnit1Sensor {
 
 		final double Delta = 0.001;
 		long tsNow = DateFactory.newTsConstantFromT8("20130615T0000Z00M000");
-		final ArgonSensorHitRate sensor = new ArgonSensorHitRate(ElapsedFactory.newElapsedConstant("10s"), "t10");
+		final ArgonSensorHitRate sensor = new ArgonSensorHitRate(ElapsedFactory.newElapsedConstant("10m"), "t10");
 		Assert.assertTrue(Float.isNaN(sensor.ratio()));
 		sensor.addSample(false, tsNow);
 		sensor.addSample(false, tsNow);
@@ -49,19 +49,19 @@ public class TestUnit1Sensor {
 		Assert.assertEquals(0.20, sensor.ratio(), Delta);
 		tsNow += CArgon.MIN_TO_MS;
 		sensor.tick(tsNow);
-		Assert.assertEquals(0.20, sensor.ratio(), Delta);
+		Assert.assertEquals(0.200, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 1, 3, 5, tsNow);
-		Assert.assertEquals(0.2196, sensor.ratio(), Delta);
+		Assert.assertEquals(0.231, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 1, 3, 5, tsNow);
-		Assert.assertEquals(0.2316, sensor.ratio(), Delta);
+		Assert.assertEquals(0.239, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 1, 3, 20, tsNow);
-		Assert.assertEquals(0.2475, sensor.ratio(), Delta);
+		Assert.assertEquals(0.248, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 1, 2, 5, tsNow);
-		Assert.assertEquals(0.2813, sensor.ratio(), Delta);
+		Assert.assertEquals(0.281, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 0, 4, 5, tsNow);
-		Assert.assertEquals(0.1706, sensor.ratio(), Delta);
+		Assert.assertEquals(0.171, sensor.ratio(), Delta);
 		tsNow = sim(sensor, 1, 3, 5, tsNow);
-		Assert.assertEquals(0.2018, sensor.ratio(), Delta);
+		Assert.assertEquals(0.202, sensor.ratio(), Delta);
 		System.out.println(DateFormatter.newT8FromDate(sensor.getLastSampleTime()) + " " + sensor);
 	}
 }
