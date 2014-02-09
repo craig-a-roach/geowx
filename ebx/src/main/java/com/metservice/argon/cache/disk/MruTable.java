@@ -267,6 +267,19 @@ class MruTable {
 		}
 	}
 
+	public MruDescriptor newDescriptor(String qccFileName, long tsAccess, long tsExpires)
+			throws ArgonCacheException {
+		if (qccFileName == null || qccFileName.length() == 0) throw new IllegalArgumentException("string is null or empty");
+		m_lockState.lock();
+		try {
+			m_checkpointDue.set(true);
+			final Tracker tracker = m_state.putTracker(qccFileName, tsAccess, tsExpires);
+			return tracker.newDescriptor();
+		} finally {
+			m_lockState.unlock();
+		}
+	}
+
 	public SensorSnapshot newSensorSnapshot() {
 		m_lockState.lock();
 		try {
@@ -462,6 +475,19 @@ class MruTable {
 			return vTracker;
 		}
 
+		public Tracker putTracker(String qccFileName, long tsAccess, long tsExpires) {
+			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
+			if (vTracker == null) {
+				vTracker = new Tracker(qccFileName, tsAccess, dcu, lastModified, tsExpires);
+				m_mapFileName_Tracker.put(qccFileName, vTracker);
+			} else {
+				m_kbActual -= vTracker.kbFile();
+				vTracker.registerReload(tsAccess, dcu, lastModified, tsExpires);
+			}
+			m_kbActual += vTracker.kbFile();
+			return vTracker;
+		}
+
 		public void reclaimUnreferenced(String qccFileName) {
 			if (!m_mapFileName_Tracker.containsKey(qccFileName)) {
 				final File target = new File(cfg.cndir, qccFileName);
@@ -538,8 +564,8 @@ class MruTable {
 
 		public MruDescriptor newDescriptor() {
 			final Date oLastModified = Tsn.getDate(m_tsnLastModified);
-			final boolean exists = Dcu.exists(m_dcu);
-			return new MruDescriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, exists);
+			final Dcu dcu = Dcu.newInstance(m_dcu);
+			return new MruDescriptor(m_qccFileName, oLastModified, m_tsLastAccess, m_tsExpires, dcu);
 		}
 
 		public void purgeMark() {

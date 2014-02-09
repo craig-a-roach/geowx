@@ -52,6 +52,10 @@ class Dcu {
 		return fromu(bc2u(oContent.byteCount()));
 	}
 
+	public static Dcu newInstance(int un) {
+		return fromu(un);
+	}
+
 	public boolean exists() {
 		return m_un != NA;
 	}

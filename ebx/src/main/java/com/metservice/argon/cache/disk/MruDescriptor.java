@@ -10,10 +10,15 @@ import java.util.Date;
 
 import com.metservice.argon.Ds;
 
-public class MruDescriptor {
+class MruDescriptor {
+
+	public MruConditional createConditional() {
+		if (oLastModified == null || !dcu.exists()) return null;
+		return new MruConditional(oLastModified, dcu);
+	}
 
 	public File createRef(File cndir) {
-		if (!exists) return null;
+		if (!dcu.exists()) return null;
 		return new File(cndir, qccFileName);
 	}
 
@@ -28,21 +33,22 @@ public class MruDescriptor {
 		ds.at8("lastModified", oLastModified);
 		ds.at8("lastAccess", tsLastAccess);
 		ds.at8("expires", tsExpires);
-		ds.a("exists", exists);
+		ds.a("dcu", dcu);
 		return ds.s();
 	}
 
-	MruDescriptor(String qccFileName, Date oLastModified, long tsLastAccess, long tsExpires, boolean exists) {
+	public MruDescriptor(String qccFileName, Date oLastModified, long tsLastAccess, long tsExpires, Dcu dcu) {
 		assert qccFileName != null && qccFileName.length() > 0;
+		assert dcu != null;
 		this.qccFileName = qccFileName;
 		this.oLastModified = oLastModified;
 		this.tsLastAccess = tsLastAccess;
 		this.tsExpires = tsExpires;
-		this.exists = exists;
+		this.dcu = dcu;
 	}
 	public final String qccFileName;
 	public final Date oLastModified;
 	public final long tsLastAccess;
 	public final long tsExpires;
-	public final boolean exists;
+	public final Dcu dcu;
 }

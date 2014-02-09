@@ -10,6 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
+import com.metservice.argon.ArgonClock;
 import com.metservice.argon.ArgonPermissionException;
 import com.metservice.argon.ArgonPlatformException;
 import com.metservice.argon.ArgonSensorHitRate;
@@ -126,7 +127,7 @@ public class ArgonDiskMruCacheController implements IArgonSensorMap {
 
 		@Override
 		public void run() {
-			final long tsNow = System.currentTimeMillis();
+			final long tsNow = ArgonClock.tsNow();
 			m_table.tick(tsNow);
 			m_sensor.tick(tsNow);
 		}

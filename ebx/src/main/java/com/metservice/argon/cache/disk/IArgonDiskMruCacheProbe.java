@@ -16,9 +16,13 @@ public interface IArgonDiskMruCacheProbe extends IArgonFileRunProbe {
 
 	boolean isLiveRequest();
 
+	boolean isLiveSupply();
+
 	void liveManagement(String message, Object... args);
 
 	void liveRequestHit(String qccResourceId);
 
 	void liveRequestMiss(String qccResourceId);
+
+	void liveSupply(String message, Object... args);
 }

@@ -19,6 +19,4 @@ public interface IArgonDiskCacheSupplier<R extends IArgonDiskCacheRequest> {
 
 	public IArgonDiskCacheable getCacheableConditional(R request, Date lastModified)
 			throws ArgonCacheException, InterruptedException;
-
-	public Date getNow();
 }
