@@ -34,7 +34,8 @@ class Dcu {
 	}
 
 	private static Dcu fromu(int u) {
-		if (u <= 0) return Zero;
+		if (u < 0) return NotAvailable;
+		if (u == 0) return Zero;
 		if (u == 1) return One;
 		return new Dcu(u);
 	}
@@ -47,9 +48,9 @@ class Dcu {
 		return dcu2kb(dcu);
 	}
 
-	public static Dcu newInstance(Binary oContent) {
-		if (oContent == null) return NotAvailable;
-		return fromu(bc2u(oContent.byteCount()));
+	public static Dcu newInstance(Binary content) {
+		if (content == null) throw new IllegalArgumentException("object is null");
+		return fromu(bc2u(content.byteCount()));
 	}
 
 	public static Dcu newInstance(int un) {

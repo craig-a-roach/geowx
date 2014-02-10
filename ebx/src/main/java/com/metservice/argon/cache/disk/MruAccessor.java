@@ -27,10 +27,6 @@ class MruAccessor {
 
 	private static final String TrySave = "Save content to file";
 
-	private static long tsResponseAt(Date oResponseAt, long tsNow) {
-		return oResponseAt == null ? tsNow : oResponseAt.getTime();
-	}
-
 	public static MruAccessor newInstance(ArgonDiskMruCacheController.Config cfg, MruTable table, ArgonSensorHitRate sensor) {
 		if (cfg == null) throw new IllegalArgumentException("object is null");
 		if (table == null) throw new IllegalArgumentException("object is null");
@@ -47,59 +43,53 @@ class MruAccessor {
 			throws ArgonCacheException, InterruptedException {
 		assert goal != null;
 		final long tsRq = goal.tsRequested;
-		final File oRef;
-		final MruDescriptor oDescriptor = m_table.findDescriptor(goal.qccFileName, tsRq);
+		final String qccFileName = goal.qccFileName;
+		File oRef = null;
+		final MruDescriptor oDescriptor = m_table.findDescriptor(qccFileName, tsRq);
 		if (oDescriptor != null && oDescriptor.isFresh(tsRq)) {
 			registerMruHit(goal.request, tsRq);
-			oRef = oDescriptor.createRef(m_cndir);
+			if (oDescriptor.isFound()) {
+				oRef = oDescriptor.newRef(m_cndir);
+			}
 		} else {
 			registerMruMiss(goal.request, tsRq);
-			final MruConditional oCond = oDescriptor == null ? null : oDescriptor.createConditional();
 			final IArgonDiskCacheable oCacheable;
-			if (oCond == null) {
+			if (oDescriptor == null || oDescriptor.oLastModified == null || !oDescriptor.isFound()) {
 				oCacheable = goal.getCacheable();
 			} else {
-				oCacheable = goal.getCacheableConditional(oCond);
+				oCacheable = goal.getCacheableConditional(oDescriptor.oLastModified);
 			}
 			if (oCacheable == null) {
 				probeSupplyError(goal, "returned null");
-				oRef = null;
 			} else if (oCacheable instanceof IArgonDiskCacheableWithContent) {
 				final IArgonDiskCacheableWithContent c = (IArgonDiskCacheableWithContent) oCacheable;
-				final Date oExpires = c.getExpires();
+				final long tsExpires = tsExpires(c.getExpires(), c.getResponseAt(), tsRq);
 				final Binary oContent = c.getContent();
-				final Dcu dcu = Dcu.newInstance(oContent);
-				if (oContent == null || !dcu.exists()) {
-					if (oExpires != null) {
-						putRefNotFound(goal, oExpires);
-					}
-					oRef = null;
+				if (oContent == null) {
+					m_table.newDescriptor(qccFileName, tsRq, tsExpires);
+					probeSupplyNotFound(goal);
 				} else {
-					final Date oResponseAt = c.getResponseAt();
-					final long tsResponseAt = tsResponseAt(oResponseAt, tsRq);
+					final Dcu dcu = Dcu.newInstance(oContent);
 					final Tsn lastModified = Tsn.newInstance(c.getLastModified());
-					final long tsExpires = tsExpires(oExpires, tsResponseAt);
-					final MruDescriptor neo = m_table.newDescriptor(goal.qccFileName, tsRq, dcu, lastModified, tsExpires);
-					oRef = neo.createRef(m_cndir);
-					if (oContent != null && oRef != null) {
-						save(oRef, oContent);
-					}
+					final MruDescriptor neo = m_table.newDescriptor(qccFileName, tsRq, dcu, lastModified, tsExpires);
+					oRef = neo.newRef(m_cndir);
+					save(oRef, oContent);
 				}
 			} else if (oCacheable instanceof IArgonDiskCacheableNotModified) {
 				final IArgonDiskCacheableNotModified c = (IArgonDiskCacheableNotModified) oCacheable;
-				if (oCond == null) {
+				if (oDescriptor == null) {
 					probeSupplyError(goal, "returned not-modified cacheable to unconditional request");
-					oRef = null;
 				} else {
-					oRef = createRefNotModified(goal, c, oCond);
+					final Dcu dcu = oDescriptor.dcu;
+					final Tsn lastModified = Tsn.newInstance(oDescriptor.oLastModified);
+					final long tsExpires = tsExpires(c.getExpires(), c.getResponseAt(), tsRq);
+					final MruDescriptor neo = m_table.newDescriptor(qccFileName, tsRq, dcu, lastModified, tsExpires);
+					oRef = neo.newRef(m_cndir);
 				}
 			} else if (oCacheable instanceof IArgonDiskCacheableNotFound) {
 				final IArgonDiskCacheableNotFound c = (IArgonDiskCacheableNotFound) oCacheable;
-				final Date oExpires = c.getExpires();
-				if (oExpires != null) {
-					putRefNotFound(goal, oExpires);
-				}
-				oRef = null;
+				final long tsExpires = tsExpires(c.getExpires(), c.getResponseAt(), tsRq);
+				m_table.newDescriptor(qccFileName, tsRq, tsExpires);
 			} else if (oCacheable instanceof IArgonDiskCacheableError) {
 				final IArgonDiskCacheableError c = (IArgonDiskCacheableError) oCacheable;
 				final String oqtwReason = ArgonText.oqtw(c.getReason());
@@ -108,11 +98,9 @@ class MruAccessor {
 				} else {
 					probeSupplyError(goal, oqtwReason);
 				}
-				oRef = null;
 			} else {
 				final String msg = "returned unsupported cacheable (" + oCacheable.getClass() + ")";
 				probeSupplyError(goal, msg);
-				oRef = null;
 			}
 		}
 		return oRef;
@@ -125,11 +113,15 @@ class MruAccessor {
 	}
 
 	private <R extends IArgonDiskCacheRequest> void probeSupplyError(Goal<R> goal, String qtwReason) {
-
+		if (m_probe.isLiveSupply()) {
+			m_probe.liveSupply("Supplier error..." + qtwReason, goal.request.qccResourceId());
+		}
 	}
 
-	private <R extends IArgonDiskCacheRequest> void putRefNotFound(Goal<R> goal, Date expires) {
-
+	private <R extends IArgonDiskCacheRequest> void probeSupplyNotFound(Goal<R> goal) {
+		if (m_probe.isLiveSupply()) {
+			m_probe.liveSupply("Supplier could not find resource " + goal.request.qccResourceId());
+		}
 	}
 
 	private String qccFileName(String qccResourceId) {
@@ -169,8 +161,10 @@ class MruAccessor {
 		}
 	}
 
-	private long tsExpires(Date oExpires, long tsResponseAt) {
-		return oExpires == null ? (tsResponseAt + m_impliedFreshMs) : oExpires.getTime();
+	private long tsExpires(Date oExpires, Date oResponseAt, long tsNow) {
+		if (oExpires != null) return oExpires.getTime();
+		final long tsResponseAt = oResponseAt == null ? tsNow : oResponseAt.getTime();
+		return tsResponseAt + m_impliedFreshMs;
 	}
 
 	public <R extends IArgonDiskCacheRequest> File find(IArgonDiskCacheSupplier<R> supplier, R request)
@@ -184,7 +178,7 @@ class MruAccessor {
 		final MruDescriptor oDescriptor = m_table.findDescriptor(qccFileName, tsRq);
 		if (oDescriptor != null && oDescriptor.isFresh(tsRq)) {
 			registerMruHit(request, tsRq);
-			return oDescriptor.createRef(m_cndir);
+			return oDescriptor.isFound() ? oDescriptor.newRef(m_cndir) : null;
 		}
 		m_lock.lock(qccFileName);
 		try {
@@ -222,10 +216,10 @@ class MruAccessor {
 			return supplier.getCacheable(request);
 		}
 
-		public IArgonDiskCacheable getCacheableConditional(MruConditional cond)
+		public IArgonDiskCacheable getCacheableConditional(Date lastModified)
 				throws ArgonCacheException, InterruptedException {
-			assert cond != null;
-			return supplier.getCacheableConditional(request, cond.lastModified);
+			assert lastModified != null;
+			return supplier.getCacheableConditional(request, lastModified);
 		}
 
 		@Override

@@ -273,7 +273,7 @@ class MruTable {
 		m_lockState.lock();
 		try {
 			m_checkpointDue.set(true);
-			final Tracker tracker = m_state.putTracker(qccFileName, tsAccess, tsExpires);
+			final Tracker tracker = m_state.putTracker(qccFileName, tsAccess, Dcu.NotAvailable, Tsn.Nil, tsExpires);
 			return tracker.newDescriptor();
 		} finally {
 			m_lockState.unlock();
@@ -330,6 +330,7 @@ class MruTable {
 	private final AtomicBoolean m_checkpointDue = new AtomicBoolean();
 	private final AtomicInteger m_auditCounter = new AtomicInteger();
 	private final Lock m_lockState = new ReentrantLock();
+
 	private final State m_state;
 
 	private static class Cfg {
@@ -463,19 +464,6 @@ class MruTable {
 		}
 
 		public Tracker putTracker(String qccFileName, long tsAccess, Dcu dcu, Tsn lastModified, long tsExpires) {
-			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
-			if (vTracker == null) {
-				vTracker = new Tracker(qccFileName, tsAccess, dcu, lastModified, tsExpires);
-				m_mapFileName_Tracker.put(qccFileName, vTracker);
-			} else {
-				m_kbActual -= vTracker.kbFile();
-				vTracker.registerReload(tsAccess, dcu, lastModified, tsExpires);
-			}
-			m_kbActual += vTracker.kbFile();
-			return vTracker;
-		}
-
-		public Tracker putTracker(String qccFileName, long tsAccess, long tsExpires) {
 			Tracker vTracker = m_mapFileName_Tracker.get(qccFileName);
 			if (vTracker == null) {
 				vTracker = new Tracker(qccFileName, tsAccess, dcu, lastModified, tsExpires);

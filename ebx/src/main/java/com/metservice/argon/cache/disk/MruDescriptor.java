@@ -12,18 +12,16 @@ import com.metservice.argon.Ds;
 
 class MruDescriptor {
 
-	public MruConditional createConditional() {
-		if (oLastModified == null || !dcu.exists()) return null;
-		return new MruConditional(oLastModified, dcu);
-	}
-
-	public File createRef(File cndir) {
-		if (!dcu.exists()) return null;
-		return new File(cndir, qccFileName);
+	public boolean isFound() {
+		return dcu.exists();
 	}
 
 	public boolean isFresh(long tsNow) {
 		return tsNow < tsExpires;
+	}
+
+	public File newRef(File cndir) {
+		return new File(cndir, qccFileName);
 	}
 
 	@Override
