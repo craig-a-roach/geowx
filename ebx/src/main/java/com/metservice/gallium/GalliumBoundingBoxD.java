@@ -82,7 +82,7 @@ public class GalliumBoundingBoxD implements Comparable<GalliumBoundingBoxD> {
 
 	public boolean intersects(GalliumBoundingBoxD rhs) {
 		if (rhs == null) throw new IllegalArgumentException("object is null");
-		return (rhs.m_xHi > m_xLo && rhs.m_yHi > m_yLo && rhs.m_xLo < m_xHi && rhs.m_yHi > m_yLo);
+		return (rhs.m_xHi > m_xLo && rhs.m_yHi > m_yLo && rhs.m_xLo < m_xHi && rhs.m_yLo < m_yHi);
 	}
 
 	public GalliumBoundingBoxD newUnion(GalliumBoundingBoxD oRhs) {
