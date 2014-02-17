@@ -98,11 +98,11 @@ class StrikeTree {
 		}
 	}
 
-	public int[] query(Strike[] strikes, int idOrigin, float range) {
+	public int[] query(Strike[] strikes, int originStrikeId, float range) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
-		final Strike originStrike = strikes[idOrigin];
+		final Strike originStrike = strikes[originStrikeId];
 		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
-		final Result result = new Result(strikes, idOrigin, rangeRing);
+		final Result result = new Result(strikes, originStrikeId, rangeRing);
 		query(result);
 		return result.emit();
 	}
