@@ -24,26 +24,31 @@ class StrikeClusteringEngine {
 	private boolean expandCluster(Constraint cons, ClusterState clusterState, int strikeId, int clusterId) {
 		assert cons != null;
 		final Strike strike = m_base.strike(strikeId);
-		final int[] seedStrikeIds = m_base.regionStrikeIds(cons, strikeId);
-		final int seedIdCount = seedStrikeIds.length;
-		final boolean noCorePoint = seedIdCount < cons.minStrikes;
+		final StrikeAgenda seeds = new StrikeAgenda();
+		m_base.regionQuery(cons, strikeId, seeds);
+		final boolean noCorePoint = seeds.count() < cons.minStrikes;
 		if (noCorePoint) {
 			clusterState.setNoise(strikeId);
 			return false;
 		}
 		clusterState.setClusterId(strikeId, clusterId);
-		clusterState.setClusterId(seedStrikeIds, clusterId);
-		for (int iseed = 0; iseed < seedIdCount; iseed++) {
-			final int seedStrikeId = seedStrikeIds[iseed];
-			final int[] resultStrikeIds = m_base.regionStrikeIds(cons, seedStrikeId);
-			final int resultIdCount = resultStrikeIds.length;
-			if (resultIdCount < cons.minStrikes) {
+		clusterState.setClusterId(seeds, clusterId);
+		while (!seeds.isEmpty()) {
+			final int seedStrikeId = seeds.pop();
+			final StrikeAgenda result = new StrikeAgenda();
+			m_base.regionQuery(cons, seedStrikeId, result);
+			if (result.count() < cons.minStrikes) {
 				continue;
 			}
-			for (int iresult = 0; iresult < resultIdCount; iresult++) {
-				final int resultStrikeId = resultStrikeIds[iresult];
+			while (!result.isEmpty()) {
+				final int resultStrikeId = result.pop();
 				final int resultClusterId = clusterState.clusterId(resultStrikeId);
-
+				if (resultClusterId < CID_FIRST) {
+					if (resultClusterId == CID_UNCLASSIFIED) {
+						seeds.add(resultStrikeId);
+					}
+					clusterState.setClusterId(resultStrikeId, clusterId);
+				}
 			}
 		}
 		return true;
@@ -75,7 +80,7 @@ class StrikeClusteringEngine {
 		public static ClusterState newInstance(StrikeBase base) {
 			assert base != null;
 			final int[] cidArray = base.newClusterIdArray();
-			return new ClusterState(base, cidArray);
+			return new ClusterState(cidArray);
 		}
 
 		public int clusterId(int strikeId) {
@@ -86,10 +91,11 @@ class StrikeClusteringEngine {
 			m_cidArray[strikeId] = clusterId;
 		}
 
-		public void setClusterId(int[] strikeIds, int clusterId) {
-			final int idCount = strikeIds.length;
-			for (int strikeId = 0; strikeId < idCount; strikeId++) {
-				m_cidArray[strikeId] = clusterId;
+		public void setClusterId(StrikeAgenda agenda, int clusterId) {
+			assert agenda != null;
+			final int count = agenda.count();
+			for (int i = 0; i < count; i++) {
+				m_cidArray[agenda.id(i)] = clusterId;
 			}
 		}
 
@@ -97,13 +103,10 @@ class StrikeClusteringEngine {
 			m_cidArray[strikeId] = CID_NOISE;
 		}
 
-		private ClusterState(StrikeBase base, int[] cidArray) {
-			assert base != null;
+		private ClusterState(int[] cidArray) {
 			assert cidArray != null;
-			m_base = base;
 			m_cidArray = cidArray;
 		}
-		private final StrikeBase m_base;
 		private final int[] m_cidArray;
 	}
 
@@ -132,9 +135,9 @@ class StrikeClusteringEngine {
 			return new int[m_strikeCount];
 		}
 
-		public int[] regionStrikeIds(Constraint cons, int strikeId) {
+		public void regionQuery(Constraint cons, int strikeId, StrikeAgenda agenda) {
 			assert cons != null;
-			return m_tree.query(m_strikes, strikeId, cons.eps);
+			m_tree.query(m_strikes, strikeId, cons.eps, agenda);
 		}
 
 		public Strike strike(int idStrike) {

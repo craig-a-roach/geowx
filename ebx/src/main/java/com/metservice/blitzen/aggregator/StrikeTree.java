@@ -89,7 +89,7 @@ class StrikeTree {
 			if (sid != idOrigin) {
 				final Strike strike = strikes[sid];
 				if (rangeRing.contains(strike.y, strike.x)) {
-					result.add(sid);
+					result.agenda.add(sid);
 				}
 			}
 		}
@@ -98,13 +98,12 @@ class StrikeTree {
 		}
 	}
 
-	public int[] query(Strike[] strikes, int originStrikeId, float range) {
+	public void query(Strike[] strikes, int originStrikeId, float range, StrikeAgenda agenda) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
 		final Strike originStrike = strikes[originStrikeId];
 		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
-		final Result result = new Result(strikes, originStrikeId, rangeRing);
+		final Result result = new Result(strikes, originStrikeId, rangeRing, agenda);
 		query(result);
-		return result.emit();
 	}
 
 	public int size() {
@@ -164,42 +163,17 @@ class StrikeTree {
 
 	private static class Result {
 
-		private static final int[] Nil = new int[0];
-
-		public void add(int id) {
-			final int exCap = m_ids.length;
-			if (m_count == exCap) {
-				final int[] save = m_ids;
-				final int neoCap = exCap * 3 / 2;
-				m_ids = new int[neoCap];
-				System.arraycopy(save, 0, m_ids, 0, m_count);
-			}
-			m_ids[m_count] = id;
-			m_count++;
-		}
-
-		public int[] emit() {
-			if (m_count == 0) return Nil;
-			final int exCap = m_ids.length;
-			if (m_count < exCap) {
-				final int[] save = m_ids;
-				m_ids = new int[m_count];
-				System.arraycopy(save, 0, m_ids, 0, m_count);
-			}
-			return m_ids;
-		}
-
-		public Result(Strike[] strikes, int idOrigin, Ring rangeRing) {
+		public Result(Strike[] strikes, int idOrigin, Ring rangeRing, StrikeAgenda agenda) {
 			assert strikes != null;
 			this.strikes = strikes;
 			this.idOrigin = idOrigin;
 			this.rangeRing = rangeRing;
+			this.agenda = agenda;
 		}
 		public final Strike[] strikes;
 		public final int idOrigin;
 		public final Ring rangeRing;
-		private int m_count;
-		private int[] m_ids = new int[16];
+		public final StrikeAgenda agenda;
 	}
 
 	private static class Ring {
