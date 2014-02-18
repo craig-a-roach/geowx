@@ -13,11 +13,13 @@ class StrikeClusterTable {
 	@Override
 	public String toString() {
 		final int clusterCount = m_clusterArray.length;
+		final int noiseCount = m_noiseArray.length;
 		final StringBuilder sb = new StringBuilder();
 		sb.append("strikes=").append(m_strikeCount).append('\n');
-		sb.append("noise(").append(m_noise).append(")\n");
 		sb.append("clusterCount=").append(clusterCount).append("\n");
+		sb.append("noiseCount=").append(noiseCount).append(")\n");
 		sb.append("sumClusterMagnitude=").append(m_sumClusterMagnitude).append("\n");
+		sb.append("sumNoiseMagnitude=").append(m_sumNoiseMagnitude).append("\n");
 		sb.append("clusters(").append("\n");
 		for (int i = 0; i < clusterCount; i++) {
 			sb.append(m_clusterArray[i]).append("\n");
@@ -26,16 +28,19 @@ class StrikeClusterTable {
 		return sb.toString();
 	}
 
-	public StrikeClusterTable(StrikeCluster[] clusterArray, StrikeCluster noise, int strikeCount, float sumClusterMagnitude) {
+	public StrikeClusterTable(StrikeCluster[] clusterArray, Strike[] noiseArray, int strikeCount, float sumClusterMag,
+			float sumNoiseMag) {
 		if (clusterArray == null) throw new IllegalArgumentException("object is null");
-		if (noise == null) throw new IllegalArgumentException("object is null");
+		if (noiseArray == null) throw new IllegalArgumentException("object is null");
 		m_clusterArray = clusterArray;
-		m_noise = noise;
+		m_noiseArray = noiseArray;
 		m_strikeCount = strikeCount;
-		m_sumClusterMagnitude = sumClusterMagnitude;
+		m_sumClusterMagnitude = sumClusterMag;
+		m_sumNoiseMagnitude = sumNoiseMag;
 	}
 	private final StrikeCluster[] m_clusterArray;
-	private final StrikeCluster m_noise;
+	private final Strike[] m_noiseArray;
 	private final int m_strikeCount;
 	private final float m_sumClusterMagnitude;
+	private final float m_sumNoiseMagnitude;
 }

@@ -5,6 +5,8 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -15,6 +17,16 @@ class StrikeClusteringEngine {
 	private static final int CID_NOISE = -1;
 	private static final int CID_UNCLASSIFIED = 0;
 	private static final int CID_FIRST = 1;
+
+	private static final Comparator<Strike> XComparator = new Comparator<Strike>() {
+
+		@Override
+		public int compare(Strike lhs, Strike rhs) {
+			if (lhs.x < rhs.x) return -1;
+			if (lhs.x > rhs.x) return +1;
+			return 0;
+		}
+	};
 
 	public static StrikeClusteringEngine newInstance(List<Strike> strikeList) {
 		final StrikeBase base = StrikeBase.newInstance(strikeList);
@@ -75,9 +87,10 @@ class StrikeClusteringEngine {
 		assert base != null;
 		m_base = base;
 	}
+
 	private final StrikeBase m_base;
 
-	private static class ClusterBuilder {
+	private static class ArrayBuilder {
 
 		public void add(Strike strike) {
 			assert strike != null;
@@ -90,10 +103,19 @@ class StrikeClusteringEngine {
 			final int depth = m_strikes.length;
 			if (depth != m_nextIndex)
 				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
+			Arrays.sort(m_strikes, XComparator);
 			return new StrikeCluster(m_strikes, m_qtyMagnitude);
 		}
 
-		public ClusterBuilder(int depth) {
+		public float qtyMagnitude() {
+			return m_qtyMagnitude;
+		}
+
+		public Strike[] strikes() {
+			return m_strikes;
+		}
+
+		public ArrayBuilder(int depth) {
 			m_strikes = new Strike[depth];
 		}
 		private final Strike[] m_strikes;
@@ -109,11 +131,11 @@ class StrikeClusteringEngine {
 			return new ClusterState(base, cidArray);
 		}
 
-		private ClusterBuilder[] newBuilderArray(int[] extentArray, int lastClusterId) {
-			final ClusterBuilder[] builderArray = new ClusterBuilder[lastClusterId + 1];
+		private ArrayBuilder[] newBuilderArray(int[] extentArray, int lastClusterId) {
+			final ArrayBuilder[] builderArray = new ArrayBuilder[lastClusterId + 1];
 			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
 				final int extentDepth = extentArray[clusterId];
-				builderArray[clusterId] = new ClusterBuilder(extentDepth);
+				builderArray[clusterId] = new ArrayBuilder(extentDepth);
 			}
 			return builderArray;
 		}
@@ -145,25 +167,26 @@ class StrikeClusteringEngine {
 		public StrikeClusterTable newTable(int lastClusterId) {
 			final int[] extentArray = newExtentArray(lastClusterId);
 			final int noiseCount = extentArray[0];
-			final ClusterBuilder noiseBuilder = new ClusterBuilder(noiseCount);
-			final ClusterBuilder[] builderArray = newBuilderArray(extentArray, lastClusterId);
+			final ArrayBuilder noiseBuilder = new ArrayBuilder(noiseCount);
+			final ArrayBuilder[] builderArray = newBuilderArray(extentArray, lastClusterId);
 			final int strikeCount = m_cidArray.length;
 			for (int strikeId = 0; strikeId < strikeCount; strikeId++) {
 				final Strike strike = m_base.strike(strikeId);
 				final int clusterId = m_cidArray[strikeId];
 				final boolean isNoise = clusterId < CID_FIRST;
-				final ClusterBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
+				final ArrayBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
 				builder.add(strike);
 			}
-			final StrikeCluster noiseCluster = noiseBuilder.newCluster();
 			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
-			float sumClusterMagnitude = 0.0f;
+			float sumClusterMag = 0.0f;
 			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
 				final StrikeCluster cluster = builderArray[clusterId].newCluster();
 				clusterArray[clusterId - 1] = cluster;
-				sumClusterMagnitude += cluster.qtyMagnitude();
+				sumClusterMag += cluster.qtyMagnitude();
 			}
-			return new StrikeClusterTable(clusterArray, noiseCluster, strikeCount, sumClusterMagnitude);
+			final Strike[] noiseArray = noiseBuilder.strikes();
+			final float sumNoiseMag = noiseBuilder.qtyMagnitude();
+			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumClusterMag, sumNoiseMag);
 		}
 
 		public void setClusterId(int strikeId, int clusterId) {
