@@ -5,6 +5,7 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -186,7 +187,8 @@ class StrikeClusteringEngine {
 			}
 			final Strike[] noiseArray = noiseBuilder.strikes();
 			final float sumNoiseMag = noiseBuilder.qtyMagnitude();
-			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumClusterMag, sumNoiseMag);
+			final Rectangle2D.Float rect = m_base.boundingRectangle();
+			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumClusterMag, sumNoiseMag, rect);
 		}
 
 		public void setClusterId(int strikeId, int clusterId) {
@@ -234,6 +236,10 @@ class StrikeClusteringEngine {
 			final Strike[] strikes = strikeList.toArray(new Strike[strikeCount]);
 			final StrikeTree tree = StrikeTree.newInstance(strikes);
 			return new StrikeBase(strikes, tree);
+		}
+
+		public Rectangle2D.Float boundingRectangle() {
+			return m_tree.boundingRectangle();
 		}
 
 		public int[] newClusterIdArray() {

@@ -5,10 +5,16 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.awt.geom.Rectangle2D;
+
 /**
  * @author roach
  */
 class StrikeClusterTable {
+
+	public Rectangle2D.Float bounds() {
+		return m_bounds;
+	}
 
 	@Override
 	public String toString() {
@@ -20,6 +26,7 @@ class StrikeClusterTable {
 		sb.append("noiseCount=").append(noiseCount).append(")\n");
 		sb.append("sumClusterMagnitude=").append(m_sumClusterMagnitude).append("\n");
 		sb.append("sumNoiseMagnitude=").append(m_sumNoiseMagnitude).append("\n");
+		sb.append("bounds(").append(m_bounds.x).append(")\n");
 		sb.append("clusters(").append("\n");
 		for (int i = 0; i < clusterCount; i++) {
 			sb.append(m_clusterArray[i]).append("\n");
@@ -29,7 +36,7 @@ class StrikeClusterTable {
 	}
 
 	public StrikeClusterTable(StrikeCluster[] clusterArray, Strike[] noiseArray, int strikeCount, float sumClusterMag,
-			float sumNoiseMag) {
+			float sumNoiseMag, Rectangle2D.Float bounds) {
 		if (clusterArray == null) throw new IllegalArgumentException("object is null");
 		if (noiseArray == null) throw new IllegalArgumentException("object is null");
 		m_clusterArray = clusterArray;
@@ -37,10 +44,12 @@ class StrikeClusterTable {
 		m_strikeCount = strikeCount;
 		m_sumClusterMagnitude = sumClusterMag;
 		m_sumNoiseMagnitude = sumNoiseMag;
+		m_bounds = bounds;
 	}
 	private final StrikeCluster[] m_clusterArray;
 	private final Strike[] m_noiseArray;
 	private final int m_strikeCount;
 	private final float m_sumClusterMagnitude;
 	private final float m_sumNoiseMagnitude;
+	private final Rectangle2D.Float m_bounds;
 }

@@ -5,6 +5,8 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.awt.geom.Rectangle2D;
+
 /**
  * @author roach
  */
@@ -98,6 +100,10 @@ class StrikeTree {
 		}
 	}
 
+	public Rectangle2D.Float boundingRectangle() {
+		return m_bounds.boundingRectangle();
+	}
+
 	public void query(Strike[] strikes, int originStrikeId, float range, StrikeAgenda agenda) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
 		final Strike originStrike = strikes[originStrikeId];
@@ -127,6 +133,10 @@ class StrikeTree {
 	private SubTree m_oSubTree;
 
 	private static class Bounds {
+
+		public Rectangle2D.Float boundingRectangle() {
+			return new Rectangle2D.Float(xL, yT, (xR - xR), (yT - yB));
+		}
 
 		public boolean contains(float y, float x) {
 			return y >= yB && y <= yT && x >= xL && x <= xR;
