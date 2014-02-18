@@ -43,8 +43,27 @@ class StrikeAgenda {
 		return m_ids[m_count];
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		for (int i = 0; i < m_count; i++) {
+			if (i > 0) {
+				sb.append(',');
+			}
+			sb.append(m_ids[i]);
+		}
+		sb.append(']');
+		return sb.toString();
+	}
+
 	public StrikeAgenda() {
+		this(16);
+	}
+
+	public StrikeAgenda(int initialCapacity) {
+		m_ids = new int[Math.max(2, initialCapacity)];
 	}
 	private int m_count;
-	private int[] m_ids = new int[16];
+	private int[] m_ids;
 }

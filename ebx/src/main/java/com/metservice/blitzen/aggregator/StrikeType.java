@@ -5,15 +5,11 @@
  */
 package com.metservice.blitzen.aggregator;
 
-import com.metservice.argon.Binary;
-
 /**
  * @author roach
  */
-public class TestPerf {
+enum StrikeType {
 
-	public void test() {
-		Binary.createFromClassPath(getClass(), "2012_07_11_lightning_data.csv");
-	}
+	GROUND, CLOUD
 
 }

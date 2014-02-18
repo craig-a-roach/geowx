@@ -8,23 +8,22 @@ package com.metservice.blitzen.aggregator;
 /**
  * @author roach
  */
-class Strike {
+class StrikeCluster {
+
+	public float qtyMagnitude() {
+		return m_qtyMagnitude;
+	}
 
 	@Override
 	public String toString() {
-		return "y" + y + ", x" + x + " @" + t + ":" + qty + "," + type;
+		return "strikes=" + m_strikes.length + ", mag=" + m_qtyMagnitude;
 	}
 
-	public Strike(long t, float y, float x, float qty, StrikeType type) {
-		this.t = t;
-		this.y = y;
-		this.x = x;
-		this.qty = qty;
-		this.type = type;
+	public StrikeCluster(Strike[] strikes, float qtyMagnitude) {
+		assert strikes != null;
+		m_strikes = strikes;
+		m_qtyMagnitude = qtyMagnitude;
 	}
-	public final long t;
-	public final float y;
-	public final float x;
-	public final float qty;
-	public final StrikeType type;
+	private final Strike[] m_strikes;
+	private final float m_qtyMagnitude;
 }

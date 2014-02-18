@@ -5,6 +5,10 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -16,18 +20,11 @@ class TestHelpLoader {
 
 	private static final Pattern CommaSeparator = Pattern.compile("[,]");
 
-	private static int fieldCat(String in, int lineno, String tag) {
-		final String quctw = qtw(in, lineno, tag).toUpperCase();
-		if (quctw.equals("GROUND")) return 1;
-		if (quctw.equals("CLOUD")) return 2;
-		return 0;
-	}
-
 	private static float fieldFloat(String in, int lineno, String tag) {
 		try {
 			return Float.parseFloat(qtw(in, lineno, tag));
 		} catch (final NumberFormatException ex) {
-			throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno);
+			throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno + "..." + in);
 		}
 	}
 
@@ -35,8 +32,15 @@ class TestHelpLoader {
 		try {
 			return Long.parseLong(qtw(in, lineno, tag));
 		} catch (final NumberFormatException ex) {
-			throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno);
+			throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno + "..." + in);
 		}
+	}
+
+	private static StrikeType fieldType(String in, int lineno, String tag) {
+		final String quctw = qtw(in, lineno, tag).toUpperCase();
+		if (quctw.equals("GROUND")) return StrikeType.GROUND;
+		if (quctw.equals("CLOUD")) return StrikeType.CLOUD;
+		throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno + "..." + in);
 	}
 
 	private static String qtw(String in, int lineno, String tag) {
@@ -55,11 +59,17 @@ class TestHelpLoader {
 		final float y = fieldFloat(fields[1], lineno, "latitude");
 		final float x = fieldFloat(fields[2], lineno, "longitude");
 		final float qty = fieldFloat(fields[3], lineno, "qty");
-		final int cat = fieldCat(fields[4], lineno, "category");
-		return new Strike(t, y, x, qty, cat);
+		final StrikeType type = fieldType(fields[4], lineno, "type");
+		return new Strike(t, y, x, qty, type);
 	}
 
 	public static Strike[] newArrayFromLines(String[] zlines) {
+		final List<Strike> zl = newListFromLines(zlines);
+		final int sz = zl.size();
+		return zl.toArray(new Strike[sz]);
+	}
+
+	public static List<Strike> newListFromLines(String[] zlines) {
 		final List<Strike> zl = new ArrayList<>(zlines.length);
 		for (int i = 0; i < zlines.length; i++) {
 			final String line = zlines[i].trim();
@@ -68,8 +78,42 @@ class TestHelpLoader {
 				zl.add(oStrike);
 			}
 		}
-		final int sz = zl.size();
-		return zl.toArray(new Strike[sz]);
+		return zl;
+	}
+
+	public static List<Strike> newListFromResource(Class<?> ref, String path) {
+		final InputStream ins = ref.getResourceAsStream(path);
+		if (ins == null) throw new IllegalArgumentException("Resource '" + path + "' not found under " + ref.getName());
+		final BufferedReader rdr = new BufferedReader(new InputStreamReader(ins));
+		try {
+			final List<Strike> strikes = new ArrayList<Strike>();
+			int lineNo = 0;
+			boolean more = true;
+			while (more) {
+				final String oLine = rdr.readLine();
+				if (oLine == null) {
+					more = false;
+					continue;
+				}
+				lineNo++;
+				final String ztwLine = oLine.trim();
+				if (ztwLine.length() == 0) {
+					continue;
+				}
+				final Strike oStrike = createStrike(ztwLine, lineNo);
+				if (oStrike != null) {
+					strikes.add(oStrike);
+				}
+			}
+			return strikes;
+		} catch (final IOException ex) {
+			throw new IllegalArgumentException("Cannot read '" + path + "'..." + ex.getMessage());
+		} finally {
+			try {
+				rdr.close();
+			} catch (final IOException ex) {
+			}
+		}
 	}
 
 }

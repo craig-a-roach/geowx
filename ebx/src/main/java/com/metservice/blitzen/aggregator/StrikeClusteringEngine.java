@@ -23,7 +23,6 @@ class StrikeClusteringEngine {
 
 	private boolean expandCluster(Constraint cons, ClusterState clusterState, int strikeId, int clusterId) {
 		assert cons != null;
-		final Strike strike = m_base.strike(strikeId);
 		final StrikeAgenda seeds = new StrikeAgenda();
 		m_base.regionQuery(cons, strikeId, seeds);
 		final boolean noCorePoint = seeds.count() < cons.minStrikes;
@@ -54,7 +53,7 @@ class StrikeClusteringEngine {
 		return true;
 	}
 
-	public void solve(float eps, int minStrikes) {
+	public StrikeClusterTable solve(float eps, int minStrikes) {
 		final Constraint cons = new Constraint(eps, minStrikes);
 		final ClusterState clusterState = ClusterState.newInstance(m_base);
 		int clusterId = CID_FIRST;
@@ -67,24 +66,104 @@ class StrikeClusteringEngine {
 				}
 			}
 		}
+		final int lastClusterId = clusterId == CID_FIRST ? 0 : (clusterId - 1);
+		final StrikeClusterTable table = clusterState.newTable(lastClusterId);
+		return table;
 	}
 
 	private StrikeClusteringEngine(StrikeBase base) {
-		if (base == null) throw new IllegalArgumentException("object is null");
+		assert base != null;
 		m_base = base;
 	}
 	private final StrikeBase m_base;
+
+	private static class ClusterBuilder {
+
+		public void add(Strike strike) {
+			assert strike != null;
+			m_strikes[m_nextIndex] = strike;
+			m_nextIndex++;
+			m_qtyMagnitude += Math.abs(strike.qty);
+		}
+
+		public StrikeCluster newCluster() {
+			final int depth = m_strikes.length;
+			if (depth != m_nextIndex)
+				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
+			return new StrikeCluster(m_strikes, m_qtyMagnitude);
+		}
+
+		public ClusterBuilder(int depth) {
+			m_strikes = new Strike[depth];
+		}
+		private final Strike[] m_strikes;
+		private int m_nextIndex;
+		private float m_qtyMagnitude;
+	}
 
 	private static class ClusterState {
 
 		public static ClusterState newInstance(StrikeBase base) {
 			assert base != null;
 			final int[] cidArray = base.newClusterIdArray();
-			return new ClusterState(cidArray);
+			return new ClusterState(base, cidArray);
+		}
+
+		private ClusterBuilder[] newBuilderArray(int[] extentArray, int lastClusterId) {
+			final ClusterBuilder[] builderArray = new ClusterBuilder[lastClusterId + 1];
+			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
+				final int extentDepth = extentArray[clusterId];
+				builderArray[clusterId] = new ClusterBuilder(extentDepth);
+			}
+			return builderArray;
+		}
+
+		private int[] newExtentArray(int lastClusterId) {
+			final int[] extentArray = new int[lastClusterId + 1];
+			final int strikeCount = m_cidArray.length;
+			int noiseCount = 0;
+			for (int strikeId = 0; strikeId < strikeCount; strikeId++) {
+				final int clusterId = m_cidArray[strikeId];
+				if (clusterId >= CID_FIRST) {
+					extentArray[clusterId] = extentArray[clusterId] + 1;
+					continue;
+				}
+				if (clusterId == CID_NOISE) {
+					noiseCount++;
+					continue;
+				}
+				throw new IllegalStateException("strike " + strikeId + " is unclassified");
+			}
+			extentArray[0] = noiseCount;
+			return extentArray;
 		}
 
 		public int clusterId(int strikeId) {
 			return m_cidArray[strikeId];
+		}
+
+		public StrikeClusterTable newTable(int lastClusterId) {
+			final int[] extentArray = newExtentArray(lastClusterId);
+			final int noiseCount = extentArray[0];
+			final ClusterBuilder noiseBuilder = new ClusterBuilder(noiseCount);
+			final ClusterBuilder[] builderArray = newBuilderArray(extentArray, lastClusterId);
+			final int strikeCount = m_cidArray.length;
+			for (int strikeId = 0; strikeId < strikeCount; strikeId++) {
+				final Strike strike = m_base.strike(strikeId);
+				final int clusterId = m_cidArray[strikeId];
+				final boolean isNoise = clusterId < CID_FIRST;
+				final ClusterBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
+				builder.add(strike);
+			}
+			final StrikeCluster noiseCluster = noiseBuilder.newCluster();
+			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
+			float sumClusterMagnitude = 0.0f;
+			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
+				final StrikeCluster cluster = builderArray[clusterId].newCluster();
+				clusterArray[clusterId - 1] = cluster;
+				sumClusterMagnitude += cluster.qtyMagnitude();
+			}
+			return new StrikeClusterTable(clusterArray, noiseCluster, strikeCount, sumClusterMagnitude);
 		}
 
 		public void setClusterId(int strikeId, int clusterId) {
@@ -103,10 +182,13 @@ class StrikeClusteringEngine {
 			m_cidArray[strikeId] = CID_NOISE;
 		}
 
-		private ClusterState(int[] cidArray) {
+		private ClusterState(StrikeBase base, int[] cidArray) {
+			assert base != null;
 			assert cidArray != null;
+			m_base = base;
 			m_cidArray = cidArray;
 		}
+		private final StrikeBase m_base;
 		private final int[] m_cidArray;
 	}
 
@@ -140,8 +222,8 @@ class StrikeClusteringEngine {
 			m_tree.query(m_strikes, strikeId, cons.eps, agenda);
 		}
 
-		public Strike strike(int idStrike) {
-			return m_strikes[idStrike];
+		public Strike strike(int strikeId) {
+			return m_strikes[strikeId];
 		}
 
 		public int strikeCount() {
