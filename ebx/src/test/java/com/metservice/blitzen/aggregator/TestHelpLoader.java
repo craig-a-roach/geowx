@@ -69,6 +69,26 @@ class TestHelpLoader {
 		return zl.toArray(new Strike[sz]);
 	}
 
+	public static List<Strike> newListFromGenerator(String spec) {
+		final Pattern lineSplitter = Pattern.compile("[|]");
+		final Pattern genSplitter = Pattern.compile("[,:]");
+		final List<Strike> zl = new ArrayList<>();
+		final String[] lines = lineSplitter.split(spec);
+		long t = 1000L;
+		for (int iline = 0; iline < lines.length; iline++) {
+			final String[] gen = genSplitter.split(lines[iline]);
+			final String yg = gen[0];
+			for (int ic = 1; ic < gen.length; ic++) {
+				final String xg = gen[ic];
+				final String src = t + "," + yg + "," + xg + ",1,GROUND";
+				final Strike strike = createStrike(src, iline);
+				zl.add(strike);
+				t++;
+			}
+		}
+		return zl;
+	}
+
 	public static List<Strike> newListFromLines(String[] zlines) {
 		final List<Strike> zl = new ArrayList<>(zlines.length);
 		for (int i = 0; i < zlines.length; i++) {

@@ -13,9 +13,9 @@ import java.util.List;
 /**
  * @author roach
  */
-class StrikeClusteringEngine {
+class StrikeClusteringEngineCH {
 
-	private static final int CID_NOISE = Integer.MIN_VALUE;
+	private static final int CID_NOISE = -1;
 	private static final int CID_UNCLASSIFIED = 0;
 	private static final int CID_FIRST = 1;
 
@@ -29,20 +29,21 @@ class StrikeClusteringEngine {
 		}
 	};
 
-	public static StrikeClusteringEngine newInstance(List<Strike> strikeList) {
+	public static StrikeClusteringEngineCH newInstance(List<Strike> strikeList) {
 		final StrikeBase base = StrikeBase.newInstance(strikeList);
-		return new StrikeClusteringEngine(base);
+		return new StrikeClusteringEngineCH(base);
 	}
 
 	private boolean expandCluster(Constraint cons, ClusterState clusterState, int strikeId, int clusterId) {
 		assert cons != null;
 		final StrikeAgenda seeds = new StrikeAgenda();
 		m_base.regionQuery(cons, strikeId, seeds);
-		if (seeds.count() < cons.minStrikes) {
+		final boolean noCorePoint = seeds.count() < cons.minStrikes;
+		if (noCorePoint) {
 			clusterState.setNoise(strikeId);
 			return false;
 		}
-		clusterState.setClusterId(strikeId, -clusterId);
+		clusterState.setClusterId(strikeId, clusterId);
 		clusterState.setClusterId(seeds, clusterId);
 		while (!seeds.isEmpty()) {
 			final int seedStrikeId = seeds.pop();
@@ -54,12 +55,10 @@ class StrikeClusteringEngine {
 			while (!result.isEmpty()) {
 				final int resultStrikeId = result.pop();
 				final int resultClusterId = clusterState.clusterId(resultStrikeId);
-				if (resultClusterId == CID_NOISE) {
-					clusterState.setClusterId(resultStrikeId, clusterId);
-					continue;
-				}
-				if (resultClusterId == CID_UNCLASSIFIED) {
-					seeds.add(resultStrikeId);
+				if (resultClusterId < CID_FIRST) {
+					if (resultClusterId == CID_UNCLASSIFIED) {
+						seeds.add(resultStrikeId);
+					}
 					clusterState.setClusterId(resultStrikeId, clusterId);
 				}
 			}
@@ -85,7 +84,7 @@ class StrikeClusteringEngine {
 		return table;
 	}
 
-	private StrikeClusteringEngine(StrikeBase base) {
+	private StrikeClusteringEngineCH(StrikeBase base) {
 		assert base != null;
 		m_base = base;
 	}

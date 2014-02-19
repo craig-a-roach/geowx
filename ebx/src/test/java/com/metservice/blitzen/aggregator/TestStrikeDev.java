@@ -31,9 +31,6 @@ public class TestStrikeDev {
 		"1011,4,3,  10,GROUND",
 		"1012,5,5,  10,GROUND"
 		};
-	//@formatter:on
-
-	//@formatter:off
 	private static final String[] popB = {
 		"1341964827332,-5.0799,152.8558,-5,GROUND",
 		"1341964865803,-5.2584,152.8397,-2,GROUND", 
@@ -46,6 +43,15 @@ public class TestStrikeDev {
 		"1341964982314,-39.0316,154.2593,0,CLOUD",
 		"1341964982328,-39.0137,154.1638,-3,GROUND"
 		};
+	
+	private static final String popC =
+			"   3.5:1.5,2.0,2.5,3.0,3.5"
+			+"|3.0:2.0,2.5,3.0,3.5,4.0|"
+			+"|2.5:1.5,2.0,2.5,3.0,3.5,4.0,4.5"
+			+"|2.0:2.0,4.0,4.5,5.0"
+			+"|1.5:1.5,4.0,4.5"
+			+"|1.0:4.0"
+			;
 	//@formatter:on
 
 	private static void print(Strike[] strikes, StrikeAgenda agenda) {
@@ -57,6 +63,11 @@ public class TestStrikeDev {
 	}
 
 	@Test
+	public void a10_popC() {
+		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
+		System.out.println(strikes);
+	}
+
 	public void t10_popB() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popB);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
@@ -66,7 +77,6 @@ public class TestStrikeDev {
 		System.out.println(table2);
 	}
 
-	@Test
 	public void t15_popMax() {
 		final List<Strike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
 		final long tsInit = System.currentTimeMillis();
@@ -79,14 +89,12 @@ public class TestStrikeDev {
 		System.out.println(table);
 	}
 
-	@Test
 	public void t85_popB() {
 		final Strike[] strikes = TestHelpLoader.newArrayFromLines(popB);
 		final StrikeTree oTree = StrikeTree.newInstance(strikes, 3);
 		System.out.println(oTree);
 	}
 
-	@Test
 	public void t90_popA() {
 		final Strike[] strikes = TestHelpLoader.newArrayFromLines(popA);
 		final StrikeTree oTree = StrikeTree.newInstance(strikes, 3);
@@ -99,7 +107,6 @@ public class TestStrikeDev {
 		print(strikes, agenda);
 	}
 
-	@Test
 	public void t95_agenda() {
 		final StrikeAgenda agenda = new StrikeAgenda(2);
 		agenda.add(10);
