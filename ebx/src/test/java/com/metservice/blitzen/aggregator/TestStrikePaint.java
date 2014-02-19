@@ -7,87 +7,83 @@ package com.metservice.blitzen.aggregator;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.Path2D;
+import java.awt.Paint;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.List;
 
 import javax.imageio.ImageIO;
 
 import org.junit.Test;
 
-import com.metservice.gallium.GalliumBoundingBoxD;
-import com.metservice.gallium.GalliumPointD;
-
 /**
  * @author roach
  */
 public class TestStrikePaint {
+
+	private void render(List<Strike> strikes, StrikeClusterTable table, Canvas canvas) {
+		final int strikeCount = strikes.size();
+		for (int i = 0; i < strikeCount; i++) {
+			final Strike strike = strikes.get(i);
+			canvas.plotPoint(strike.x, strike.y, Color.black);
+		}
+	}
 
 	@Test
 	public void t50() {
 		final List<Strike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
 		final StrikeClusterTable table = engine.solve(0.1f, 3);
+		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
+		render(strikes, table, canvas);
+		canvas.save("base");
 	}
 
 	private static class Canvas {
 
-		// final Color fg = fill ? new Color(210, 200, 180) : new Color(150, 100, 50);
-		// final Color bg = fill ? new Color(50, 50, 80) : new Color(200, 200, 230);
-
-		public void draw(Path2D.Float path) {
-			if (m_fill) {
-				m_g2d.fill(path);
-			} else {
-				m_g2d.draw(path);
-			}
+		public void plotPoint(float sX, float sY, Paint paint) {
+			final int x = x(sX);
+			final int y = y(sY);
+			m_g2d.setPaint(paint);
+			m_g2d.fillRect(x, y, 1, 1);
 		}
 
-		public void save(File dst) {
+		public Path save(String filePrefix) {
 			try {
-				ImageIO.write(m_bimg, "png", dst);
+				final String home = System.getProperty("user.home");
+				final Path outPath = FileSystems.getDefault().getPath(home, "blitzen", filePrefix + ".png");
+				ImageIO.write(m_bimg, "png", outPath.toFile());
+				System.out.println("Saved to " + outPath);
+				return outPath;
 			} catch (final IOException ex) {
 				System.err.println(ex);
+				return null;
 			}
 		}
 
-		public float x(GalliumPointD pt) {
-			final double w = bounds.width();
-			final double xLo = bounds.xLo();
-			final double xd = ((pt.x - xLo) / w) * m_width;
-			return (float) xd;
+		public int x(float strikeX) {
+			return Math.round(((strikeX - bounds.x) / bounds.width) * m_width);
 		}
 
-		public float y(GalliumPointD pt) {
-			final double h = bounds.height();
-			final double yHi = bounds.yHi();
-			final double xd = ((yHi - pt.y) / h) * m_height;
-			return (float) xd;
+		public int y(float strikeY) {
+			return Math.round(((bounds.y - strikeY) / bounds.height) * m_height);
 		}
 
-		public Canvas(GalliumBoundingBoxD b, boolean fill, Color bg, Color fg) {
-			final int w = (int) Math.round(b.width() * 50.0);
-			final int h = (int) Math.round(b.height() * 50.0);
+		public Canvas(Rectangle2D.Float b, int w, int h) {
 			this.bounds = b;
 			m_width = w;
 			m_height = h;
-			m_fill = fill;
 			m_bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 			m_g2d = m_bimg.createGraphics();
-			m_g2d.setColor(bg);
+			m_g2d.setColor(Color.WHITE);
 			m_g2d.fillRect(0, 0, w, h);
-			if (fill) {
-				m_g2d.setPaint(fg);
-			} else {
-				m_g2d.setColor(fg);
-			}
 		}
-		final GalliumBoundingBoxD bounds;
+		final Rectangle2D.Float bounds;
 		private final int m_width;
 		private final int m_height;
-		private final boolean m_fill;
 		private final BufferedImage m_bimg;
 		private final Graphics2D m_g2d;
 	}

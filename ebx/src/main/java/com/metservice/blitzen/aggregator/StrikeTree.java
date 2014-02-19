@@ -135,7 +135,7 @@ class StrikeTree {
 	private static class Bounds {
 
 		public Rectangle2D.Float boundingRectangle() {
-			return new Rectangle2D.Float(xL, yT, (xR - xR), (yT - yB));
+			return new Rectangle2D.Float(xL, yT, (xR - xL), (yT - yB));
 		}
 
 		public boolean contains(float y, float x) {
