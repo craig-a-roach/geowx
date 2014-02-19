@@ -16,6 +16,14 @@ class StrikeClusterTable {
 		return m_bounds;
 	}
 
+	public StrikeCluster[] clusterArray() {
+		return m_clusterArray;
+	}
+
+	public Strike[] noiseArray() {
+		return m_noiseArray;
+	}
+
 	@Override
 	public String toString() {
 		final int clusterCount = m_clusterArray.length;
