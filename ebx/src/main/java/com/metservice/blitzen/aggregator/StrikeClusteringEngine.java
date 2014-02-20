@@ -38,7 +38,9 @@ class StrikeClusteringEngine {
 		assert cons != null;
 		final StrikeAgenda seeds = new StrikeAgenda();
 		m_base.regionQuery(cons, strikeId, seeds);
-		if (seeds.count() < cons.minStrikes) {
+		final int seedCount = seeds.count();
+		clusterState.setRegion(strikeId, seedCount);
+		if (seedCount < cons.minStrikes) {
 			clusterState.setNoise(strikeId);
 			return false;
 		}
@@ -48,7 +50,9 @@ class StrikeClusteringEngine {
 			final int seedStrikeId = seeds.pop();
 			final StrikeAgenda result = new StrikeAgenda();
 			m_base.regionQuery(cons, seedStrikeId, result);
-			if (result.count() < cons.minStrikes) {
+			final int resultCount = result.count();
+			clusterState.setRegion(seedStrikeId, resultCount);
+			if (resultCount < cons.minStrikes) {
 				continue;
 			}
 			while (!result.isEmpty()) {
@@ -129,8 +133,10 @@ class StrikeClusteringEngine {
 
 		public static ClusterState newInstance(StrikeBase base) {
 			assert base != null;
-			final int[] cidArray = base.newClusterIdArray();
-			return new ClusterState(base, cidArray);
+			final int strikeCount = base.strikeCount();
+			final int[] cidArray = new int[strikeCount];
+			final int[] rgnArray = new int[strikeCount];
+			return new ClusterState(base, cidArray, rgnArray);
 		}
 
 		private ArrayBuilder[] newBuilderArray(int[] extentArray, int lastClusterId) {
@@ -208,14 +214,20 @@ class StrikeClusteringEngine {
 			m_cidArray[strikeId] = CID_NOISE;
 		}
 
-		private ClusterState(StrikeBase base, int[] cidArray) {
+		public void setRegion(int strikeId, int regionCount) {
+			m_rgnArray[strikeId] = regionCount;
+		}
+
+		private ClusterState(StrikeBase base, int[] cidArray, int[] rgnArray) {
 			assert base != null;
 			assert cidArray != null;
 			m_base = base;
 			m_cidArray = cidArray;
+			m_rgnArray = rgnArray;
 		}
 		private final StrikeBase m_base;
 		private final int[] m_cidArray;
+		private final int[] m_rgnArray;
 	}
 
 	private static class Constraint {
@@ -241,10 +253,6 @@ class StrikeClusteringEngine {
 
 		public Rectangle2D.Float boundingRectangle() {
 			return m_tree.boundingRectangle();
-		}
-
-		public int[] newClusterIdArray() {
-			return new int[m_strikeCount];
 		}
 
 		public void regionQuery(Constraint cons, int strikeId, StrikeAgenda agenda) {

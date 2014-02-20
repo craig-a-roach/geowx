@@ -52,6 +52,12 @@ public class TestStrikeDev {
 			+"|1.5:1.5,4.0,4.5"
 			+"|1.0:4.0"
 			;
+	//0123
+	//=45678
+	//9012345
+	//=6789
+	//0====12
+	//====3
 	//@formatter:on
 
 	private static void print(Strike[] strikes, StrikeAgenda agenda) {
@@ -65,7 +71,10 @@ public class TestStrikeDev {
 	@Test
 	public void a10_popC() {
 		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
-		System.out.println(strikes);
+		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
+		final StrikeClusterTable table = engine.solve(0.8f, 3);
+
+		System.out.println(table);
 	}
 
 	public void t10_popB() {

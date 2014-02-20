@@ -58,11 +58,6 @@ class StrikeTree {
 		return tree;
 	}
 
-	private boolean isCore(Strike[] strikes, int originStrikeId, Ring rangeRing) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 	boolean boundsContains(Strike strike) {
 		assert strike != null;
 		return m_bounds.contains(strike.y, strike.x);
@@ -84,7 +79,7 @@ class StrikeTree {
 		}
 	}
 
-	void query(Result result) {
+	void query(QResult result) {
 		final Strike[] strikes = result.strikes;
 		final Ring rangeRing = result.rangeRing;
 		final int idOrigin = result.idOrigin;
@@ -109,18 +104,11 @@ class StrikeTree {
 		return m_bounds.boundingRectangle();
 	}
 
-	public boolean isCore(Strike[] strikes, int originStrikeId, float range) {
-		if (strikes == null) throw new IllegalArgumentException("object is null");
-		final Strike originStrike = strikes[originStrikeId];
-		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
-		return isCore(strikes, originStrikeId, rangeRing);
-	}
-
 	public void query(Strike[] strikes, int originStrikeId, float range, StrikeAgenda agenda) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
 		final Strike originStrike = strikes[originStrikeId];
 		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
-		final Result result = new Result(strikes, originStrikeId, rangeRing, agenda);
+		final QResult result = new QResult(strikes, originStrikeId, rangeRing, agenda);
 		query(result);
 	}
 
@@ -183,9 +171,9 @@ class StrikeTree {
 		public final float xR;
 	}
 
-	private static class Result {
+	private static class QResult {
 
-		public Result(Strike[] strikes, int idOrigin, Ring rangeRing, StrikeAgenda agenda) {
+		public QResult(Strike[] strikes, int idOrigin, Ring rangeRing, StrikeAgenda agenda) {
 			assert strikes != null;
 			this.strikes = strikes;
 			this.idOrigin = idOrigin;
@@ -247,7 +235,7 @@ class StrikeTree {
 			throw new IllegalStateException("Cannot insert strike (" + strike + ") in subTree(" + toString() + ")");
 		}
 
-		void query(Result result) {
+		void query(QResult result) {
 			tl.query(result);
 			tr.query(result);
 			bl.query(result);
@@ -277,5 +265,4 @@ class StrikeTree {
 		private final StrikeTree bl;
 		private final StrikeTree br;
 	}
-
 }
