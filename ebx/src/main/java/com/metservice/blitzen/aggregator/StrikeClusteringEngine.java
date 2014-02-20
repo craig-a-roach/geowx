@@ -15,7 +15,7 @@ import java.util.List;
  */
 class StrikeClusteringEngine {
 
-	private static final int CID_NOISE = Integer.MIN_VALUE;
+	private static final int CID_NOISE = -1;
 	private static final int CID_UNCLASSIFIED = 0;
 	private static final int CID_FIRST = 1;
 
@@ -42,7 +42,7 @@ class StrikeClusteringEngine {
 			clusterState.setNoise(strikeId);
 			return false;
 		}
-		clusterState.setClusterId(strikeId, -clusterId);
+		clusterState.setClusterId(strikeId, clusterId);
 		clusterState.setClusterId(seeds, clusterId);
 		while (!seeds.isEmpty()) {
 			final int seedStrikeId = seeds.pop();

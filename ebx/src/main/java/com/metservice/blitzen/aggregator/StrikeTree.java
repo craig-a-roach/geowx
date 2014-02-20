@@ -58,6 +58,11 @@ class StrikeTree {
 		return tree;
 	}
 
+	private boolean isCore(Strike[] strikes, int originStrikeId, Ring rangeRing) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 	boolean boundsContains(Strike strike) {
 		assert strike != null;
 		return m_bounds.contains(strike.y, strike.x);
@@ -102,6 +107,13 @@ class StrikeTree {
 
 	public Rectangle2D.Float boundingRectangle() {
 		return m_bounds.boundingRectangle();
+	}
+
+	public boolean isCore(Strike[] strikes, int originStrikeId, float range) {
+		if (strikes == null) throw new IllegalArgumentException("object is null");
+		final Strike originStrike = strikes[originStrikeId];
+		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
+		return isCore(strikes, originStrikeId, rangeRing);
 	}
 
 	public void query(Strike[] strikes, int originStrikeId, float range, StrikeAgenda agenda) {
