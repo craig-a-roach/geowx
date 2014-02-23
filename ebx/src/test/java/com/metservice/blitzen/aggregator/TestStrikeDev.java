@@ -52,11 +52,11 @@ public class TestStrikeDev {
 			+"|1.5:1.5,4.0,4.5"
 			+"|1.0:4.0"
 			;
-	//0123
-	//=45678
-	//9012345
-	//=6789
-	//0====12
+	//01234
+	//=56789
+	//0123456
+	//=7890
+	//1====2
 	//====3
 	//@formatter:on
 
@@ -69,7 +69,20 @@ public class TestStrikeDev {
 	}
 
 	@Test
-	public void a10_popC() {
+	public void a10_trig() {
+		final double RTD = 180.0 / Math.PI;
+		final float Ay = 3.5f, Ax = 2.0f;
+		final float By = 3.0f, Bx = 2.0f;
+		final float Cy = 3.5f, Cx = 1.5f;
+		final float ABy = By - Ay, ABx = Bx - Ax;
+		final float BCy = Cy - By, BCx = Cx - Bx;
+		final double AB = Math.PI - Math.atan2(ABy, ABx);
+		final double BC = Math.atan2(BCy, BCx);
+		final double ABC = (AB + BC);
+		System.out.println("AB=" + (AB * RTD) + ", BC=" + (BC * RTD) + ", ABC=" + (ABC * RTD));
+	}
+
+	public void a20_popC() {
 		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
 		final StrikeClusterTable table = engine.solve(0.8f, 3);

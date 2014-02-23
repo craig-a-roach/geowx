@@ -5,13 +5,26 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.util.Comparator;
+
 /**
  * @author roach
  */
 class StrikeCluster {
 
 	private static final int MinHullVertices = 10;
+	@SuppressWarnings("unused")
+	private static final Comparator<Strike> XComparator = new Comparator<Strike>() {
 
+		@Override
+		public int compare(Strike lhs, Strike rhs) {
+			if (lhs.x < rhs.x) return -1;
+			if (lhs.x > rhs.x) return +1;
+			return 0;
+		}
+	};
+
+	@SuppressWarnings("unused")
 	private static Strike[] convexHull(Strike[] strikesAscX) {
 		final int n = strikesAscX.length;
 		if (n < MinHullVertices) return strikesAscX;
@@ -63,29 +76,26 @@ class StrikeCluster {
 	}
 
 	public Strike[] strikeConvexHull() {
-		return m_strikeConvexHull;
+		return m_strikePolygon;
 	}
 
-	public Strike[] strikes() {
-		return m_strikesAscX;
+	public Strike[] strikePolygon() {
+		return m_strikePolygon;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("strikes=").append(m_strikesAscX.length);
-		sb.append(", vertices=").append(m_strikeConvexHull.length);
+		sb.append("strikes=").append(m_strikePolygon.length);
 		sb.append(", mags=").append(m_qtyMagnitude);
 		return sb.toString();
 	}
 
-	public StrikeCluster(Strike[] strikesAscX, float qtyMagnitude) {
-		assert strikesAscX != null;
-		m_strikesAscX = strikesAscX;
+	public StrikeCluster(Strike[] strikePolygon, float qtyMagnitude) {
+		assert strikePolygon != null;
+		m_strikePolygon = strikePolygon;
 		m_qtyMagnitude = qtyMagnitude;
-		m_strikeConvexHull = convexHull(strikesAscX);
 	}
-	private final Strike[] m_strikesAscX;
+	private final Strike[] m_strikePolygon;
 	private final float m_qtyMagnitude;
-	private final Strike[] m_strikeConvexHull;
 }
