@@ -10,11 +10,14 @@ package com.metservice.blitzen.aggregator;
  */
 class StrikePolygon {
 
+	private static final float FPI = (float) Math.PI;
+	private static final double PI2 = 2.0 * Math.PI;
+
 	private static float pathAngle(Strike[] strikes, int[] idtriple) {
 		final int id0 = idtriple[0];
 		final int id1 = idtriple[1];
 		final int id2 = idtriple[2];
-		if (id0 == id2) return 0.0f;
+		if (id0 == id2) return FPI;
 		final Strike sa = strikes[id0];
 		final Strike sb = strikes[id1];
 		final Strike sc = strikes[id2];
@@ -22,20 +25,27 @@ class StrikePolygon {
 		final float ABx = sb.x - sa.x;
 		final float BCy = sc.y - sb.y;
 		final float BCx = sc.x - sb.x;
-		final double AB = Math.PI - Math.atan2(ABy, ABx);
+		final double AB = Math.atan2(ABy, ABx);
 		final double BC = Math.atan2(BCy, BCx);
-		return (float) (AB + BC);
+		final double ABC = Math.abs(AB - BC);
+		final double ABCn = (ABC > Math.PI) ? PI2 - ABC : ABC;
+		return (float) ABCn;
 	}
 
 	private static int selectLeftmost(Strike[] strikes) {
 		final int strikeCount = strikes.length;
 		int resultId = 0;
 		float xmin = strikes[resultId].x;
+		float yxmin = strikes[resultId].y;
 		for (int id = 1; id < strikeCount; id++) {
 			final float sx = strikes[id].x;
-			if (sx < xmin) {
-				resultId = id;
+			if (sx <= xmin) {
 				xmin = sx;
+				final float sy = strikes[id].y;
+				if (sy < yxmin) {
+					resultId = id;
+					yxmin = sy;
+				}
 			}
 		}
 		return resultId;
@@ -64,13 +74,13 @@ class StrikePolygon {
 		final int agendaCount = agenda.count();
 		idtriple[2] = agenda.id(0);
 		int resultId = idtriple[2];
-		float maxAngle = pathAngle(strikes, idtriple);
+		float minAngle = pathAngle(strikes, idtriple);
 		for (int i = 1; i < agendaCount; i++) {
 			idtriple[2] = agenda.id(i);
 			final float pa = pathAngle(strikes, idtriple);
-			if (pa > maxAngle) {
+			if (pa < minAngle) {
 				resultId = idtriple[2];
-				maxAngle = pa;
+				minAngle = pa;
 			}
 		}
 		idtriple[2] = resultId;

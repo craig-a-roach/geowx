@@ -91,7 +91,7 @@ class StrikeClusteringEngine {
 			final int depth = m_strikes.length;
 			if (depth != m_nextIndex)
 				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
-			return StrikePolygon.newPolygon(m_strikes, eps); // TODO
+			return StrikePolygon.newPolygon(m_strikes, eps);
 		}
 
 		public float qtyMagnitude() {

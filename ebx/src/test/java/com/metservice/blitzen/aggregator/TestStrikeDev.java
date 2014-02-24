@@ -68,20 +68,26 @@ public class TestStrikeDev {
 		}
 	}
 
-	@Test
-	public void a10_trig() {
+	private static void trigfn(float Ax, float Ay, float Bx, float By, float Cx, float Cy) {
 		final double RTD = 180.0 / Math.PI;
-		final float Ay = 3.5f, Ax = 2.0f;
-		final float By = 3.0f, Bx = 2.0f;
-		final float Cy = 3.5f, Cx = 1.5f;
+		final double PI2 = 2.0 * Math.PI;
 		final float ABy = By - Ay, ABx = Bx - Ax;
 		final float BCy = Cy - By, BCx = Cx - Bx;
-		final double AB = Math.PI - Math.atan2(ABy, ABx);
+		final double AB = Math.atan2(ABy, ABx);
 		final double BC = Math.atan2(BCy, BCx);
-		final double ABC = (AB + BC);
-		System.out.println("AB=" + (AB * RTD) + ", BC=" + (BC * RTD) + ", ABC=" + (ABC * RTD));
+		final double ABC = Math.abs(AB - BC);
+		final double ABCn = (ABC > Math.PI) ? PI2 - ABC : ABC;
+		System.out.println("AB=" + (AB * RTD) + ", BC=" + (BC * RTD) + ", ABC=" + (ABCn * RTD));
 	}
 
+	// @Test
+	public void a10_trig() {
+		trigfn(1.0f, 7.0f, 2.5f, 5.0f, 2.0f, 2.0f);
+		trigfn(2.5f, 5.0f, 2.0f, 1.0f, 2.0f, 5.0f);
+		trigfn(3.0f, 3.5f, 3.5f, 3.5f, 4.0f, 3.0f);
+	}
+
+	@Test
 	public void a20_popC() {
 		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
