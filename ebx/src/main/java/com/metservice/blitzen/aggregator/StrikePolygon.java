@@ -10,14 +10,14 @@ package com.metservice.blitzen.aggregator;
  */
 class StrikePolygon {
 
-	private static final float FPI = (float) Math.PI;
-	private static final double PI2 = 2.0 * Math.PI;
+	private static final double TWOPI = 2.0 * Math.PI;
+	private static final float FTWOPI = (float) TWOPI;
 
 	private static float pathAngle(Strike[] strikes, int[] idtriple) {
 		final int id0 = idtriple[0];
 		final int id1 = idtriple[1];
 		final int id2 = idtriple[2];
-		if (id0 == id2) return FPI;
+		if (id0 == id2) return FTWOPI;
 		final Strike sa = strikes[id0];
 		final Strike sb = strikes[id1];
 		final Strike sc = strikes[id2];
@@ -27,9 +27,9 @@ class StrikePolygon {
 		final float BCx = sc.x - sb.x;
 		final double AB = Math.atan2(ABy, ABx);
 		final double BC = Math.atan2(BCy, BCx);
-		final double ABC = Math.abs(AB - BC);
-		final double ABCn = (ABC > Math.PI) ? PI2 - ABC : ABC;
-		return (float) ABCn;
+		final double ABC = AB - BC + Math.PI;
+		final double result = ABC > 0.0 ? (ABC > TWOPI ? (ABC - TWOPI) : ABC) : (TWOPI + ABC);
+		return (float) result;
 	}
 
 	private static int selectLeftmost(Strike[] strikes) {
@@ -94,13 +94,19 @@ class StrikePolygon {
 		final StrikeAgenda peers = new StrikeAgenda();
 		tree.query(strikes, vertexId, eps, peers);
 		final int leftmostPeerId = selectLeftmost(strikes, peers);
+		final int strikeCount = strikes.length;
 		idtriple[0] = vertexId;
 		idtriple[1] = leftmostPeerId;
 		selectPath(strikes, tree, eps, idtriple);
-		while (idtriple[2] != sentinelId) {
+		int visitCount = 0;
+		while (idtriple[2] != sentinelId && visitCount < strikeCount) {
 			idtriple[0] = idtriple[1];
 			idtriple[1] = idtriple[2];
 			selectPath(strikes, tree, eps, idtriple);
+			visitCount++;
+		}
+		final boolean isClosed = (idtriple[2] == sentinelId);
+		if (!isClosed) {
 		}
 
 		return null;
