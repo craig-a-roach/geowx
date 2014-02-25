@@ -29,6 +29,14 @@ class StrikeAgenda {
 		return m_count;
 	}
 
+	public int[] emit() {
+		final int exCap = m_ids.length;
+		if (m_count == exCap) return m_ids;
+		final int[] out = new int[m_count];
+		System.arraycopy(m_ids, 0, out, 0, m_count);
+		return out;
+	}
+
 	public int id(int index) {
 		return m_ids[index];
 	}

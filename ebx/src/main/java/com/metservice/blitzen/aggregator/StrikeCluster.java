@@ -13,7 +13,6 @@ import java.util.Comparator;
 class StrikeCluster {
 
 	private static final int MinHullVertices = 10;
-	@SuppressWarnings("unused")
 	private static final Comparator<Strike> XComparator = new Comparator<Strike>() {
 
 		@Override
@@ -24,7 +23,6 @@ class StrikeCluster {
 		}
 	};
 
-	@SuppressWarnings("unused")
 	private static Strike[] convexHull(Strike[] strikesAscX) {
 		final int n = strikesAscX.length;
 		if (n < MinHullVertices) return strikesAscX;
@@ -71,31 +69,48 @@ class StrikeCluster {
 		return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x)) > 0;
 	}
 
-	public float qtyMagnitude() {
-		return m_qtyMagnitude;
+	public float qtyMagnitudeAverage() {
+		return m_magSum / m_strikeCount;
+	}
+
+	public float qtyMagnitudeMax() {
+		return m_magMax;
+	}
+
+	public float qtyMagnitudeSum() {
+		return m_magSum;
 	}
 
 	public Strike[] strikeConvexHull() {
-		return m_strikePolygon;
+		final Strike[] strikesAscX = m_strikePolygon.newSortedVertexArray(XComparator);
+		final Strike[] convexHull = convexHull(strikesAscX);
+		return convexHull;
 	}
 
-	public Strike[] strikePolygon() {
+	public StrikePolygon strikePolygon() {
 		return m_strikePolygon;
 	}
 
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("strikes=").append(m_strikePolygon.length);
-		sb.append(", mags=").append(m_qtyMagnitude);
+		sb.append("vertices=").append(m_strikePolygon.vertexCount());
+		sb.append("strikes=").append(m_strikeCount);
+		sb.append(", magSum=").append(m_magSum);
+		sb.append(", magMax=").append(m_magMax);
 		return sb.toString();
 	}
 
-	public StrikeCluster(Strike[] strikePolygon, float qtyMagnitude) {
-		assert strikePolygon != null;
-		m_strikePolygon = strikePolygon;
-		m_qtyMagnitude = qtyMagnitude;
+	public StrikeCluster(StrikePolygon polygon, int strikeCount, float magSum, float magMax) {
+		assert polygon != null;
+		assert strikeCount > 0;
+		m_strikePolygon = polygon;
+		m_strikeCount = strikeCount;
+		m_magSum = magSum;
+		m_magMax = magMax;
 	}
-	private final Strike[] m_strikePolygon;
-	private final float m_qtyMagnitude;
+	private final StrikePolygon m_strikePolygon;
+	private final int m_strikeCount;
+	private final float m_magSum;
+	private final float m_magMax;
 }

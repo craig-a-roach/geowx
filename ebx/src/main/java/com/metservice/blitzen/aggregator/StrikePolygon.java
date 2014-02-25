@@ -5,6 +5,10 @@
  */
 package com.metservice.blitzen.aggregator;
 
+import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
+import java.util.Comparator;
+
 /**
  * @author roach
  */
@@ -95,20 +99,86 @@ class StrikePolygon {
 		tree.query(strikes, vertexId, eps, peers);
 		final int leftmostPeerId = selectLeftmost(strikes, peers);
 		final int strikeCount = strikes.length;
+		final StrikeAgenda vertices = new StrikeAgenda(strikeCount / 8);
+		vertices.add(vertexId);
+		vertices.add(leftmostPeerId);
 		idtriple[0] = vertexId;
 		idtriple[1] = leftmostPeerId;
 		selectPath(strikes, tree, eps, idtriple);
 		int visitCount = 0;
 		while (idtriple[2] != sentinelId && visitCount < strikeCount) {
+			vertices.add(idtriple[2]);
 			idtriple[0] = idtriple[1];
 			idtriple[1] = idtriple[2];
 			selectPath(strikes, tree, eps, idtriple);
 			visitCount++;
 		}
 		final boolean isClosed = (idtriple[2] == sentinelId);
-		if (!isClosed) {
-		}
-
-		return null;
+		if (!isClosed) throw new IllegalStateException("Circularity in hull construction");
+		return new StrikePolygon(strikes, vertices);
 	}
+
+	public Rectangle2D.Float bounds() {
+		return m_bounds;
+	}
+
+	public float maxDimension() {
+		return Math.max(m_bounds.height, m_bounds.width);
+	}
+
+	public Strike[] newSortedVertexArray(Comparator<Strike> comparator) {
+		final Strike[] asc = new Strike[m_vertices.length];
+		System.arraycopy(m_vertices, 0, asc, 0, m_vertices.length);
+		Arrays.sort(asc, comparator);
+		return asc;
+	}
+
+	@Override
+	public String toString() {
+		return "#" + m_vertices.length + " " + m_bounds;
+	}
+
+	public int vertexCount() {
+		return m_vertices.length;
+	}
+
+	public Strike[] vertices() {
+		return m_vertices;
+	}
+
+	private StrikePolygon(Strike[] strikes, StrikeAgenda vertices) {
+		assert vertices != null;
+		assert strikes != null;
+		assert vertices != null;
+		final int vcount = vertices.count();
+		final Strike s0 = strikes[0];
+		float yB = s0.y, xL = s0.x;
+		float yT = yB, xR = xL;
+		final Strike[] array = new Strike[vcount];
+		for (int i = 0; i < vcount; i++) {
+			final int vid = vertices.id(i);
+			final Strike strike = strikes[vid];
+			final float sy = strike.y;
+			final float sx = strike.x;
+			if (sy < yB) {
+				yB = sy;
+			}
+			if (sx < xL) {
+				xL = sx;
+			}
+			if (sy > yT) {
+				yT = sy;
+			}
+			if (sx > xR) {
+				xR = sx;
+			}
+			array[i] = strike;
+		}
+		final float width = (xR - xL);
+		final float height = (yT - yB);
+		m_vertices = array;
+		m_bounds = new Rectangle2D.Float(xL, yT, width, height);
+	}
+	private final Strike[] m_vertices;
+	private final Rectangle2D.Float m_bounds;
 }

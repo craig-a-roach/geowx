@@ -33,6 +33,7 @@ class StrikeClusterTable {
 		sb.append("clusterCount=").append(clusterCount).append("\n");
 		sb.append("noiseCount=").append(noiseCount).append(")\n");
 		sb.append("sumClusterMagnitude=").append(m_sumClusterMagnitude).append("\n");
+		sb.append("maxClusterMagnitude=").append(m_sumClusterMagnitude).append("\n");
 		sb.append("sumNoiseMagnitude=").append(m_sumNoiseMagnitude).append("\n");
 		sb.append("bounds(").append(m_bounds.x).append(")\n");
 		sb.append("clusters(").append("\n");

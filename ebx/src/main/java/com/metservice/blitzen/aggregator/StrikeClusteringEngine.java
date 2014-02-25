@@ -84,7 +84,9 @@ class StrikeClusteringEngine {
 			assert strike != null;
 			m_strikes[m_nextIndex] = strike;
 			m_nextIndex++;
-			m_qtyMagnitude += Math.abs(strike.qty);
+			final float absQty = Math.abs(strike.qty);
+			m_qtyMagnitudeSum += absQty;
+			m_qtyMagnitudeMax = Math.max(m_qtyMagnitudeMax, absQty);
 		}
 
 		public StrikePolygon newPolygon(float eps) {
@@ -94,8 +96,16 @@ class StrikeClusteringEngine {
 			return StrikePolygon.newPolygon(m_strikes, eps);
 		}
 
-		public float qtyMagnitude() {
-			return m_qtyMagnitude;
+		public float qtyMagnitudeMax() {
+			return m_qtyMagnitudeMax;
+		}
+
+		public float qtyMagnitudeSum() {
+			return m_qtyMagnitudeSum;
+		}
+
+		public int strikeCount() {
+			return m_strikes.length;
 		}
 
 		public Strike[] strikes() {
@@ -107,7 +117,8 @@ class StrikeClusteringEngine {
 		}
 		private final Strike[] m_strikes;
 		private int m_nextIndex;
-		private float m_qtyMagnitude;
+		private float m_qtyMagnitudeSum;
+		private float m_qtyMagnitudeMax;
 	}
 
 	private static class ClusterState {
@@ -165,19 +176,21 @@ class StrikeClusteringEngine {
 				builder.add(strike);
 			}
 			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
-			float sumClusterMag = 0.0f;
+			float sumMag = 0.0f;
 			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
 				final ArrayBuilder ab = builderArray[clusterId];
 				final StrikePolygon polygon = ab.newPolygon(eps);
-				final float mag = ab.qtyMagnitude();
-				final StrikeCluster cluster = null; // TODO
+				final int clusterCount = ab.strikeCount();
+				final float clusterMagSum = ab.qtyMagnitudeSum();
+				final float clusterMagMax = ab.qtyMagnitudeMax();
+				final StrikeCluster cluster = new StrikeCluster(polygon, clusterCount, clusterMagSum, clusterMagMax);
 				clusterArray[clusterId - 1] = cluster;
-				sumClusterMag += mag;
+				sumMag += clusterMagSum;
 			}
 			final Strike[] noiseArray = noiseBuilder.strikes();
-			final float sumNoiseMag = noiseBuilder.qtyMagnitude();
+			final float noiseSumMag = noiseBuilder.qtyMagnitudeSum();
 			final Rectangle2D.Float rect = m_base.boundingRectangle();
-			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumClusterMag, sumNoiseMag, rect);
+			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, rect);
 		}
 
 		public void setClusterId(int strikeId, int clusterId) {
