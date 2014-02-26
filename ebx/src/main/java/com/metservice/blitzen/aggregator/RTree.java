@@ -10,7 +10,7 @@ import java.awt.geom.Rectangle2D;
 /**
  * @author roach
  */
-class StrikeTree {
+class RTree {
 
 	public static final int DefaultNodeCapacity = 64;
 
@@ -41,15 +41,15 @@ class StrikeTree {
 		return new Bounds(yB, xL, yT, xR);
 	}
 
-	public static StrikeTree newInstance(Strike[] strikes) {
+	public static RTree newInstance(Strike[] strikes) {
 		return newInstance(strikes, DefaultNodeCapacity);
 	}
 
-	public static StrikeTree newInstance(Strike[] strikes, int nodeCapacity) {
+	public static RTree newInstance(Strike[] strikes, int nodeCapacity) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
 		if (strikes.length == 0) throw new IllegalArgumentException("strikeList is empty");
 		final Bounds bounds = newBounds(strikes);
-		final StrikeTree tree = new StrikeTree(bounds);
+		final RTree tree = new RTree(bounds);
 		final int strikeCount = strikes.length;
 		for (int sid = 0; sid < strikeCount; sid++) {
 			final Strike strike = strikes[sid];
@@ -104,7 +104,7 @@ class StrikeTree {
 		return m_bounds.boundingRectangle();
 	}
 
-	public void query(Strike[] strikes, int originStrikeId, float range, StrikeAgenda agenda) {
+	public void query(Strike[] strikes, int originStrikeId, float range, Agenda agenda) {
 		if (strikes == null) throw new IllegalArgumentException("object is null");
 		final Strike originStrike = strikes[originStrikeId];
 		final Ring rangeRing = new Ring(originStrike.y, originStrike.x, range);
@@ -123,7 +123,7 @@ class StrikeTree {
 		return "bounds(" + m_bounds + "), members=" + m_memberCount + ", hasSubTree=" + hasSub;
 	}
 
-	private StrikeTree(Bounds b) {
+	private RTree(Bounds b) {
 		assert b != null;
 		m_bounds = b;
 	}
@@ -173,7 +173,7 @@ class StrikeTree {
 
 	private static class QResult {
 
-		public QResult(Strike[] strikes, int idOrigin, Ring rangeRing, StrikeAgenda agenda) {
+		public QResult(Strike[] strikes, int idOrigin, Ring rangeRing, Agenda agenda) {
 			assert strikes != null;
 			this.strikes = strikes;
 			this.idOrigin = idOrigin;
@@ -183,7 +183,7 @@ class StrikeTree {
 		public final Strike[] strikes;
 		public final int idOrigin;
 		public final Ring rangeRing;
-		public final StrikeAgenda agenda;
+		public final Agenda agenda;
 	}
 
 	private static class Ring {
@@ -255,14 +255,14 @@ class StrikeTree {
 			assert parent != null;
 			final float yM = parent.yM();
 			final float xM = parent.xM();
-			tl = new StrikeTree(new Bounds(yM, parent.xL, parent.yT, xM));
-			tr = new StrikeTree(new Bounds(yM, xM, parent.yT, parent.xR));
-			bl = new StrikeTree(new Bounds(parent.yB, parent.xL, yM, xM));
-			br = new StrikeTree(new Bounds(parent.yB, xM, yM, parent.xR));
+			tl = new RTree(new Bounds(yM, parent.xL, parent.yT, xM));
+			tr = new RTree(new Bounds(yM, xM, parent.yT, parent.xR));
+			bl = new RTree(new Bounds(parent.yB, parent.xL, yM, xM));
+			br = new RTree(new Bounds(parent.yB, xM, yM, parent.xR));
 		}
-		private final StrikeTree tl;
-		private final StrikeTree tr;
-		private final StrikeTree bl;
-		private final StrikeTree br;
+		private final RTree tl;
+		private final RTree tr;
+		private final RTree bl;
+		private final RTree br;
 	}
 }

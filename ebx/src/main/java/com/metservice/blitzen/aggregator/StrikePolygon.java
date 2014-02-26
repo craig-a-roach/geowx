@@ -70,6 +70,38 @@ class StrikePolygon {
 		return result;
 	}
 
+	private static StrikePolygon createConvex(Strike[] strikes, PolygonSpec ps, PolygonBuilder pb) {
+		final int[] idtriple = new int[3];
+		final RTree tree = RTree.newInstance(strikes);
+		final int sentinelId = selectLeftmost(strikes);
+		final int vertexId = sentinelId;
+		final Agenda peers = new Agenda();
+		tree.query(strikes, vertexId, eps, peers);
+		final int leftmostPeerId = selectLeftmost(strikes, peers);
+		final int strikeCount = strikes.length;
+		final Agenda vertices = new Agenda(strikeCount / 8);
+		vertices.add(vertexId);
+		vertices.add(leftmostPeerId);
+		idtriple[0] = vertexId;
+		idtriple[1] = leftmostPeerId;
+		selectPath(strikes, tree, eps, idtriple);
+		final int visitLimit = strikeCount * 2;
+		int visitCount = 0;
+		while (idtriple[2] != sentinelId && visitCount < visitLimit) {
+			vertices.add(idtriple[2]);
+			idtriple[0] = idtriple[1];
+			idtriple[1] = idtriple[2];
+			selectPath(strikes, tree, eps, idtriple);
+			visitCount++;
+		}
+		final boolean isClosed = (idtriple[2] == sentinelId);
+		if (!isClosed) {
+			final String msg = "Circularity in hull construction";
+			throw new IllegalStateException(msg);
+		}
+		return new StrikePolygon(strikes, vertices);
+	}
+
 	private static float pathAngle(Strike[] strikes, int[] idtriple) {
 		final int id0 = idtriple[0];
 		final int id1 = idtriple[1];
@@ -112,7 +144,7 @@ class StrikePolygon {
 		return resultId;
 	}
 
-	private static int selectLeftmost(Strike[] strikes, StrikeAgenda agenda) {
+	private static int selectLeftmost(Strike[] strikes, Agenda agenda) {
 		assert agenda != null;
 		final int agendaCount = agenda.count();
 		int resultId = agenda.id(0);
@@ -128,9 +160,9 @@ class StrikePolygon {
 		return resultId;
 	}
 
-	private static void selectPath(Strike[] strikes, StrikeTree tree, float eps, int[] idtriple) {
+	private static void selectPath(Strike[] strikes, RTree tree, float eps, int[] idtriple) {
 		final int vertexId = idtriple[1];
-		final StrikeAgenda agenda = new StrikeAgenda();
+		final Agenda agenda = new Agenda();
 		tree.query(strikes, vertexId, eps, agenda);
 		final int agendaCount = agenda.count();
 		idtriple[2] = agenda.id(0);
@@ -147,33 +179,8 @@ class StrikePolygon {
 		idtriple[2] = resultId;
 	}
 
-	public static StrikePolygon newPolygon(Strike[] strikes, float eps) {
-		final int[] idtriple = new int[3];
-		final StrikeTree tree = StrikeTree.newInstance(strikes);
-		final int sentinelId = selectLeftmost(strikes);
-		final int vertexId = sentinelId;
-		final StrikeAgenda peers = new StrikeAgenda();
-		tree.query(strikes, vertexId, eps, peers);
-		final int leftmostPeerId = selectLeftmost(strikes, peers);
-		final int strikeCount = strikes.length;
-		final StrikeAgenda vertices = new StrikeAgenda(strikeCount / 8);
-		vertices.add(vertexId);
-		vertices.add(leftmostPeerId);
-		idtriple[0] = vertexId;
-		idtriple[1] = leftmostPeerId;
-		selectPath(strikes, tree, eps, idtriple);
-		final int visitLimit = strikeCount * 2;
-		int visitCount = 0;
-		while (idtriple[2] != sentinelId && visitCount < visitLimit) {
-			vertices.add(idtriple[2]);
-			idtriple[0] = idtriple[1];
-			idtriple[1] = idtriple[2];
-			selectPath(strikes, tree, eps, idtriple);
-			visitCount++;
-		}
-		final boolean isClosed = (idtriple[2] == sentinelId);
-		if (!isClosed) throw new IllegalStateException("Circularity in hull construction");
-		return new StrikePolygon(strikes, vertices);
+	public static StrikePolygon newPolygon(Strike[] strikes, PolygonSpec ps, PolygonBuilder pb) {
+
 	}
 
 	public Rectangle2D.Float bounds() {
@@ -205,7 +212,7 @@ class StrikePolygon {
 		return m_vertices.length;
 	}
 
-	private StrikePolygon(Strike[] strikes, StrikeAgenda vertices) {
+	private StrikePolygon(Strike[] strikes, Agenda vertices) {
 		assert vertices != null;
 		assert strikes != null;
 		assert vertices != null;

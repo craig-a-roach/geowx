@@ -71,7 +71,7 @@ public class TestStrikeDev {
 	//====3
 	//@formatter:on
 
-	private static void print(Strike[] strikes, StrikeAgenda agenda) {
+	private static void print(Strike[] strikes, Agenda agenda) {
 		while (!agenda.isEmpty()) {
 			final int sid = agenda.pop();
 			final Strike strike = strikes[sid];
@@ -137,16 +137,16 @@ public class TestStrikeDev {
 
 	public void t85_popB() {
 		final Strike[] strikes = TestHelpLoader.newArrayFromLines(popB);
-		final StrikeTree oTree = StrikeTree.newInstance(strikes, 3);
+		final RTree oTree = RTree.newInstance(strikes, 3);
 		System.out.println(oTree);
 	}
 
 	public void t90_popA() {
 		final Strike[] strikes = TestHelpLoader.newArrayFromLines(popA);
-		final StrikeTree oTree = StrikeTree.newInstance(strikes, 3);
+		final RTree oTree = RTree.newInstance(strikes, 3);
 		System.out.println(oTree);
 		Assert.assertNotNull(oTree);
-		final StrikeAgenda agenda = new StrikeAgenda();
+		final Agenda agenda = new Agenda();
 		oTree.query(strikes, 0, 1.0f, agenda);
 		print(strikes, agenda);
 		oTree.query(strikes, 2, 1.0f, agenda);
@@ -154,7 +154,7 @@ public class TestStrikeDev {
 	}
 
 	public void t95_agenda() {
-		final StrikeAgenda agenda = new StrikeAgenda(2);
+		final Agenda agenda = new Agenda(2);
 		agenda.add(10);
 		agenda.add(20);
 		agenda.add(30);

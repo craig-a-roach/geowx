@@ -66,7 +66,7 @@ public class TestStrikePaint {
 		}
 	}
 
-	@Test
+	// @Test
 	public void a10() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);

@@ -24,7 +24,7 @@ class StrikeClusteringEngine {
 
 	private boolean expandCluster(Constraint cons, ClusterState clusterState, int strikeId, int clusterId) {
 		assert cons != null;
-		final StrikeAgenda seeds = new StrikeAgenda();
+		final Agenda seeds = new Agenda();
 		m_base.regionQuery(cons, strikeId, seeds);
 		if (seeds.count() < cons.minStrikes) {
 			clusterState.setNoise(strikeId);
@@ -34,7 +34,7 @@ class StrikeClusteringEngine {
 		clusterState.setClusterId(seeds, clusterId);
 		while (!seeds.isEmpty()) {
 			final int seedStrikeId = seeds.pop();
-			final StrikeAgenda result = new StrikeAgenda();
+			final Agenda result = new Agenda();
 			m_base.regionQuery(cons, seedStrikeId, result);
 			if (result.count() < cons.minStrikes) {
 				continue;
@@ -53,8 +53,9 @@ class StrikeClusteringEngine {
 		return true;
 	}
 
-	public StrikeClusterTable solve(float eps, int minStrikes) {
+	public StrikeClusterTable solve(float eps, int minStrikes, int minConcave) {
 		final Constraint cons = new Constraint(eps, minStrikes);
+		final PolygonSpec pspec = new PolygonSpec(eps, minConcave);
 		final ClusterState clusterState = ClusterState.newInstance(m_base);
 		int clusterId = CID_FIRST;
 		final int strikeCount = m_base.strikeCount();
@@ -67,7 +68,7 @@ class StrikeClusteringEngine {
 			}
 		}
 		final int lastClusterId = clusterId == CID_FIRST ? 0 : (clusterId - 1);
-		final StrikeClusterTable table = clusterState.newTable(lastClusterId, eps);
+		final StrikeClusterTable table = clusterState.newTable(pspec, lastClusterId);
 		return table;
 	}
 
@@ -89,11 +90,11 @@ class StrikeClusteringEngine {
 			m_qtyMagnitudeMax = Math.max(m_qtyMagnitudeMax, absQty);
 		}
 
-		public StrikePolygon newPolygon(float eps) {
+		public StrikePolygon newPolygon(PolygonSpec ps, PolygonBuilder pb) {
 			final int depth = m_strikes.length;
 			if (depth != m_nextIndex)
 				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
-			return StrikePolygon.newPolygon(m_strikes, eps);
+			return StrikePolygon.newPolygon(m_strikes, ps, pb);
 		}
 
 		public float qtyMagnitudeMax() {
@@ -162,7 +163,7 @@ class StrikeClusteringEngine {
 			return m_cidArray[strikeId];
 		}
 
-		public StrikeClusterTable newTable(int lastClusterId, float eps) {
+		public StrikeClusterTable newTable(PolygonSpec pspec, int lastClusterId) {
 			final int[] extentArray = newExtentArray(lastClusterId);
 			final int noiseCount = extentArray[0];
 			final ArrayBuilder noiseBuilder = new ArrayBuilder(noiseCount);
@@ -175,11 +176,12 @@ class StrikeClusteringEngine {
 				final ArrayBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
 				builder.add(strike);
 			}
+			final PolygonBuilder pb = m_base.newPolygonBuilder();
 			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
 			float sumMag = 0.0f;
 			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
 				final ArrayBuilder ab = builderArray[clusterId];
-				final StrikePolygon polygon = ab.newPolygon(eps);
+				final StrikePolygon polygon = ab.newPolygon(pspec, pb);
 				final int clusterCount = ab.strikeCount();
 				final float clusterMagSum = ab.qtyMagnitudeSum();
 				final float clusterMagMax = ab.qtyMagnitudeMax();
@@ -193,16 +195,16 @@ class StrikeClusteringEngine {
 			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, rect);
 		}
 
-		public void setClusterId(int strikeId, int clusterId) {
-			m_cidArray[strikeId] = clusterId;
-		}
-
-		public void setClusterId(StrikeAgenda agenda, int clusterId) {
+		public void setClusterId(Agenda agenda, int clusterId) {
 			assert agenda != null;
 			final int count = agenda.count();
 			for (int i = 0; i < count; i++) {
 				m_cidArray[agenda.id(i)] = clusterId;
 			}
+		}
+
+		public void setClusterId(int strikeId, int clusterId) {
+			m_cidArray[strikeId] = clusterId;
 		}
 
 		public void setNoise(int strikeId) {
@@ -236,7 +238,7 @@ class StrikeClusteringEngine {
 			final int strikeCount = strikeList.size();
 			if (strikeCount == 0) throw new IllegalArgumentException("empty strike list");
 			final Strike[] strikes = strikeList.toArray(new Strike[strikeCount]);
-			final StrikeTree tree = StrikeTree.newInstance(strikes);
+			final RTree tree = RTree.newInstance(strikes);
 			return new StrikeBase(strikes, tree);
 		}
 
@@ -248,7 +250,11 @@ class StrikeClusteringEngine {
 			return new int[m_strikeCount];
 		}
 
-		public void regionQuery(Constraint cons, int strikeId, StrikeAgenda agenda) {
+		public PolygonBuilder newPolygonBuilder() {
+			return new PolygonBuilder(m_strikes);
+		}
+
+		public void regionQuery(Constraint cons, int strikeId, Agenda agenda) {
 			assert cons != null;
 			m_tree.query(m_strikes, strikeId, cons.eps, agenda);
 		}
@@ -261,7 +267,7 @@ class StrikeClusteringEngine {
 			return m_strikeCount;
 		}
 
-		public StrikeBase(Strike[] strikes, StrikeTree tree) {
+		public StrikeBase(Strike[] strikes, RTree tree) {
 			assert strikes != null;
 			assert tree != null;
 			m_strikes = strikes;
@@ -269,7 +275,7 @@ class StrikeClusteringEngine {
 			m_strikeCount = strikes.length;
 		}
 		private final Strike[] m_strikes;
-		private final StrikeTree m_tree;
+		private final RTree m_tree;
 		private final int m_strikeCount;
 	}
 }

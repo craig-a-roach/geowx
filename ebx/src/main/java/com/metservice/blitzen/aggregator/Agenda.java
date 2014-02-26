@@ -8,7 +8,7 @@ package com.metservice.blitzen.aggregator;
 /**
  * @author roach
  */
-class StrikeAgenda {
+class Agenda {
 
 	private void ensure() {
 		final int exCap = m_ids.length;
@@ -65,11 +65,11 @@ class StrikeAgenda {
 		return sb.toString();
 	}
 
-	public StrikeAgenda() {
+	public Agenda() {
 		this(16);
 	}
 
-	public StrikeAgenda(int initialCapacity) {
+	public Agenda(int initialCapacity) {
 		m_ids = new int[Math.max(2, initialCapacity)];
 	}
 	private int m_count;
