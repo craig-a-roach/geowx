@@ -25,26 +25,55 @@ import org.junit.Test;
  */
 public class TestStrikePaint {
 
-	private void render(List<Strike> strikes, StrikeClusterTable table, Canvas canvas) {
+	private static final String[] popD = { "1341965133494,-6.3704, 152.8754,-2.0,GROUND",
+			"1341976756872,-6.3213, 152.8321,-11.0,GROUND", "1341978101046,-6.3412, 152.9054,-5.0,GROUND",
+			"1341978815425,-6.3373, 152.8744,-1.0,GROUND", "1341979254621,-6.3779, 152.8444,-64.0,GROUND",
+			"1342013599646,-6.3079, 152.9032,-2.0,GROUND", "1342014685240,-6.3908, 152.9207,-2.0,GROUND" };
+
+	private void render(List<Strike> strikes, StrikeClusterTable table, Canvas canvas, Color oAll, Color oNoise, Color oConvex,
+			Color oConcave) {
 		final StrikeCluster[] clusterArray = table.clusterArray();
 		final int clusterCount = clusterArray.length;
 		for (int i = 0; i < clusterCount; i++) {
 			final StrikeCluster strikeCluster = clusterArray[i];
-			final Strike[] strikeConvexHull = strikeCluster.strikeConvexHull();
-			canvas.plotPolygon(strikeConvexHull, Color.orange);
+			if (strikeCluster == null) {
+				continue; // TODO
+			}
+			final StrikePolygon polygon = strikeCluster.strikePolygon();
+			if (oConvex != null) {
+				final Strike[] convex = polygon.convexVertices();
+				canvas.plotPolygon(convex, oConvex);
+			}
+			if (oConcave != null) {
+				final Strike[] concave = polygon.concaveVertices();
+				canvas.plotPolygon(concave, oConcave);
+			}
 		}
-		final int strikeCount = strikes.size();
-		for (int i = 0; i < strikeCount; i++) {
-			final Strike strike = strikes.get(i);
-			canvas.plotPoint(strike, Color.gray);
+		if (oAll != null) {
+			final int strikeCount = strikes.size();
+			for (int i = 0; i < strikeCount; i++) {
+				final Strike strike = strikes.get(i);
+				canvas.plotPoint(strike, oAll);
+			}
 		}
-		final Strike[] noiseArray = table.noiseArray();
-		final int noiseCount = noiseArray.length;
-		for (int i = 0; i < noiseCount; i++) {
-			final Strike strike = noiseArray[i];
-			canvas.plotPoint(strike, Color.blue);
+		if (oNoise != null) {
+			final Strike[] noiseArray = table.noiseArray();
+			final int noiseCount = noiseArray.length;
+			for (int i = 0; i < noiseCount; i++) {
+				final Strike strike = noiseArray[i];
+				canvas.plotPoint(strike, oNoise);
+			}
 		}
+	}
 
+	@Test
+	public void a10() {
+		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
+		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
+		final StrikeClusterTable table = engine.solve(0.05f, 3);
+		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
+		render(strikes, table, canvas, Color.gray, Color.blue, Color.cyan, Color.orange);
+		canvas.save("a10");
 	}
 
 	@Test
@@ -53,7 +82,7 @@ public class TestStrikePaint {
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
 		final StrikeClusterTable table = engine.solve(0.05f, 3);
 		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
-		render(strikes, table, canvas);
+		render(strikes, table, canvas, null, null, null, Color.orange);
 		canvas.save("base");
 	}
 

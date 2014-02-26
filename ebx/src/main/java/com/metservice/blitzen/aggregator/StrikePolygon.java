@@ -16,6 +16,59 @@ class StrikePolygon {
 
 	private static final double TWOPI = 2.0 * Math.PI;
 	private static final float FTWOPI = (float) TWOPI;
+	private static final int MinHullVertices = 10;
+
+	private static final Comparator<Strike> XComparator = new Comparator<Strike>() {
+
+		@Override
+		public int compare(Strike lhs, Strike rhs) {
+			if (lhs.x < rhs.x) return -1;
+			if (lhs.x > rhs.x) return +1;
+			return 0;
+		}
+	};
+
+	private static Strike[] convexHull(Strike[] strikesAscX) {
+		final int n = strikesAscX.length;
+		if (n < MinHullVertices) return strikesAscX;
+		final Strike[] upper = new Strike[n];
+		upper[0] = strikesAscX[0];
+		upper[1] = strikesAscX[1];
+		int upperSize = 2;
+		for (int i = 2; i < n; i++) {
+			upper[upperSize] = strikesAscX[i];
+			upperSize++;
+			while (upperSize > 2 && !rightTurn(upper[upperSize - 3], upper[upperSize - 2], upper[upperSize - 1])) {
+				upper[upperSize - 2] = upper[upperSize - 1];
+				upperSize--;
+			}
+		}
+
+		final Strike[] lower = new Strike[n];
+		lower[0] = strikesAscX[n - 1];
+		lower[1] = strikesAscX[n - 2];
+		int lowerSize = 2;
+		for (int i = n - 3; i >= 0; i--) {
+			lower[lowerSize] = strikesAscX[i];
+			lowerSize++;
+			while (lowerSize > 2 && !rightTurn(lower[lowerSize - 3], lower[lowerSize - 2], lower[lowerSize - 1])) {
+				lower[lowerSize - 2] = lower[lowerSize - 1];
+				lowerSize--;
+			}
+		}
+
+		final Strike[] result = new Strike[upperSize + lowerSize];
+		int ri = 0;
+		for (int i = 0; i < upperSize; i++) {
+			result[ri] = upper[i];
+			ri++;
+		}
+		for (int i = 0; i < lowerSize; i++) {
+			result[ri] = lower[i];
+			ri++;
+		}
+		return result;
+	}
 
 	private static float pathAngle(Strike[] strikes, int[] idtriple) {
 		final int id0 = idtriple[0];
@@ -36,17 +89,21 @@ class StrikePolygon {
 		return (float) result;
 	}
 
+	private static boolean rightTurn(Strike a, Strike b, Strike c) {
+		return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x)) > 0;
+	}
+
 	private static int selectLeftmost(Strike[] strikes) {
 		final int strikeCount = strikes.length;
 		int resultId = 0;
 		float xmin = strikes[resultId].x;
-		float yxmin = strikes[resultId].y;
+		float yxmin = Float.NaN;
 		for (int id = 1; id < strikeCount; id++) {
 			final float sx = strikes[id].x;
 			if (sx <= xmin) {
 				xmin = sx;
 				final float sy = strikes[id].y;
-				if (sy < yxmin) {
+				if (Float.isNaN(yxmin) || sy < yxmin) {
 					resultId = id;
 					yxmin = sy;
 				}
@@ -105,8 +162,9 @@ class StrikePolygon {
 		idtriple[0] = vertexId;
 		idtriple[1] = leftmostPeerId;
 		selectPath(strikes, tree, eps, idtriple);
+		final int visitLimit = strikeCount * 2;
 		int visitCount = 0;
-		while (idtriple[2] != sentinelId && visitCount < strikeCount) {
+		while (idtriple[2] != sentinelId && visitCount < visitLimit) {
 			vertices.add(idtriple[2]);
 			idtriple[0] = idtriple[1];
 			idtriple[1] = idtriple[2];
@@ -122,15 +180,20 @@ class StrikePolygon {
 		return m_bounds;
 	}
 
-	public float maxDimension() {
-		return Math.max(m_bounds.height, m_bounds.width);
+	public Strike[] concaveVertices() {
+		return m_vertices;
 	}
 
-	public Strike[] newSortedVertexArray(Comparator<Strike> comparator) {
-		final Strike[] asc = new Strike[m_vertices.length];
-		System.arraycopy(m_vertices, 0, asc, 0, m_vertices.length);
-		Arrays.sort(asc, comparator);
-		return asc;
+	public Strike[] convexVertices() {
+		final Strike[] ascX = new Strike[m_vertices.length];
+		System.arraycopy(m_vertices, 0, ascX, 0, m_vertices.length);
+		Arrays.sort(ascX, XComparator);
+		final Strike[] convexHull = convexHull(ascX);
+		return convexHull;
+	}
+
+	public float maxDimension() {
+		return Math.max(m_bounds.height, m_bounds.width);
 	}
 
 	@Override
@@ -140,10 +203,6 @@ class StrikePolygon {
 
 	public int vertexCount() {
 		return m_vertices.length;
-	}
-
-	public Strike[] vertices() {
-		return m_vertices;
 	}
 
 	private StrikePolygon(Strike[] strikes, StrikeAgenda vertices) {

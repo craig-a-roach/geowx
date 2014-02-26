@@ -110,7 +110,7 @@ class StrikeClusteringEngineRC {
 			if (depth != m_nextIndex)
 				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
 			Arrays.sort(m_strikes, XComparator);
-			return new StrikeCluster(m_strikes, m_qtyMagnitude);
+			return null; // new StrikeCluster(m_strikes, m_qtyMagnitude);
 		}
 
 		public float qtyMagnitude() {
@@ -190,7 +190,7 @@ class StrikeClusteringEngineRC {
 			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
 				final StrikeCluster cluster = builderArray[clusterId].newCluster();
 				clusterArray[clusterId - 1] = cluster;
-				sumClusterMag += cluster.qtyMagnitude();
+				sumClusterMag += cluster.qtyMagnitudeSum();
 			}
 			final Strike[] noiseArray = noiseBuilder.strikes();
 			final float sumNoiseMag = noiseBuilder.qtyMagnitude();

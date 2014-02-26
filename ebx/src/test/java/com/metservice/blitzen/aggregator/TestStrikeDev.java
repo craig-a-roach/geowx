@@ -31,6 +31,17 @@ public class TestStrikeDev {
 		"1011,4,3,  10,GROUND",
 		"1012,5,5,  10,GROUND"
 		};
+	
+	private static final String[] popD = {
+		"1341965133494,-6.3704, 152.8754,-2.0,GROUND",
+		"1341976756872,-6.3213, 152.8321,-11.0,GROUND",
+		"1341978101046,-6.3412, 152.9054,-5.0,GROUND",
+		"1341978815425,-6.3373, 152.8744,-1.0,GROUND",
+		"1341979254621,-6.3779, 152.8444,-64.0,GROUND",
+		"1342013599646,-6.3079, 152.9032,-2.0,GROUND",
+		 "1342014685240,-6.3908, 152.9207,-2.0,GROUND"
+	};
+	
 	private static final String[] popB = {
 		"1341964827332,-5.0799,152.8558,-5,GROUND",
 		"1341964865803,-5.2584,152.8397,-2,GROUND", 
@@ -88,11 +99,18 @@ public class TestStrikeDev {
 	}
 
 	@Test
-	public void a20_popC() {
+	public void a20_popD() {
+		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
+		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
+		final StrikeClusterTable table = engine.solve(0.8f, 3);
+		System.out.println(table);
+	}
+
+	// @Test
+	public void a30_popC() {
 		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
 		final StrikeClusterTable table = engine.solve(0.8f, 3);
-
 		System.out.println(table);
 	}
 
