@@ -8,7 +8,6 @@ package com.metservice.blitzen.aggregator;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -30,30 +29,30 @@ public class TestStrikePaint {
 			"1341978815425,-6.3373, 152.8744,-1.0,GROUND", "1341979254621,-6.3779, 152.8444,-64.0,GROUND",
 			"1342013599646,-6.3079, 152.9032,-2.0,GROUND", "1342014685240,-6.3908, 152.9207,-2.0,GROUND" };
 
-	private void render(List<Strike> strikes, StrikeClusterTable table, Canvas canvas, Color oAll, Color oNoise, Color oConvex,
-			Color oConcave) {
+	private void render(StrikeClusterTable table, Canvas canvas, Color oInterior, Color oNoise, int minCluster, Color oCluster) {
 		final StrikeCluster[] clusterArray = table.clusterArray();
 		final int clusterCount = clusterArray.length;
-		for (int i = 0; i < clusterCount; i++) {
-			final StrikeCluster strikeCluster = clusterArray[i];
-			if (strikeCluster == null) {
-				continue; // TODO
+		for (int cid = 0; cid < clusterCount; cid++) {
+			if (cid != 125) {
+				continue;
 			}
+			final StrikeCluster strikeCluster = clusterArray[cid];
 			final StrikePolygon polygon = strikeCluster.strikePolygon();
-			if (oConvex != null) {
-				final Strike[] convex = polygon.convexVertices();
-				canvas.plotPolygon(convex, oConvex);
+			if (oCluster != null) {
+				final int vcount = polygon.vertexCount();
+				if (vcount > minCluster) {
+					canvas.plotPolygon(polygon.vertices(), oCluster);
+				} else {
+					canvas.plotBounds(polygon.bounds(), oCluster);
+				}
 			}
-			if (oConcave != null) {
-				final Strike[] concave = polygon.concaveVertices();
-				canvas.plotPolygon(concave, oConcave);
-			}
-		}
-		if (oAll != null) {
-			final int strikeCount = strikes.size();
-			for (int i = 0; i < strikeCount; i++) {
-				final Strike strike = strikes.get(i);
-				canvas.plotPoint(strike, oAll);
+			if (oInterior != null) {
+				final int interiorCount = polygon.interiorCount();
+				final Strike[] strikes = polygon.cluster();
+				for (int i = 0; i < interiorCount; i++) {
+					final Strike strike = strikes[i];
+					canvas.plotPoint(strike, oInterior);
+				}
 			}
 		}
 		if (oNoise != null) {
@@ -70,9 +69,9 @@ public class TestStrikePaint {
 	public void a10() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.05f, 3);
+		final StrikeClusterTable table = engine.solve(0.05f, 3, 5);
 		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
-		render(strikes, table, canvas, Color.gray, Color.blue, Color.cyan, Color.orange);
+		render(table, canvas, Color.gray, Color.blue, 3, Color.orange);
 		canvas.save("a10");
 	}
 
@@ -80,13 +79,26 @@ public class TestStrikePaint {
 	public void t50() {
 		final List<Strike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.05f, 3);
+		final StrikeClusterTable table = engine.solve(0.05f, 3, 10);
 		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
-		render(strikes, table, canvas, null, null, null, Color.orange);
+		render(table, canvas, null, null, 8, Color.orange);
 		canvas.save("base");
 	}
 
 	private static class Canvas {
+
+		public int h(float height) {
+			return Math.round(height / bounds.height() * m_height);
+		}
+
+		public void plotBounds(StrikeBounds box, Color paint) {
+			final int x = x(box.xL);
+			final int y = y(box.yT);
+			final int w = w(box.width());
+			final int h = h(box.height());
+			m_g2d.setPaint(paint);
+			m_g2d.fillRect(x, y, w, h);
+		}
 
 		public void plotPoint(Strike s, Paint paint) {
 			final int x = x(s.x);
@@ -95,12 +107,12 @@ public class TestStrikePaint {
 			m_g2d.fillRect(x, y, 1, 1);
 		}
 
-		public void plotPolygon(Strike[] strikeConvexHull, Color paint) {
-			final int vertexCount = strikeConvexHull.length;
+		public void plotPolygon(Strike[] vertices, Color paint) {
+			final int vertexCount = vertices.length;
 			final int[] xPoints = new int[vertexCount];
 			final int[] yPoints = new int[vertexCount];
 			for (int i = 0; i < vertexCount; i++) {
-				final Strike s = strikeConvexHull[i];
+				final Strike s = vertices[i];
 				xPoints[i] = x(s.x);
 				yPoints[i] = y(s.y);
 			}
@@ -123,15 +135,19 @@ public class TestStrikePaint {
 			}
 		}
 
+		public int w(float width) {
+			return Math.round(width / bounds.width() * m_width);
+		}
+
 		public int x(float strikeX) {
-			return Math.round(((strikeX - bounds.x) / bounds.width) * m_width);
+			return Math.round(((strikeX - bounds.xL) / bounds.width()) * m_width);
 		}
 
 		public int y(float strikeY) {
-			return Math.round(((bounds.y - strikeY) / bounds.height) * m_height);
+			return m_height - Math.round(((strikeY - bounds.yB) / bounds.height()) * m_height);
 		}
 
-		public Canvas(Rectangle2D.Float b, int w, int h) {
+		public Canvas(StrikeBounds b, int w, int h) {
 			this.bounds = b;
 			m_width = w;
 			m_height = h;
@@ -140,7 +156,7 @@ public class TestStrikePaint {
 			m_g2d.setColor(Color.WHITE);
 			m_g2d.fillRect(0, 0, w, h);
 		}
-		final Rectangle2D.Float bounds;
+		final StrikeBounds bounds;
 		private final int m_width;
 		private final int m_height;
 		private final BufferedImage m_bimg;

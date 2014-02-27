@@ -5,7 +5,6 @@
  */
 package com.metservice.blitzen.aggregator;
 
-import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -16,7 +15,6 @@ class StrikePolygon {
 
 	private static final double TWOPI = 2.0 * Math.PI;
 	private static final float FTWOPI = (float) TWOPI;
-	private static final int MinHullVertices = 10;
 
 	private static final Comparator<Strike> XComparator = new Comparator<Strike>() {
 
@@ -30,7 +28,6 @@ class StrikePolygon {
 
 	private static Strike[] convexHull(Strike[] strikesAscX) {
 		final int n = strikesAscX.length;
-		if (n < MinHullVertices) return strikesAscX;
 		final Strike[] upper = new Strike[n];
 		upper[0] = strikesAscX[0];
 		upper[1] = strikesAscX[1];
@@ -70,43 +67,60 @@ class StrikePolygon {
 		return result;
 	}
 
-	private static StrikePolygon createConvex(Strike[] strikes, PolygonSpec ps, PolygonBuilder pb) {
-		final int[] idtriple = new int[3];
-		final RTree tree = RTree.newInstance(strikes);
-		final int sentinelId = selectLeftmost(strikes);
-		final int vertexId = sentinelId;
+	private static StrikePolygon createConcave(PolygonSpec ps, Strike[] cluster) {
+		final int interiorCount = cluster.length;
+		final float eps = ps.eps;
+		final Tracker tracker = new Tracker(cluster);
+		final RTree tree = RTree.newInstance(cluster);
+		final int sentinelId = selectLeftmost(cluster);
 		final Agenda peers = new Agenda();
-		tree.query(strikes, vertexId, eps, peers);
-		final int leftmostPeerId = selectLeftmost(strikes, peers);
-		final int strikeCount = strikes.length;
-		final Agenda vertices = new Agenda(strikeCount / 8);
-		vertices.add(vertexId);
+		tree.query(cluster, sentinelId, eps, peers);
+		final int leftmostPeerId = selectLeftmost(cluster, peers);
+		final Agenda vertices = new Agenda(interiorCount / 8);
+		vertices.add(sentinelId);
 		vertices.add(leftmostPeerId);
-		idtriple[0] = vertexId;
-		idtriple[1] = leftmostPeerId;
-		selectPath(strikes, tree, eps, idtriple);
-		final int visitLimit = strikeCount * 2;
+		final int[] idpath = new int[2];
+		idpath[0] = sentinelId;
+		idpath[1] = leftmostPeerId;
+		int headId = selectPath(cluster, tree, eps, idpath, tracker);
+		final int visitLimit = interiorCount * 2;
 		int visitCount = 0;
-		while (idtriple[2] != sentinelId && visitCount < visitLimit) {
-			vertices.add(idtriple[2]);
-			idtriple[0] = idtriple[1];
-			idtriple[1] = idtriple[2];
-			selectPath(strikes, tree, eps, idtriple);
+		while (headId != sentinelId && headId >= 0 && visitCount < visitLimit) {
+			vertices.add(headId);
+			tracker.visited(headId);
+			idpath[0] = idpath[1];
+			idpath[1] = headId;
+			headId = selectPath(cluster, tree, eps, idpath, tracker);
 			visitCount++;
 		}
-		final boolean isClosed = (idtriple[2] == sentinelId);
-		if (!isClosed) {
-			final String msg = "Circularity in hull construction";
-			throw new IllegalStateException(msg);
-		}
-		return new StrikePolygon(strikes, vertices);
+		final boolean isClosed = (headId == sentinelId);
+		if (!isClosed) return null;
+		return new StrikePolygon(cluster, newStrikeVertices(cluster, vertices));
 	}
 
-	private static float pathAngle(Strike[] strikes, int[] idtriple) {
-		final int id0 = idtriple[0];
-		final int id1 = idtriple[1];
-		final int id2 = idtriple[2];
-		if (id0 == id2) return FTWOPI;
+	private static StrikePolygon newConvex(Strike[] cluster) {
+		final int interiorCount = cluster.length;
+		final Strike[] ascX = new Strike[interiorCount];
+		System.arraycopy(cluster, 0, ascX, 0, interiorCount);
+		Arrays.sort(ascX, XComparator);
+		final Strike[] convexHull = convexHull(ascX);
+		return new StrikePolygon(cluster, convexHull);
+	}
+
+	private static Strike[] newStrikeVertices(Strike[] strikes, Agenda vertices) {
+		final int vcount = vertices.count();
+		final Strike[] array = new Strike[vcount];
+		for (int i = 0; i < vcount; i++) {
+			array[i] = strikes[vertices.id(i)];
+		}
+		return array;
+	}
+
+	private static float pathAngle(Strike[] strikes, int[] idpath, int headId) {
+		final int id0 = idpath[0];
+		if (id0 == headId) return FTWOPI;
+		final int id1 = idpath[1];
+		final int id2 = headId;
 		final Strike sa = strikes[id0];
 		final Strike sb = strikes[id1];
 		final Strike sc = strikes[id2];
@@ -160,91 +174,82 @@ class StrikePolygon {
 		return resultId;
 	}
 
-	private static void selectPath(Strike[] strikes, RTree tree, float eps, int[] idtriple) {
-		final int vertexId = idtriple[1];
+	private static int selectPath(Strike[] strikes, RTree tree, float eps, int[] idpath, Tracker tracker) {
+		final int pathId = idpath[0];
+		final int vertexId = idpath[1];
 		final Agenda agenda = new Agenda();
-		tree.query(strikes, vertexId, eps, agenda);
+		tree.query(strikes, vertexId, eps, agenda, pathId, tracker);
 		final int agendaCount = agenda.count();
-		idtriple[2] = agenda.id(0);
-		int resultId = idtriple[2];
-		float minAngle = pathAngle(strikes, idtriple);
-		for (int i = 1; i < agendaCount; i++) {
-			idtriple[2] = agenda.id(i);
-			final float pa = pathAngle(strikes, idtriple);
-			if (pa < minAngle) {
-				resultId = idtriple[2];
-				minAngle = pa;
+		if (agendaCount == 0) return -1;
+		int headId = agenda.id(0);
+		int resultId = headId;
+		if (agendaCount > 1) {
+			float minAngle = pathAngle(strikes, idpath, headId);
+			for (int i = 1; i < agendaCount; i++) {
+				headId = agenda.id(i);
+				final float pa = pathAngle(strikes, idpath, headId);
+				if (pa < minAngle) {
+					resultId = headId;
+					minAngle = pa;
+				}
 			}
 		}
-		idtriple[2] = resultId;
+		return resultId;
 	}
 
-	public static StrikePolygon newPolygon(Strike[] strikes, PolygonSpec ps, PolygonBuilder pb) {
+	public static StrikePolygon newPolygon(PolygonSpec ps, Strike[] cluster, int cid) {
+		if (ps == null) throw new IllegalArgumentException("object is null");
+		if (cluster == null) throw new IllegalArgumentException("object is null");
+		final int interiorCount = cluster.length;
+		if (interiorCount == 0) throw new IllegalArgumentException("non-empty interior strikes");
+		StrikePolygon oPolygon = null;
+		if (cid == 125) {
+			System.out.println("Big");
+		}
+		if (interiorCount >= ps.minConcave) {
+			oPolygon = createConcave(ps, cluster);
+		}
+		if (oPolygon == null) {
+			oPolygon = newConvex(cluster);
+		}
+		if (oPolygon == null) throw new IllegalStateException("Could not construct polygon for cluster #" + cid);
+		return oPolygon;
 
 	}
 
-	public Rectangle2D.Float bounds() {
+	public StrikeBounds bounds() {
 		return m_bounds;
 	}
 
-	public Strike[] concaveVertices() {
-		return m_vertices;
+	public Strike[] cluster() {
+		return m_cluster;
 	}
 
-	public Strike[] convexVertices() {
-		final Strike[] ascX = new Strike[m_vertices.length];
-		System.arraycopy(m_vertices, 0, ascX, 0, m_vertices.length);
-		Arrays.sort(ascX, XComparator);
-		final Strike[] convexHull = convexHull(ascX);
-		return convexHull;
-	}
-
-	public float maxDimension() {
-		return Math.max(m_bounds.height, m_bounds.width);
+	public int interiorCount() {
+		return m_cluster.length;
 	}
 
 	@Override
 	public String toString() {
-		return "#" + m_vertices.length + " " + m_bounds;
+		return "vertices=" + vertexCount() + ", interior=" + interiorCount() + " " + m_bounds;
 	}
 
 	public int vertexCount() {
 		return m_vertices.length;
 	}
 
-	private StrikePolygon(Strike[] strikes, Agenda vertices) {
-		assert vertices != null;
-		assert strikes != null;
-		assert vertices != null;
-		final int vcount = vertices.count();
-		final Strike s0 = strikes[0];
-		float yB = s0.y, xL = s0.x;
-		float yT = yB, xR = xL;
-		final Strike[] array = new Strike[vcount];
-		for (int i = 0; i < vcount; i++) {
-			final int vid = vertices.id(i);
-			final Strike strike = strikes[vid];
-			final float sy = strike.y;
-			final float sx = strike.x;
-			if (sy < yB) {
-				yB = sy;
-			}
-			if (sx < xL) {
-				xL = sx;
-			}
-			if (sy > yT) {
-				yT = sy;
-			}
-			if (sx > xR) {
-				xR = sx;
-			}
-			array[i] = strike;
-		}
-		final float width = (xR - xL);
-		final float height = (yT - yB);
-		m_vertices = array;
-		m_bounds = new Rectangle2D.Float(xL, yT, width, height);
+	public Strike[] vertices() {
+		return m_vertices;
 	}
+
+	private StrikePolygon(Strike[] cluster, Strike[] vertices) {
+		assert cluster != null && cluster.length > 0;
+		assert vertices != null && vertices.length > 0;
+		m_cluster = cluster;
+		m_vertices = vertices;
+		m_bounds = StrikeBounds.newInstance(vertices);
+	}
+	private final Strike[] m_cluster;
 	private final Strike[] m_vertices;
-	private final Rectangle2D.Float m_bounds;
+	private final StrikeBounds m_bounds;
 }

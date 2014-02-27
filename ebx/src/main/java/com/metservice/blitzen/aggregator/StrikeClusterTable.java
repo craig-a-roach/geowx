@@ -5,14 +5,13 @@
  */
 package com.metservice.blitzen.aggregator;
 
-import java.awt.geom.Rectangle2D;
 
 /**
  * @author roach
  */
 class StrikeClusterTable {
 
-	public Rectangle2D.Float bounds() {
+	public StrikeBounds bounds() {
 		return m_bounds;
 	}
 
@@ -45,7 +44,7 @@ class StrikeClusterTable {
 	}
 
 	public StrikeClusterTable(StrikeCluster[] clusterArray, Strike[] noiseArray, int strikeCount, float sumClusterMag,
-			float sumNoiseMag, Rectangle2D.Float bounds) {
+			float sumNoiseMag, StrikeBounds bounds) {
 		if (clusterArray == null) throw new IllegalArgumentException("object is null");
 		if (noiseArray == null) throw new IllegalArgumentException("object is null");
 		m_clusterArray = clusterArray;
@@ -60,5 +59,5 @@ class StrikeClusterTable {
 	private final int m_strikeCount;
 	private final float m_sumClusterMagnitude;
 	private final float m_sumNoiseMagnitude;
-	private final Rectangle2D.Float m_bounds;
+	private final StrikeBounds m_bounds;
 }

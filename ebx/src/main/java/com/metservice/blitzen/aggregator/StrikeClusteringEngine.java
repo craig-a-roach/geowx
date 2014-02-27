@@ -5,7 +5,6 @@
  */
 package com.metservice.blitzen.aggregator;
 
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 
 /**
@@ -90,11 +89,13 @@ class StrikeClusteringEngine {
 			m_qtyMagnitudeMax = Math.max(m_qtyMagnitudeMax, absQty);
 		}
 
-		public StrikePolygon newPolygon(PolygonSpec ps, PolygonBuilder pb) {
+		public StrikePolygon newPolygon(PolygonSpec ps, int cid) {
 			final int depth = m_strikes.length;
-			if (depth != m_nextIndex)
-				throw new IllegalStateException("expecting " + depth + " in cluster, but " + m_nextIndex);
-			return StrikePolygon.newPolygon(m_strikes, ps, pb);
+			if (depth != m_nextIndex) {
+				final String msg = "Expecting " + depth + " in cluster # " + cid + ", but " + m_nextIndex;
+				throw new IllegalStateException(msg);
+			}
+			return StrikePolygon.newPolygon(ps, m_strikes, cid);
 		}
 
 		public float qtyMagnitudeMax() {
@@ -176,23 +177,22 @@ class StrikeClusteringEngine {
 				final ArrayBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
 				builder.add(strike);
 			}
-			final PolygonBuilder pb = m_base.newPolygonBuilder();
 			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
 			float sumMag = 0.0f;
-			for (int clusterId = 1; clusterId <= lastClusterId; clusterId++) {
-				final ArrayBuilder ab = builderArray[clusterId];
-				final StrikePolygon polygon = ab.newPolygon(pspec, pb);
+			for (int clusterId = 0; clusterId < lastClusterId; clusterId++) {
+				final ArrayBuilder ab = builderArray[clusterId + 1];
+				final StrikePolygon polygon = ab.newPolygon(pspec, clusterId);
 				final int clusterCount = ab.strikeCount();
 				final float clusterMagSum = ab.qtyMagnitudeSum();
 				final float clusterMagMax = ab.qtyMagnitudeMax();
 				final StrikeCluster cluster = new StrikeCluster(polygon, clusterCount, clusterMagSum, clusterMagMax);
-				clusterArray[clusterId - 1] = cluster;
+				clusterArray[clusterId] = cluster;
 				sumMag += clusterMagSum;
 			}
 			final Strike[] noiseArray = noiseBuilder.strikes();
 			final float noiseSumMag = noiseBuilder.qtyMagnitudeSum();
-			final Rectangle2D.Float rect = m_base.boundingRectangle();
-			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, rect);
+			final StrikeBounds bounds = m_base.bounds();
+			return new StrikeClusterTable(clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, bounds);
 		}
 
 		public void setClusterId(Agenda agenda, int clusterId) {
@@ -242,16 +242,12 @@ class StrikeClusteringEngine {
 			return new StrikeBase(strikes, tree);
 		}
 
-		public Rectangle2D.Float boundingRectangle() {
-			return m_tree.boundingRectangle();
+		public StrikeBounds bounds() {
+			return m_tree.bounds();
 		}
 
 		public int[] newClusterIdArray() {
 			return new int[m_strikeCount];
-		}
-
-		public PolygonBuilder newPolygonBuilder() {
-			return new PolygonBuilder(m_strikes);
 		}
 
 		public void regionQuery(Constraint cons, int strikeId, Agenda agenda) {
