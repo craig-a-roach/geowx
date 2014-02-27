@@ -54,7 +54,7 @@ class StrikeClusteringEngine {
 
 	public StrikeClusterTable solve(float eps, int minStrikes, int minConcave) {
 		final Constraint cons = new Constraint(eps, minStrikes);
-		final PolygonSpec pspec = new PolygonSpec(eps, minConcave);
+		final PolygonSpec pspec = new PolygonSpec(eps, minConcave, 5);
 		final ClusterState clusterState = ClusterState.newInstance(m_base);
 		int clusterId = CID_FIRST;
 		final int strikeCount = m_base.strikeCount();

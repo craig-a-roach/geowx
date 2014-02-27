@@ -69,12 +69,11 @@ class StrikePolygon {
 
 	private static StrikePolygon createConcave(PolygonSpec ps, Strike[] cluster) {
 		final int interiorCount = cluster.length;
-		final float eps = ps.eps;
 		final Tracker tracker = new Tracker(cluster);
 		final RTree tree = RTree.newInstance(cluster);
 		final int sentinelId = selectLeftmost(cluster);
 		final Agenda peers = new Agenda();
-		tree.query(cluster, sentinelId, eps, peers);
+		tree.query(cluster, sentinelId, ps.eps, peers);
 		final int leftmostPeerId = selectLeftmost(cluster, peers);
 		final Agenda vertices = new Agenda(interiorCount / 8);
 		vertices.add(sentinelId);
@@ -82,7 +81,7 @@ class StrikePolygon {
 		final int[] idpath = new int[2];
 		idpath[0] = sentinelId;
 		idpath[1] = leftmostPeerId;
-		int headId = selectPath(cluster, tree, eps, idpath, tracker);
+		int headId = selectPath(cluster, tree, ps, idpath, tracker, 1);
 		final int visitLimit = interiorCount * 2;
 		int visitCount = 0;
 		while (headId != sentinelId && headId >= 0 && visitCount < visitLimit) {
@@ -90,7 +89,7 @@ class StrikePolygon {
 			tracker.visited(headId);
 			idpath[0] = idpath[1];
 			idpath[1] = headId;
-			headId = selectPath(cluster, tree, eps, idpath, tracker);
+			headId = selectPath(cluster, tree, ps, idpath, tracker, 1);
 			visitCount++;
 		}
 		final boolean isClosed = (headId == sentinelId);
@@ -135,6 +134,12 @@ class StrikePolygon {
 		return (float) result;
 	}
 
+	private static void reverse(int[] idpath) {
+		final int tid = idpath[0];
+		idpath[0] = idpath[1];
+		idpath[1] = tid;
+	}
+
 	private static boolean rightTurn(Strike a, Strike b, Strike c) {
 		return ((b.x - a.x) * (c.y - a.y)) - ((b.y - a.y) * (c.x - a.x)) > 0;
 	}
@@ -174,24 +179,30 @@ class StrikePolygon {
 		return resultId;
 	}
 
-	private static int selectPath(Strike[] strikes, RTree tree, float eps, int[] idpath, Tracker tracker) {
+	private static int selectPath(Strike[] strikes, RTree tree, PolygonSpec ps, int[] idpath, Tracker tracker, int inflator) {
+		if (inflator > ps.inflateLimit) return -1;
+		final float eps = ps.eps * inflator;
 		final int pathId = idpath[0];
 		final int vertexId = idpath[1];
 		final Agenda agenda = new Agenda();
 		tree.query(strikes, vertexId, eps, agenda, pathId, tracker);
 		final int agendaCount = agenda.count();
-		if (agendaCount == 0) return -1;
+		if (agendaCount == 0) {
+			if (inflator == 1) {
+				reverse(idpath);
+			}
+			return selectPath(strikes, tree, ps, idpath, tracker, inflator + 1);
+		}
 		int headId = agenda.id(0);
+		if (agendaCount == 1) return headId;
 		int resultId = headId;
-		if (agendaCount > 1) {
-			float minAngle = pathAngle(strikes, idpath, headId);
-			for (int i = 1; i < agendaCount; i++) {
-				headId = agenda.id(i);
-				final float pa = pathAngle(strikes, idpath, headId);
-				if (pa < minAngle) {
-					resultId = headId;
-					minAngle = pa;
-				}
+		float minAngle = pathAngle(strikes, idpath, headId);
+		for (int i = 1; i < agendaCount; i++) {
+			headId = agenda.id(i);
+			final float pa = pathAngle(strikes, idpath, headId);
+			if (pa < minAngle) {
+				resultId = headId;
+				minAngle = pa;
 			}
 		}
 		return resultId;
@@ -207,6 +218,7 @@ class StrikePolygon {
 			System.out.println("Big");
 		}
 		if (interiorCount >= ps.minConcave) {
+			System.out.println("**" + cid + ".");
 			oPolygon = createConcave(ps, cluster);
 		}
 		if (oPolygon == null) {

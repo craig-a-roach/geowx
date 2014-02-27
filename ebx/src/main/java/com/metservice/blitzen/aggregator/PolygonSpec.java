@@ -10,10 +10,12 @@ package com.metservice.blitzen.aggregator;
  */
 class PolygonSpec {
 
-	public PolygonSpec(float eps, int minConcave) {
+	public PolygonSpec(float eps, int minConcave, int inflateLimit) {
 		this.eps = eps;
 		this.minConcave = minConcave;
+		this.inflateLimit = inflateLimit;
 	}
 	public final float eps;
 	public final int minConcave;
+	public int inflateLimit;
 }

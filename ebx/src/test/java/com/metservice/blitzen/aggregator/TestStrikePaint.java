@@ -33,9 +33,6 @@ public class TestStrikePaint {
 		final StrikeCluster[] clusterArray = table.clusterArray();
 		final int clusterCount = clusterArray.length;
 		for (int cid = 0; cid < clusterCount; cid++) {
-			if (cid != 125) {
-				continue;
-			}
 			final StrikeCluster strikeCluster = clusterArray[cid];
 			final StrikePolygon polygon = strikeCluster.strikePolygon();
 			if (oCluster != null) {
@@ -65,7 +62,7 @@ public class TestStrikePaint {
 		}
 	}
 
-	// @Test
+	@Test
 	public void a10() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
@@ -75,7 +72,7 @@ public class TestStrikePaint {
 		canvas.save("a10");
 	}
 
-	@Test
+	// @Test
 	public void t50() {
 		final List<Strike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
