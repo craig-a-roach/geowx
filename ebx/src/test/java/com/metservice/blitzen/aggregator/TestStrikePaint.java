@@ -33,14 +33,17 @@ public class TestStrikePaint {
 		final StrikeCluster[] clusterArray = table.clusterArray();
 		final int clusterCount = clusterArray.length;
 		for (int cid = 0; cid < clusterCount; cid++) {
+			if (cid == 35) {
+				System.out.println("35");
+			}
 			final StrikeCluster strikeCluster = clusterArray[cid];
 			final StrikePolygon polygon = strikeCluster.strikePolygon();
 			if (oCluster != null) {
 				final int vcount = polygon.vertexCount();
 				if (vcount > minCluster) {
-					canvas.plotPolygon(polygon.vertices(), oCluster);
+					canvas.plotPolygon(polygon.vertices(), oCluster, "#" + cid);
 				} else {
-					canvas.plotBounds(polygon.bounds(), oCluster);
+					canvas.plotBounds(polygon.bounds(), oCluster, "#" + cid);
 				}
 			}
 			if (oInterior != null) {
@@ -62,23 +65,25 @@ public class TestStrikePaint {
 		}
 	}
 
-	@Test
+	// @Test
 	public void a10() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.05f, 3, 5);
+		final StrikeClusterTable table = engine.solve(0.05f, 3, 5, 5);
 		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
 		render(table, canvas, Color.gray, Color.blue, 3, Color.orange);
 		canvas.save("a10");
 	}
 
-	// @Test
+	@Test
 	public void t50() {
 		final List<Strike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.05f, 3, 10);
-		final Canvas canvas = new Canvas(table.bounds(), 1024, 640);
-		render(table, canvas, null, null, 8, Color.orange);
+		final StrikeClusterTable table = engine.solve(0.05f, 3, 100, 5);
+		final Canvas canvas = new Canvas(table.bounds(), 2048, 1024);
+		final Color colorInterior = new Color(0.1f, 0.1f, 0.9f, 0.6f);
+		final Color colorCluster = new Color(0.9f, 0.8f, 0.1f, 0.6f);
+		render(table, canvas, colorInterior, null, 8, colorCluster);
 		canvas.save("base");
 	}
 
@@ -88,13 +93,17 @@ public class TestStrikePaint {
 			return Math.round(height / bounds.height() * m_height);
 		}
 
-		public void plotBounds(StrikeBounds box, Color paint) {
+		public void plotBounds(StrikeBounds box, Color paint, String oText) {
 			final int x = x(box.xL);
 			final int y = y(box.yT);
 			final int w = w(box.width());
 			final int h = h(box.height());
 			m_g2d.setPaint(paint);
 			m_g2d.fillRect(x, y, w, h);
+			if (oText != null) {
+				m_g2d.setColor(Color.black);
+				m_g2d.drawString(oText, x, y);
+			}
 		}
 
 		public void plotPoint(Strike s, Paint paint) {
@@ -104,7 +113,7 @@ public class TestStrikePaint {
 			m_g2d.fillRect(x, y, 1, 1);
 		}
 
-		public void plotPolygon(Strike[] vertices, Color paint) {
+		public void plotPolygon(Strike[] vertices, Color paint, String oText) {
 			final int vertexCount = vertices.length;
 			final int[] xPoints = new int[vertexCount];
 			final int[] yPoints = new int[vertexCount];
@@ -115,6 +124,10 @@ public class TestStrikePaint {
 			}
 			m_g2d.setPaint(paint);
 			m_g2d.fillPolygon(xPoints, yPoints, vertexCount);
+			if (oText != null) {
+				m_g2d.setColor(Color.black);
+				m_g2d.drawString(oText, xPoints[0], yPoints[0]);
+			}
 		}
 
 		public Path save(String filePrefix) {

@@ -102,7 +102,7 @@ public class TestStrikeDev {
 	public void a20_popD() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popD);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.8f, 3, 10);
+		final StrikeClusterTable table = engine.solve(0.8f, 3, 10, 1);
 		System.out.println(table);
 	}
 
@@ -110,16 +110,16 @@ public class TestStrikeDev {
 	public void a30_popC() {
 		final List<Strike> strikes = TestHelpLoader.newListFromGenerator(popC);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table = engine.solve(0.8f, 3, 10);
+		final StrikeClusterTable table = engine.solve(0.8f, 3, 10, 1);
 		System.out.println(table);
 	}
 
 	public void t10_popB() {
 		final List<Strike> strikes = TestHelpLoader.newListFromLines(popB);
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
-		final StrikeClusterTable table1 = engine.solve(0.1f, 3, 10);
+		final StrikeClusterTable table1 = engine.solve(0.1f, 3, 10, 1);
 		System.out.println(table1);
-		final StrikeClusterTable table2 = engine.solve(5.0f, 3, 10);
+		final StrikeClusterTable table2 = engine.solve(5.0f, 3, 10, 1);
 		System.out.println(table2);
 	}
 
@@ -128,7 +128,7 @@ public class TestStrikeDev {
 		final long tsInit = System.currentTimeMillis();
 		final StrikeClusteringEngine engine = StrikeClusteringEngine.newInstance(strikes);
 		final long tsEngine = System.currentTimeMillis();
-		final StrikeClusterTable table = engine.solve(0.1f, 3, 10);
+		final StrikeClusterTable table = engine.solve(0.1f, 3, 10, 1);
 		final long tsCluster = System.currentTimeMillis();
 		System.out.println("engine-cluster=" + (tsCluster - tsEngine) + "ms");
 		System.out.println("init-cluster=" + (tsCluster - tsInit) + "ms");

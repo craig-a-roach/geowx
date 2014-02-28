@@ -217,6 +217,9 @@ class StrikePolygon {
 		if (cid == 125) {
 			System.out.println("Big");
 		}
+		if (cid == 35) {
+			System.out.println("Missing");
+		}
 		if (interiorCount >= ps.minConcave) {
 			System.out.println("**" + cid + ".");
 			oPolygon = createConcave(ps, cluster);
