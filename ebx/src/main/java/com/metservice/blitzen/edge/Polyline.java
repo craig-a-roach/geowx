@@ -12,7 +12,13 @@ import java.util.List;
  */
 class Polyline implements IPolyline {
 
-	public Polyline(List<Vertex> vertices) {
-
+	@Override
+	public String toString() {
+		return m_vertices.toString();
 	}
+
+	public Polyline(List<Vertex> vertices) {
+		m_vertices = vertices;
+	}
+	private final List<Vertex> m_vertices;
 }

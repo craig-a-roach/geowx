@@ -10,6 +10,7 @@ enum Bearing {
 	N(0, 0, 1), NE(1, 1, 1), E(2, 1, 0), SE(3, 1, -1), S(4, 0, -1), SW(5, -1, -1), W(6, -1, 0), NW(7, -1, 1), STAY(8, 0, 0);
 
 	private static final Bearing[] Paths = { N, NE, E, SE, S, SW, W, NW };
+	public static final Bearing[] Polar = { N, NE, E, SE, S };
 
 	public static Bearing select(int dx, int dy) {
 		if (dx == 0) {

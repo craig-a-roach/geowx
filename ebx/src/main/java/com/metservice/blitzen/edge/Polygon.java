@@ -12,7 +12,13 @@ import java.util.List;
  */
 class Polygon implements IPolyline {
 
-	public Polygon(List<Vertex> vertices) {
-
+	@Override
+	public String toString() {
+		return m_vertices.toString();
 	}
+
+	public Polygon(List<Vertex> vertices) {
+		m_vertices = vertices;
+	}
+	private final List<Vertex> m_vertices;
 }

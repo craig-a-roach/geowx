@@ -69,6 +69,25 @@ class TestHelpLoader {
 		return zl.toArray(new Strike[sz]);
 	}
 
+	public static BitMesh newBitMeshFromLines(String[] zlines, char mark) {
+		final int height = zlines.length;
+		int width = 0;
+		for (int i = 0; i < height; i++) {
+			width = Math.max(width, zlines[i].length());
+		}
+		final BitMesh bm = new BitMesh(width, height);
+		for (int i = 0, y = height - 1; i < height; i++, y--) {
+			final String line = zlines[i];
+			final int lineLen = line.length();
+			for (int x = 0; x < lineLen; x++) {
+				if (line.charAt(x) == mark) {
+					bm.set(x, y, true);
+				}
+			}
+		}
+		return bm;
+	}
+
 	public static List<Strike> newListFromGenerator(String spec) {
 		final Pattern lineSplitter = Pattern.compile("[|]");
 		final Pattern genSplitter = Pattern.compile("[,:]");

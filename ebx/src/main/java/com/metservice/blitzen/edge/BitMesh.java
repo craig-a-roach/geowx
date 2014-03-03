@@ -16,7 +16,12 @@ class BitMesh {
 		return bitIndex >> ADDRESS_BITS_PER_WORD;
 	}
 
+	private boolean outbounds(int x, int y) {
+		return x < 0 || x >= m_w || y < 0 || y >= m_h;
+	}
+
 	public boolean clear(int x, int y) {
+		if (outbounds(x, y)) return false;
 		final int index = (y * m_w) + x;
 		final int iw = wordIndex(index);
 		final long mask = 1L << index;
@@ -32,6 +37,10 @@ class BitMesh {
 	}
 
 	public void set(int x, int y, boolean value) {
+		if (outbounds(x, y)) {
+			final String arg = "x=" + x + ",y=" + y + ", w=" + m_w + ", h=" + m_h;
+			throw new IllegalArgumentException("Out of bounds (" + arg + ")");
+		}
 		final int index = (y * m_w) + x;
 		final int iw = wordIndex(index);
 		final long mask = 1L << index;
@@ -54,6 +63,7 @@ class BitMesh {
 	}
 
 	public boolean value(int x, int y) {
+		if (outbounds(x, y)) return false;
 		final int index = (y * m_w) + x;
 		final int iw = wordIndex(index);
 		final long mask = 1L << index;

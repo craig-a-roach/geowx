@@ -13,26 +13,36 @@ import java.util.List;
  */
 class VertexGenerator {
 
-	private Bearing consume(int x, int y, Bearing bearing) {
+	private Bearing consume(Vertex start, int x, int y, Bearing bearing) {
+		final int sx = start.x;
+		final int sy = start.y;
 		for (int i = 0; i < 8; i++) {
 			final Bearing next = bearing.path(i);
 			final int nx = x + next.dx;
 			final int ny = y + next.dy;
+			if (nx == sx && ny == sy) return next;
 			if (m_store.clear(nx, ny)) return next;
 		}
 		return Bearing.STAY;
 	}
 
-	private Vertex consumePolarMax(Vertex ref) {
-		for (int x = ref.x; x < m_width; x++) {
-			for (int y = ref.y; y < m_height; y++) {
-				if (m_store.value(x, y)) return new Vertex(x, y);
+	private Vertex consumeLeftBottom() {
+		for (int x = 0; x < m_width; x++) {
+			for (int y = 0; y < m_height; y++) {
+				if (m_store.clear(x, y)) return new Vertex(x, y);
 			}
 		}
-		for (int x = ref.x; x < m_width; x++) {
-			for (int y = ref.y - 1; y >= 0; y--) {
-				if (m_store.value(x, y)) return new Vertex(x, y);
-			}
+		return null;
+	}
+
+	private Vertex consumePolarMax(Vertex ref) {
+		final Bearing[] Polar = Bearing.Polar;
+		final int polarCount = Polar.length;
+		for (int i = 0; i < polarCount; i++) {
+			final Bearing b = Polar[i];
+			final int px = ref.x + b.dx;
+			final int py = ref.y + b.dy;
+			if (m_store.clear(px, py)) return new Vertex(px, py);
 		}
 		return null;
 	}
@@ -48,12 +58,12 @@ class VertexGenerator {
 		int originY = start.y;
 		int pivotX = polar.x;
 		int pivotY = polar.y;
-		final int originPivotX = polar.x - start.x;
-		final int originPivotY = polar.y - start.y;
-		final Bearing originPivot = Bearing.select(originPivotX, originPivotY);
 		boolean detecting = true;
 		while (detecting) {
-			final Bearing pivotHead = consume(pivotX, pivotY, originPivot);
+			final int originPivotX = pivotX - originX;
+			final int originPivotY = pivotY - originY;
+			final Bearing originPivot = Bearing.select(originPivotX, originPivotY);
+			final Bearing pivotHead = consume(start, pivotX, pivotY, originPivot);
 			if (pivotHead == Bearing.STAY) {
 				detecting = false;
 				continue;
@@ -65,7 +75,7 @@ class VertexGenerator {
 				detecting = false;
 				continue;
 			}
-
+			vertices.add(new Vertex(headX, headY)); // temporary
 			originX = pivotX;
 			originY = pivotY;
 			pivotX = headX;
@@ -75,20 +85,11 @@ class VertexGenerator {
 		return new Polyline(vertices);
 	}
 
-	private Vertex findLeftBottom() {
-		for (int x = 0; x < m_width; x++) {
-			for (int y = 0; y < m_height; y++) {
-				if (m_store.value(x, y)) return new Vertex(x, y);
-			}
-		}
-		return null;
-	}
-
 	public List<IPolyline> newShape() {
 		final List<IPolyline> result = new ArrayList<IPolyline>();
 		boolean morePolyLines = true;
 		while (morePolyLines) {
-			final Vertex oLB = findLeftBottom();
+			final Vertex oLB = consumeLeftBottom();
 			if (oLB == null) {
 				morePolyLines = false;
 				continue;
@@ -99,6 +100,7 @@ class VertexGenerator {
 				continue;
 			}
 			final IPolyline oPolyline = consumePolyline(oLB, oPM);
+			System.out.println(oPolyline);
 		}
 
 		return result;
