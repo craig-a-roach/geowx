@@ -25,6 +25,26 @@ enum Bearing {
 		return dy < 0 ? SE : NE;
 	}
 
+	private int indexAdjMinus() {
+		return m_index == 7 ? 0 : m_index + 1;
+	}
+
+	private int indexAdjPlus() {
+		return m_index == 0 ? 7 : m_index - 1;
+	}
+
+	public Bearing adjacentMinus() {
+		return Paths[indexAdjMinus()];
+	}
+
+	public Bearing adjacentPlus() {
+		return Paths[indexAdjPlus()];
+	}
+
+	public boolean isAdjacent(Bearing rhs) {
+		return m_index == indexAdjMinus() || m_index == indexAdjPlus();
+	}
+
 	public Bearing path(int index) {
 		final int neo = (m_index + index + 5) % 8;
 		return Paths[neo];
