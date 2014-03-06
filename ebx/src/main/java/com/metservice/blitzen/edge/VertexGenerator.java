@@ -50,19 +50,15 @@ class VertexGenerator {
 	private IPolyline consumePolyline(Vertex start, Vertex polar) {
 		assert start != null;
 		assert polar != null;
-		final List<Vertex> vertices = new ArrayList<>();
 		boolean isClosed = false;
-		vertices.add(start);
-		vertices.add(polar);
 		int originX = start.x;
 		int originY = start.y;
 		int pivotX = polar.x;
 		int pivotY = polar.y;
+		Bearing originPivot = Bearing.select(pivotX - originX, pivotY - originY);
+		final RampBuilder rb = new RampBuilder(start, originPivot);
 		boolean detecting = true;
 		while (detecting) {
-			final int originPivotX = pivotX - originX;
-			final int originPivotY = pivotY - originY;
-			final Bearing originPivot = Bearing.select(originPivotX, originPivotY);
 			final Bearing pivotHead = consume(start, pivotX, pivotY, originPivot);
 			if (pivotHead == Bearing.STAY) {
 				detecting = false;
@@ -75,12 +71,14 @@ class VertexGenerator {
 				detecting = false;
 				continue;
 			}
-			vertices.add(new Vertex(headX, headY)); // temporary
+			rb.add(pivotHead);
 			originX = pivotX;
 			originY = pivotY;
 			pivotX = headX;
 			pivotY = headY;
+			originPivot = pivotHead;
 		}
+		final List<Vertex> vertices = new ArrayList<>();
 		if (isClosed) return new Polygon(vertices);
 		return new Polyline(vertices);
 	}

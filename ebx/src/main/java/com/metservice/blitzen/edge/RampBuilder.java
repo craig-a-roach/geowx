@@ -13,33 +13,59 @@ import java.util.List;
  */
 class RampBuilder {
 
-	private void addAdjacent(Bearing neo) {
-		// TODO Auto-generated method stub
-
+	public void add(Bearing head) {
+		if (head == null) throw new IllegalArgumentException("object is null");
+		if (m_headSegment.bearing == head) {
+			m_headSegment.increment();
+		} else {
+			m_headSegment = new Segment(head);
+			m_segments.add(m_headSegment);
+		}
 	}
 
-	public void add(Bearing pivotHead) {
-		if (pivotHead == null) throw new IllegalArgumentException("object is null");
-		if (m_originPivot == pivotHead) return;
-		if (m_originPivot.isAdjacent(pivotHead)) {
-			addAdjacent(pivotHead);
+	public void newVertices() {
+		final int segmentCount = m_segments.size();
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(m_start);
+		sb.append(":");
+		for (final Segment segment : m_segments) {
+			sb.append(segment);
+			sb.append("|");
+		}
+		return sb.toString();
+	}
+
+	public RampBuilder(Vertex start, Bearing head) {
+		if (start == null) throw new IllegalArgumentException("object is null");
+		if (head == null) throw new IllegalArgumentException("object is null");
+		m_start = start;
+		m_headSegment = new Segment(head);
+		m_segments.add(m_headSegment);
+	}
+	private final Vertex m_start;
+	private Segment m_headSegment;
+	private final List<Segment> m_segments = new ArrayList<Segment>();
+
+	private static class Segment {
+
+		public void increment() {
+			m_count++;
 		}
 
-	}
+		@Override
+		public String toString() {
+			return bearing + "*" + m_count;
+		}
 
-	public RampBuilder(Vertex origin, Bearing originPivot) {
-		if (origin == null) throw new IllegalArgumentException("object is null");
-		if (originPivot == null) throw new IllegalArgumentException("object is null");
-		m_origin = origin;
-		m_originPivot = originPivot;
-		m_pivotX = origin.x + originPivot.dx;
-		m_pivotY = origin.y + originPivot.dy;
-		m_vertices = new ArrayList<>(16);
-		m_vertices.add(origin);
+		public Segment(Bearing bearing) {
+			this.bearing = bearing;
+			m_count = 1;
+		}
+		public final Bearing bearing;
+		private int m_count;
 	}
-	private final Vertex m_origin;
-	private final Bearing m_originPivot;
-	private final int m_pivotX;
-	private final int m_pivotY;
-	private final List<Vertex> m_vertices;
 }
