@@ -56,7 +56,7 @@ class VertexGenerator {
 		int pivotX = polar.x;
 		int pivotY = polar.y;
 		Bearing originPivot = Bearing.select(pivotX - originX, pivotY - originY);
-		final RampBuilder rb = new RampBuilder(start, originPivot);
+		final EdgeBuilder rb = new EdgeBuilder(start, originPivot);
 		boolean detecting = true;
 		while (detecting) {
 			final Bearing pivotHead = consume(start, pivotX, pivotY, originPivot);

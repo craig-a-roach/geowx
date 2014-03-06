@@ -8,7 +8,7 @@ package com.metservice.blitzen.edge;
 /**
  * @author roach
  */
-public class TestRampBuilder {
+public class TestEdgeBuilder {
 
 	public void t50() {
 		//@formatter:off
@@ -16,9 +16,14 @@ public class TestRampBuilder {
 				Bearing.NE, Bearing.E, Bearing.E,
 				Bearing.NE, Bearing.E, Bearing.E,
 				Bearing.NE, Bearing.NE,
-				Bearing.N, Bearing.E };
+				Bearing.N, Bearing.E,
+				Bearing.N, Bearing.E,
+				Bearing.SE, Bearing.S, Bearing.SW,
+				Bearing.SE, Bearing.S, Bearing.SW,
+				Bearing.SE, Bearing.S, Bearing.SW,
+				Bearing.W};
 		//@formatter:on
-		final RampBuilder rb = new RampBuilder(new Vertex(10, 20), bearings[0]);
+		final EdgeBuilder rb = new EdgeBuilder(new Vertex(10, 20), bearings[0]);
 		for (int i = 1; i < bearings.length; i++) {
 			rb.add(bearings[i]);
 		}
