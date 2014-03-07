@@ -13,37 +13,55 @@ import java.util.List;
  */
 class EdgeBuilder {
 
-	private void merge(List<IEdge> dst, List<IEdge> src) {
+	private void fill(IEdge[] dst, List<IEdge> src, int srcFrom) {
+		final int card = dst.length;
+		for (int i = 0; i < card; i++) {
+			dst[i] = src.get(srcFrom + i);
+		}
+	}
+
+	private void merge(List<IEdge> dst, List<IEdge> src, int card) {
 		final int srcCount = src.size();
-		if (srcCount == 0) return;
-		if (srcCount == 1) {
-			dst.add(src.get(0));
+		final int card2 = card * 2;
+		if (srcCount < card2) {
+			for (int i = 0; i < srcCount; i++) {
+				dst.add(src.get(i));
+			}
 			return;
 		}
-		final IEdge lhs = src.get(0);
-		final IEdge rhs = src.get(1);
-		final IEdge lhsNeo = src.get(2);
-		final IEdge rhsNeo = src.get(3);
-		if (lhs.equals(lhsNeo) && rhs.equals(rhsNeo)) {
+		final IEdge[] steps = new IEdge[card];
+		fill(steps, src, 0);
+		int ilhs = 0;
+		int irhs = 3;
+		while (irhs < srcCount) {
+			for (int i = 0; i < card; i++) {
+				steps[i] = src.get(i);
+			}
 
+			ilhs++;
+			irhs++;
+		}
+		while (ilhs < srcCount) {
+			dst.add(src.get(ilhs));
+			ilhs++;
 		}
 	}
 
 	public void add(Bearing head) {
 		if (head == null) throw new IllegalArgumentException("object is null");
-		if (m_headSegment.bearing == head) {
-			m_headSegment.increment();
+		if (m_headEdge.bearing == head) {
+			m_headEdge.increment();
 		} else {
-			m_headSegment = new Segment(head);
-			m_segments.add(m_headSegment);
+			m_headEdge = new Edge1(head);
+			m_edges.add(m_headEdge);
 		}
 	}
 
 	public List<Vertex> newVertices() {
-		final int segmentCount = m_segments.size();
-		final List<IEdge> src = m_segments;
+		final int segmentCount = m_edges.size();
+		final List<IEdge> src = m_edges;
 		final List<IEdge> dst = new ArrayList<IEdge>(segmentCount);
-		merge(dst, src);
+		merge(dst, src, 2);
 		return newVertices(dst);
 	}
 
@@ -58,8 +76,8 @@ class EdgeBuilder {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(m_start);
 		sb.append(":");
-		for (final IEdge segment : m_segments) {
-			sb.append(segment);
+		for (final IEdge edge : m_edges) {
+			sb.append(edge);
 			sb.append("|");
 		}
 		return sb.toString();
@@ -69,49 +87,23 @@ class EdgeBuilder {
 		if (start == null) throw new IllegalArgumentException("object is null");
 		if (head == null) throw new IllegalArgumentException("object is null");
 		m_start = start;
-		m_headSegment = new Segment(head);
-		m_segments.add(m_headSegment);
+		m_headEdge = new Edge1(head);
+		m_edges.add(m_headEdge);
 	}
 	private final Vertex m_start;
-	private Segment m_headSegment;
-	private final List<IEdge> m_segments = new ArrayList<IEdge>();
+	private Edge1 m_headEdge;
+	private final List<IEdge> m_edges = new ArrayList<IEdge>();
 
-	private static class Edge implements IEdge {
-
-		@Override
-		public boolean canMerge(IEdge r) {
-			// TODO Auto-generated method stub
-			return false;
-		}
-
-		public void increment() {
-			m_count++;
-		}
-
-		public Edge(IEdge lhs, IEdge rhs) {
-			m_lhs = lhs;
-			m_rhs = rhs;
-		}
-		private final IEdge m_lhs;
-		private final IEdge m_rhs;
-		private int m_count;
-	}
-
-	private static interface IEdge {
-
-		public boolean canMerge(IEdge r);
-	}
-
-	private static class Segment implements IEdge {
+	private static class Edge1 implements IEdge {
 
 		@Override
 		public boolean canMerge(IEdge r) {
-			if (r instanceof Segment) {
-				final Segment rs = (Segment) r;
+			if (r instanceof Edge1) {
+				final Edge1 rs = (Edge1) r;
 				return bearing == rs.bearing && m_count == rs.m_count;
 			}
-			if (r instanceof Edge) {
-				final Edge re = (Edge) r;
+			if (r instanceof EdgeN) {
+				final EdgeN re = (EdgeN) r;
 			}
 			return false;
 		}
@@ -125,11 +117,35 @@ class EdgeBuilder {
 			return bearing + "*" + m_count;
 		}
 
-		public Segment(Bearing bearing) {
+		public Edge1(Bearing bearing) {
 			this.bearing = bearing;
 			m_count = 1;
 		}
 		public final Bearing bearing;
 		private int m_count;
+	}
+
+	private static class EdgeN implements IEdge {
+
+		@Override
+		public boolean canMerge(IEdge r) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		public void increment() {
+			m_count++;
+		}
+
+		public EdgeN(IEdge[] steps) {
+			m_steps = steps;
+		}
+		private final IEdge[] m_steps;
+		private int m_count;
+	}
+
+	private static interface IEdge {
+
+		public boolean canMerge(IEdge r);
 	}
 }

@@ -13,6 +13,7 @@ public class TestEdgeBuilder {
 	public void t50() {
 		//@formatter:off
 		final Bearing[] bearings = {
+				Bearing.N,
 				Bearing.NE, Bearing.E, Bearing.E,
 				Bearing.NE, Bearing.E, Bearing.E,
 				Bearing.NE, Bearing.NE,
