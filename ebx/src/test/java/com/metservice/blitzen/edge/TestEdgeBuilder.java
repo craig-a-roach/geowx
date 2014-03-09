@@ -5,11 +5,16 @@
  */
 package com.metservice.blitzen.edge;
 
+import java.util.List;
+
+import org.junit.Test;
+
 /**
  * @author roach
  */
 public class TestEdgeBuilder {
 
+	@Test
 	public void t50() {
 		//@formatter:off
 		final Bearing[] bearings = {
@@ -19,15 +24,42 @@ public class TestEdgeBuilder {
 				Bearing.NE, Bearing.NE,
 				Bearing.N, Bearing.E,
 				Bearing.N, Bearing.E,
-				Bearing.SE, Bearing.S, Bearing.SW,
-				Bearing.SE, Bearing.S, Bearing.SW,
-				Bearing.SE, Bearing.S, Bearing.SW,
+				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
+				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
+				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
 				Bearing.W};
 		//@formatter:on
-		final EdgeBuilder rb = new EdgeBuilder(new Vertex(10, 20), bearings[0]);
-		for (int i = 1; i < bearings.length; i++) {
-			rb.add(bearings[i]);
-		}
-	}
+		System.out.println(Bearing.NE.isAdjacent(Bearing.NW, true));
+		System.out.println(Bearing.NW.isAdjacent(Bearing.NE, true));
+		System.out.println(Bearing.NE.isAdjacent(Bearing.W, true));
+		System.out.println(Bearing.SE.isAdjacent(Bearing.S, true));
 
+		final EdgeBuilder eb = new EdgeBuilder(new Vertex(10, 20), bearings[0], 2, false);
+		for (int i = 1; i < bearings.length; i++) {
+			eb.add(bearings[i]);
+		}
+		System.out.println(eb);
+		// 0| N*1
+		// 1|NE*1
+		// 2|E*2
+		// 3|NE*1
+		// 4|E*2
+		// 5|NE*2
+		// 6|N*1
+		// 7|E*1
+		// 8|N*1
+		// 9|E*1
+		// 10|SE*1
+		// 11|S*2
+		// 12|SW*1
+		// 13|SE*1
+		// 14|S*2
+		// 15|SW*1
+		// 16|SE*1
+		// 17|S*2
+		// 18|SW*1
+		// 19|W*1|
+		final List<Vertex> vertices = eb.newVertices();
+		System.out.println(vertices);
+	}
 }

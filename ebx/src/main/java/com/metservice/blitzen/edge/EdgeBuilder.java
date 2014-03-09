@@ -13,61 +13,101 @@ import java.util.List;
  */
 class EdgeBuilder {
 
-	private void fill(IEdge[] dst, List<IEdge> src, int srcFrom) {
-		final int card = dst.length;
-		for (int i = 0; i < card; i++) {
-			dst[i] = src.get(srcFrom + i);
+	private int advance(List<IEdge> dst, int startPos) {
+		for (int stride = m_maxStride; stride >= 2; stride--) {
+			final int advance = advanceByStride(dst, stride, startPos);
+			if (advance > 0) return advance;
 		}
+		return 0;
 	}
 
-	private void merge(List<IEdge> dst, List<IEdge> src, int card) {
-		final int srcCount = src.size();
-		final int card2 = card * 2;
-		if (srcCount < card2) {
-			for (int i = 0; i < srcCount; i++) {
-				dst.add(src.get(i));
-			}
-			return;
+	private int advanceByStride(List<IEdge> dst, int stride, int startPos) {
+		final int rampCount = m_ramps.size();
+		final int stride2 = stride * 2;
+		int rem = rampCount - startPos;
+		if (rem < stride2) return 0;
+		if (!isAdjacent(startPos, stride)) return 0;
+		if (!matches(startPos, stride)) return 0;
+		final Edge edge = newEdge(startPos, stride);
+		dst.add(edge);
+		int pos = startPos + stride;
+		rem -= stride2;
+		int advance = stride2;
+		while (rem >= stride && matches(pos, stride)) {
+			edge.increment();
+			rem -= stride;
+			advance += stride;
+			pos += stride;
 		}
-		final IEdge[] steps = new IEdge[card];
-		fill(steps, src, 0);
-		int ilhs = 0;
-		int irhs = 3;
-		while (irhs < srcCount) {
-			for (int i = 0; i < card; i++) {
-				steps[i] = src.get(i);
-			}
+		return advance;
+	}
 
-			ilhs++;
-			irhs++;
+	private boolean isAdjacent(int startPos, int stride) {
+		final int pairCount = stride - 1;
+		for (int i = 0, ilhs = startPos, irhs = startPos + 1; i < pairCount; i++, ilhs++, irhs++) {
+			final Bearing lhs = m_ramps.get(ilhs).bearing;
+			final Bearing rhs = m_ramps.get(irhs).bearing;
+			if (!lhs.isAdjacent(rhs, m_orthogonal)) return false;
 		}
-		while (ilhs < srcCount) {
-			dst.add(src.get(ilhs));
-			ilhs++;
+		return true;
+	}
+
+	private boolean matches(int startPos, int stride) {
+		for (int i = 0, ilhs = startPos, irhs = startPos + stride; i < stride; i++, ilhs++, irhs++) {
+			final Ramp lhs = m_ramps.get(ilhs);
+			final Ramp rhs = m_ramps.get(irhs);
+			if (!lhs.matches(rhs)) return false;
 		}
+		return true;
+	}
+
+	private Edge newEdge(int startPos, int stride) {
+		int dx = 0;
+		int dy = 0;
+		for (int i = 0, pos = startPos; i < stride; i++, pos++) {
+			final Ramp ramp = m_ramps.get(pos);
+			dx += ramp.dx();
+			dy += ramp.dy();
+		}
+		return new Edge(dx, dy);
 	}
 
 	public void add(Bearing head) {
 		if (head == null) throw new IllegalArgumentException("object is null");
-		if (m_headEdge.bearing == head) {
-			m_headEdge.increment();
+		if (m_headRamp.bearing == head) {
+			m_headRamp.increment();
 		} else {
-			m_headEdge = new Edge1(head);
-			m_edges.add(m_headEdge);
+			m_headRamp = new Ramp(head);
+			m_ramps.add(m_headRamp);
 		}
 	}
 
 	public List<Vertex> newVertices() {
-		final int segmentCount = m_edges.size();
-		final List<IEdge> src = m_edges;
-		final List<IEdge> dst = new ArrayList<IEdge>(segmentCount);
-		merge(dst, src, 2);
+		final int rampCount = m_ramps.size();
+		final List<IEdge> dst = new ArrayList<IEdge>(rampCount);
+		int pos = 0;
+		while (pos < rampCount) {
+			final int advance = advance(dst, pos);
+			if (advance > 0) {
+				pos += advance;
+			} else {
+				dst.add(m_ramps.get(pos));
+				pos++;
+			}
+		}
 		return newVertices(dst);
 	}
 
 	public List<Vertex> newVertices(List<IEdge> edges) {
 		final int edgeCount = edges.size();
 		final List<Vertex> vertices = new ArrayList<Vertex>(edgeCount + 1);
+		vertices.add(m_start);
+		Vertex head = m_start;
+		for (int i = 0; i < edgeCount; i++) {
+			final IEdge edge = edges.get(i);
+			head = new Vertex(head.x + edge.dx(), head.y + edge.dy());
+			vertices.add(head);
+		}
 		return vertices;
 	}
 
@@ -76,36 +116,42 @@ class EdgeBuilder {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(m_start);
 		sb.append(":");
-		for (final IEdge edge : m_edges) {
-			sb.append(edge);
+		for (final Ramp ramp : m_ramps) {
+			sb.append(ramp);
 			sb.append("|");
 		}
 		return sb.toString();
 	}
 
 	public EdgeBuilder(Vertex start, Bearing head) {
+		this(start, head, 2, false);
+	}
+
+	public EdgeBuilder(Vertex start, Bearing head, int maxStride, boolean orthogonal) {
 		if (start == null) throw new IllegalArgumentException("object is null");
 		if (head == null) throw new IllegalArgumentException("object is null");
 		m_start = start;
-		m_headEdge = new Edge1(head);
-		m_edges.add(m_headEdge);
+		m_headRamp = new Ramp(head);
+		m_ramps.add(m_headRamp);
+		m_maxStride = maxStride;
+		m_orthogonal = orthogonal;
 	}
 	private final Vertex m_start;
-	private Edge1 m_headEdge;
-	private final List<IEdge> m_edges = new ArrayList<IEdge>();
+	private Ramp m_headRamp;
+	private final List<Ramp> m_ramps = new ArrayList<Ramp>();
+	private final int m_maxStride;
+	private final boolean m_orthogonal;
 
-	private static class Edge1 implements IEdge {
+	private static class Edge implements IEdge {
 
 		@Override
-		public boolean canMerge(IEdge r) {
-			if (r instanceof Edge1) {
-				final Edge1 rs = (Edge1) r;
-				return bearing == rs.bearing && m_count == rs.m_count;
-			}
-			if (r instanceof EdgeN) {
-				final EdgeN re = (EdgeN) r;
-			}
-			return false;
+		public int dx() {
+			return dx * m_count;
+		}
+
+		@Override
+		public int dy() {
+			return dy * m_count;
 		}
 
 		public void increment() {
@@ -114,38 +160,56 @@ class EdgeBuilder {
 
 		@Override
 		public String toString() {
-			return bearing + "*" + m_count;
+			return "[" + dx + "," + dy + "]*" + m_count;
 		}
 
-		public Edge1(Bearing bearing) {
-			this.bearing = bearing;
-			m_count = 1;
+		public Edge(int dx, int dy) {
+			this.dx = dx;
+			this.dy = dy;
+			m_count = 2;
 		}
-		public final Bearing bearing;
+		public final int dx;
+		public final int dy;
 		private int m_count;
+	};
+
+	private static interface IEdge {
+
+		public int dx();
+
+		public int dy();
 	}
 
-	private static class EdgeN implements IEdge {
+	private static class Ramp implements IEdge {
 
 		@Override
-		public boolean canMerge(IEdge r) {
-			// TODO Auto-generated method stub
-			return false;
+		public int dx() {
+			return bearing.dx * m_count;
+		}
+
+		@Override
+		public int dy() {
+			return bearing.dy * m_count;
 		}
 
 		public void increment() {
 			m_count++;
 		}
 
-		public EdgeN(IEdge[] steps) {
-			m_steps = steps;
+		public boolean matches(Ramp rhs) {
+			return bearing == rhs.bearing && m_count == rhs.m_count;
 		}
-		private final IEdge[] m_steps;
+
+		@Override
+		public String toString() {
+			return bearing + "*" + m_count;
+		}
+
+		public Ramp(Bearing bearing) {
+			this.bearing = bearing;
+			m_count = 1;
+		}
+		public final Bearing bearing;
 		private int m_count;
-	}
-
-	private static interface IEdge {
-
-		public boolean canMerge(IEdge r);
 	}
 }
