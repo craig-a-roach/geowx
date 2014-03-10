@@ -97,8 +97,9 @@ class VertexGenerator {
 				result.add(oLB);
 				continue;
 			}
-			final IPolyline oPolyline = consumePolyline(oLB, oPM);
-			System.out.println(oPolyline);
+			final IPolyline polyline = consumePolyline(oLB, oPM);
+			System.out.println(polyline);
+			result.add(polyline);
 		}
 
 		return result;

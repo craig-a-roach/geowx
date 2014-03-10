@@ -124,7 +124,7 @@ class EdgeBuilder {
 	}
 
 	public EdgeBuilder(Vertex start, Bearing head) {
-		this(start, head, 2, false);
+		this(start, head, 3, true);
 	}
 
 	public EdgeBuilder(Vertex start, Bearing head, int maxStride, boolean orthogonal) {

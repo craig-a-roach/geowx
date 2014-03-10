@@ -24,17 +24,13 @@ public class TestEdgeBuilder {
 				Bearing.NE, Bearing.NE,
 				Bearing.N, Bearing.E,
 				Bearing.N, Bearing.E,
-				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
-				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
-				Bearing.SE, Bearing.S, Bearing.S, Bearing.S,
-				Bearing.W};
+				Bearing.S, Bearing.W, Bearing.SW, Bearing.SW,
+				Bearing.S, Bearing.W, Bearing.SW, Bearing.SW,
+				Bearing.S, Bearing.W, Bearing.SW, Bearing.SW,
+				Bearing.NW};
 		//@formatter:on
-		System.out.println(Bearing.NE.isAdjacent(Bearing.NW, true));
-		System.out.println(Bearing.NW.isAdjacent(Bearing.NE, true));
-		System.out.println(Bearing.NE.isAdjacent(Bearing.W, true));
-		System.out.println(Bearing.SE.isAdjacent(Bearing.S, true));
 
-		final EdgeBuilder eb = new EdgeBuilder(new Vertex(10, 20), bearings[0], 2, false);
+		final EdgeBuilder eb = new EdgeBuilder(new Vertex(10, 20), bearings[0], 3, true);
 		for (int i = 1; i < bearings.length; i++) {
 			eb.add(bearings[i]);
 		}
