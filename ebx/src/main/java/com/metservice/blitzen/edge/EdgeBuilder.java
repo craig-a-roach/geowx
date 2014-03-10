@@ -72,6 +72,36 @@ class EdgeBuilder {
 		return new Edge(dx, dy);
 	}
 
+	private BitMesh newRampImage() {
+		final int width = m_xR - m_xL + 1;
+		final int height = m_yT - m_yB + 1;
+		final BitMesh image = new BitMesh(width, height);
+		int x = m_headX;
+		int y = m_headY;
+		image.set(x, y, true);
+		final int rampCount = m_ramps.size();
+		for (int i = 0; i < rampCount; i++) {
+			final Ramp ramp = m_ramps.get(i);
+			x += ramp.dx();
+			y += ramp.dy();
+			image.set(x, y, true);
+		}
+		return image;
+	}
+
+	private List<Vertex> newVertices(List<IEdge> edges) {
+		final int edgeCount = edges.size();
+		final List<Vertex> vertices = new ArrayList<Vertex>(edgeCount + 1);
+		vertices.add(m_start);
+		Vertex head = m_start;
+		for (int i = 0; i < edgeCount; i++) {
+			final IEdge edge = edges.get(i);
+			head = new Vertex(head.x + edge.dx(), head.y + edge.dy());
+			vertices.add(head);
+		}
+		return vertices;
+	}
+
 	public void add(Bearing head) {
 		if (head == null) throw new IllegalArgumentException("object is null");
 		if (m_headRamp.bearing == head) {
@@ -80,6 +110,18 @@ class EdgeBuilder {
 			m_headRamp = new Ramp(head);
 			m_ramps.add(m_headRamp);
 		}
+		m_headX += head.dx;
+		m_headY += head.dy;
+		m_xL = Math.min(m_xL, m_headX);
+		m_xR = Math.max(m_xR, m_headX);
+		m_yB = Math.min(m_yB, m_headY);
+		m_yT = Math.max(m_yT, m_headY);
+	}
+
+	public void fillPolygon(BitMesh dst) {
+		if (dst == null) throw new IllegalArgumentException("object is null");
+		final BitMesh image = newRampImage();
+		System.out.println(image);
 	}
 
 	public List<Vertex> newVertices() {
@@ -96,19 +138,6 @@ class EdgeBuilder {
 			}
 		}
 		return newVertices(dst);
-	}
-
-	public List<Vertex> newVertices(List<IEdge> edges) {
-		final int edgeCount = edges.size();
-		final List<Vertex> vertices = new ArrayList<Vertex>(edgeCount + 1);
-		vertices.add(m_start);
-		Vertex head = m_start;
-		for (int i = 0; i < edgeCount; i++) {
-			final IEdge edge = edges.get(i);
-			head = new Vertex(head.x + edge.dx(), head.y + edge.dy());
-			vertices.add(head);
-		}
-		return vertices;
 	}
 
 	@Override
@@ -135,12 +164,24 @@ class EdgeBuilder {
 		m_ramps.add(m_headRamp);
 		m_maxStride = maxStride;
 		m_orthogonal = orthogonal;
+		m_headX = start.x;
+		m_headY = start.y;
+		m_xL = m_headX;
+		m_yB = m_headY;
+		m_xR = m_headX;
+		m_yT = m_headY;
 	}
 	private final Vertex m_start;
 	private Ramp m_headRamp;
 	private final List<Ramp> m_ramps = new ArrayList<Ramp>();
 	private final int m_maxStride;
 	private final boolean m_orthogonal;
+	private int m_headX;
+	private int m_headY;
+	private int m_xL;
+	private int m_yB;
+	private int m_xR;
+	private int m_yT;
 
 	private static class Edge implements IEdge {
 

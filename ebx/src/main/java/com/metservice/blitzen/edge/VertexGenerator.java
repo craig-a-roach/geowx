@@ -78,6 +78,9 @@ class VertexGenerator {
 			pivotY = headY;
 			originPivot = pivotHead;
 		}
+		if (isClosed) {
+			eb.fillPolygon(m_store);
+		}
 		final List<Vertex> vertices = eb.newVertices();
 		if (isClosed) return new Polygon(vertices);
 		return new Polyline(vertices);
