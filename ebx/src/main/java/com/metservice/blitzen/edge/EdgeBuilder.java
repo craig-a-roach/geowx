@@ -76,15 +76,18 @@ class EdgeBuilder {
 		final int width = m_xR - m_xL + 1;
 		final int height = m_yT - m_yB + 1;
 		final BitMesh image = new BitMesh(width, height);
-		int x = m_headX;
-		int y = m_headY;
+		int x = m_start.x;
+		int y = m_start.y;
 		image.set(x, y, true);
 		final int rampCount = m_ramps.size();
-		for (int i = 0; i < rampCount; i++) {
-			final Ramp ramp = m_ramps.get(i);
-			x += ramp.dx();
-			y += ramp.dy();
-			image.set(x, y, true);
+		for (int r = 0; r < rampCount; r++) {
+			final Ramp ramp = m_ramps.get(r);
+			final int c = ramp.count();
+			for (int i = 0; i < c; i++) {
+				x += ramp.bearing.dx;
+				y += ramp.bearing.dy;
+				image.set(x, y, true);
+			}
 		}
 		return image;
 	}
@@ -222,6 +225,10 @@ class EdgeBuilder {
 	}
 
 	private static class Ramp implements IEdge {
+
+		public int count() {
+			return m_count;
+		}
 
 		@Override
 		public int dx() {

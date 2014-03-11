@@ -17,11 +17,11 @@ public class TestVertexGenerate {
 		"======X",
 		"=====XXX",
 		"==XXXXXXX",
-		"==XX====XXX",
-		"==XX===XX==X",
-		"=XXX==XX",
-		"XXX===X",
-		"===X"
+		"==XXX==XXXXX",
+		"=XXX==XXXXXX",
+		"=XXX=XXX==XX",
+		"XXX==XX",
+		"==XX"
 	};
 	//@formatter:on
 
