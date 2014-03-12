@@ -85,8 +85,8 @@ class EdgeBuilder {
 		final int width = m_xR - m_xL + 1;
 		final int height = m_yT - m_yB + 1;
 		final BitMesh image = new BitMesh(width, height);
-		int x = m_start.x;
-		int y = m_start.y;
+		int x = m_start.x - m_xL;
+		int y = m_start.y - m_yB;
 		image.set(x, y, true);
 		final int rampCount = m_ramps.size();
 		for (int r = 0; r < rampCount; r++) {

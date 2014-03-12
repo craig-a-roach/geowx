@@ -15,13 +15,13 @@ public class TestVertexGenerate {
 	//@formatter:off
 	private static final String[] BM1 = {
 		"======X",
-		"=====XXX",
-		"==XXXXXXX",
-		"==XXX==XXXXX",
-		"=XXX==XXXXXX",
-		"=XXX=XXX==XX",
-		"XXX==XX",
-		"==XX"
+		"X====XXX",
+		"==XXXXXXXX",
+		"==XX====XXXXX",
+		"=XXX=X=XXXXXXX",
+		"=XXX===XXX==XX",
+		"XXX===XX",
+		"==XX=====X"
 	};
 	//@formatter:on
 
