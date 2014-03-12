@@ -61,6 +61,15 @@ class EdgeBuilder {
 		return true;
 	}
 
+	private void moveHead(Bearing head) {
+		m_headX += head.dx;
+		m_headY += head.dy;
+		m_xL = Math.min(m_xL, m_headX);
+		m_xR = Math.max(m_xR, m_headX);
+		m_yB = Math.min(m_yB, m_headY);
+		m_yT = Math.max(m_yT, m_headY);
+	}
+
 	private Edge newEdge(int startPos, int stride) {
 		int dx = 0;
 		int dy = 0;
@@ -88,6 +97,9 @@ class EdgeBuilder {
 				y += ramp.bearing.dy;
 				image.set(x, y, true);
 			}
+			System.out.println("RAMP " + r);
+			System.out.println(image);
+
 		}
 		return image;
 	}
@@ -113,12 +125,7 @@ class EdgeBuilder {
 			m_headRamp = new Ramp(head);
 			m_ramps.add(m_headRamp);
 		}
-		m_headX += head.dx;
-		m_headY += head.dy;
-		m_xL = Math.min(m_xL, m_headX);
-		m_xR = Math.max(m_xR, m_headX);
-		m_yB = Math.min(m_yB, m_headY);
-		m_yT = Math.max(m_yT, m_headY);
+		moveHead(head);
 	}
 
 	public void fillPolygon(BitMesh dst) {
@@ -169,10 +176,11 @@ class EdgeBuilder {
 		m_orthogonal = orthogonal;
 		m_headX = start.x;
 		m_headY = start.y;
-		m_xL = m_headX;
-		m_yB = m_headY;
-		m_xR = m_headX;
-		m_yT = m_headY;
+		m_xL = start.x;
+		m_yB = start.y;
+		m_xR = start.x;
+		m_yT = start.y;
+		moveHead(head);
 	}
 	private final Vertex m_start;
 	private Ramp m_headRamp;
