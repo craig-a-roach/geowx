@@ -97,9 +97,6 @@ class EdgeBuilder {
 				y += ramp.bearing.dy;
 				image.set(x, y, true);
 			}
-			System.out.println("RAMP " + r);
-			System.out.println(image);
-
 		}
 		return image;
 	}
@@ -131,7 +128,40 @@ class EdgeBuilder {
 	public void fillPolygon(BitMesh dst) {
 		if (dst == null) throw new IllegalArgumentException("object is null");
 		final BitMesh image = newRampImage();
+		System.out.println("IMAGE");
 		System.out.println(image);
+		System.out.println("DST");
+		System.out.println(dst);
+		final int width = image.width();
+		final int height = image.height();
+		for (int y = 0, yd = m_yB; y < height; y++, yd++) {
+			final boolean v0 = image.value(0, y);
+			FillState state = v0 ? FillState.Edge : FillState.Out;
+			for (int x = 1, xd = m_xL; x < width; x++, xd++) {
+				final boolean v = image.value(x, y);
+				switch (state) {
+					case Out:
+						if (v) {
+							state = FillState.Edge;
+						}
+					break;
+					case Edge:
+						if (!v) {
+							dst.clear(xd, yd);
+							state = FillState.In;
+						}
+					break;
+					case In:
+						if (v) {
+							state = FillState.Edge;
+						} else {
+							dst.clear(xd, yd);
+						}
+					default:
+				}
+			}
+
+		}
 	}
 
 	public List<Vertex> newVertices() {
@@ -182,6 +212,7 @@ class EdgeBuilder {
 		m_yT = start.y;
 		moveHead(head);
 	}
+
 	private final Vertex m_start;
 	private Ramp m_headRamp;
 	private final List<Ramp> m_ramps = new ArrayList<Ramp>();
@@ -223,6 +254,10 @@ class EdgeBuilder {
 		public final int dx;
 		public final int dy;
 		private int m_count;
+	}
+
+	private static enum FillState {
+		Out, Edge, In;
 	};
 
 	private static interface IEdge {
