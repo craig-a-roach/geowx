@@ -42,6 +42,37 @@ class EdgeBuilder {
 		return advance;
 	}
 
+	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing b) {
+		final Bearing br = b.orthogonalRight();
+		if (br.dx != 1) return;
+		switch (br) {
+			case NE:
+				fillRight(dst, image, x, y + 1);
+			break;
+			case E:
+				fillRight(dst, image, x + 1, y);
+				fillRight(dst, image, x + 1, y + 1);
+			break;
+			case SE:
+				fillRight(dst, image, x + 1, y);
+			break;
+			default:
+		}
+	}
+
+	private void fillRight(BitMesh dst, BitMesh image, int xEdge, int yEdge) {
+		assert dst != null;
+		assert image != null;
+		final int width = image.width();
+		int x = xEdge;
+		final int ydst = m_yB + yEdge;
+		while (!image.value(x, yEdge) && x < width) {
+			final int xdst = m_xL + x;
+			dst.set(xdst, ydst, false);
+			x++;
+		}
+	}
+
 	private boolean isAdjacent(int startPos, int stride) {
 		final int pairCount = stride - 1;
 		for (int i = 0, ilhs = startPos, irhs = startPos + 1; i < pairCount; i++, ilhs++, irhs++) {
@@ -84,21 +115,7 @@ class EdgeBuilder {
 	private BitMesh newRampImage() {
 		final int width = m_xR - m_xL + 1;
 		final int height = m_yT - m_yB + 1;
-		final BitMesh image = new BitMesh(width, height);
-		int x = m_start.x - m_xL;
-		int y = m_start.y - m_yB;
-		image.set(x, y, true);
-		final int rampCount = m_ramps.size();
-		for (int r = 0; r < rampCount; r++) {
-			final Ramp ramp = m_ramps.get(r);
-			final int c = ramp.count();
-			for (int i = 0; i < c; i++) {
-				x += ramp.bearing.dx;
-				y += ramp.bearing.dy;
-				image.set(x, y, true);
-			}
-		}
-		return image;
+		return new BitMesh(width, height);
 	}
 
 	private List<Vertex> newVertices(List<IEdge> edges) {
@@ -112,6 +129,31 @@ class EdgeBuilder {
 			vertices.add(head);
 		}
 		return vertices;
+	}
+
+	private void outline(BitMesh image) {
+		int x = xInit();
+		int y = yInit();
+		image.set(x, y, true);
+		final int rampCount = m_ramps.size();
+		for (int r = 0; r < rampCount; r++) {
+			final Ramp ramp = m_ramps.get(r);
+			final Bearing b = ramp.bearing;
+			final int c = ramp.count();
+			for (int i = 0; i < c; i++) {
+				x += b.dx;
+				y += b.dy;
+				image.set(x, y, true);
+			}
+		}
+	}
+
+	private int xInit() {
+		return m_start.x - m_xL;
+	}
+
+	private int yInit() {
+		return m_start.y - m_yB;
 	}
 
 	public void add(Bearing head) {
@@ -128,39 +170,23 @@ class EdgeBuilder {
 	public void fillPolygon(BitMesh dst) {
 		if (dst == null) throw new IllegalArgumentException("object is null");
 		final BitMesh image = newRampImage();
+		outline(image);
 		System.out.println("IMAGE");
 		System.out.println(image);
 		System.out.println("DST");
 		System.out.println(dst);
-		final int width = image.width();
-		final int height = image.height();
-		for (int y = 0, yd = m_yB; y < height; y++, yd++) {
-			final boolean v0 = image.value(0, y);
-			FillState state = v0 ? FillState.Edge : FillState.Out;
-			for (int x = 1, xd = m_xL; x < width; x++, xd++) {
-				final boolean v = image.value(x, y);
-				switch (state) {
-					case Out:
-						if (v) {
-							state = FillState.Edge;
-						}
-					break;
-					case Edge:
-						if (!v) {
-							dst.clear(xd, yd);
-							state = FillState.In;
-						}
-					break;
-					case In:
-						if (v) {
-							state = FillState.Edge;
-						} else {
-							dst.clear(xd, yd);
-						}
-					default:
-				}
+		int x = xInit();
+		int y = yInit();
+		final int rampCount = m_ramps.size();
+		for (int r = 0; r < rampCount; r++) {
+			final Ramp ramp = m_ramps.get(r);
+			final Bearing b = ramp.bearing;
+			final int c = ramp.count();
+			for (int i = 0; i < c; i++) {
+				fill(dst, image, x, y, b);
+				x += b.dx;
+				y += b.dy;
 			}
-
 		}
 	}
 
@@ -255,10 +281,6 @@ class EdgeBuilder {
 		public final int dy;
 		private int m_count;
 	}
-
-	private static enum FillState {
-		Out, Edge, In;
-	};
 
 	private static interface IEdge {
 

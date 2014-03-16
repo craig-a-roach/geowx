@@ -35,6 +35,11 @@ enum Bearing {
 		return rhsIndex >= lhsLo && rhsIndex <= lhsHi;
 	}
 
+	public Bearing orthogonalRight() {
+		final int neo = (m_index + 2) % 8;
+		return Paths[neo];
+	}
+
 	public Bearing path(int index) {
 		final int neo = (m_index + index + 5) % 8;
 		return Paths[neo];
