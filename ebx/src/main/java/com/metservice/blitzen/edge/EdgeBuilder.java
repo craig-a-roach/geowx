@@ -42,7 +42,7 @@ class EdgeBuilder {
 		return advance;
 	}
 
-	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing b) {
+	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing b, Bearing bnext) {
 		final Bearing br = b.orthogonalRight();
 		if (br.dx != 1) return;
 		switch (br) {
@@ -173,21 +173,26 @@ class EdgeBuilder {
 		outline(image);
 		System.out.println("IMAGE");
 		System.out.println(image);
-		System.out.println("DST");
+		System.out.println("DST IN");
 		System.out.println(dst);
 		int x = xInit();
 		int y = yInit();
 		final int rampCount = m_ramps.size();
 		for (int r = 0; r < rampCount; r++) {
+			final int rnext = (r + 1) % rampCount;
 			final Ramp ramp = m_ramps.get(r);
+			final Ramp rampNext = m_ramps.get(rnext);
 			final Bearing b = ramp.bearing;
 			final int c = ramp.count();
-			for (int i = 0; i < c; i++) {
-				fill(dst, image, x, y, b);
+			for (int i = c - 1; i >= 0; i--) {
+				final Bearing bnext = i > 0 ? b : rampNext.bearing;
+				fill(dst, image, x, y, b, bnext);
 				x += b.dx;
 				y += b.dy;
 			}
 		}
+		System.out.println("DST OUT");
+		System.out.println(dst);
 	}
 
 	public List<Vertex> newVertices() {

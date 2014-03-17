@@ -64,6 +64,7 @@ class VertexGenerator {
 				detecting = false;
 				continue;
 			}
+			eb.add(pivotHead);
 			final int headX = pivotX + pivotHead.dx;
 			final int headY = pivotY + pivotHead.dy;
 			if (headX == start.x && headY == start.y) {
@@ -71,7 +72,6 @@ class VertexGenerator {
 				detecting = false;
 				continue;
 			}
-			eb.add(pivotHead);
 			originX = pivotX;
 			originY = pivotY;
 			pivotX = headX;
