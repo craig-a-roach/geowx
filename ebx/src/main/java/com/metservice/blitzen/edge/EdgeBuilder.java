@@ -42,21 +42,11 @@ class EdgeBuilder {
 		return advance;
 	}
 
-	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing b, Bearing bnext) {
+	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing bpre, Bearing b) {
+		final Bearing brpre = bpre.orthogonalRight();
 		final Bearing br = b.orthogonalRight();
-		if (br.dx != 1) return;
-		switch (br) {
-			case NE:
-				fillRight(dst, image, x, y + 1);
-			break;
-			case E:
-				fillRight(dst, image, x + 1, y);
-				fillRight(dst, image, x + 1, y + 1);
-			break;
-			case SE:
-				fillRight(dst, image, x + 1, y);
-			break;
-			default:
+		if (brpre.dx == 1 || br.dx == 1) {
+			fillRight(dst, image, x + 1, y);
 		}
 	}
 
@@ -178,18 +168,18 @@ class EdgeBuilder {
 		int x = xInit();
 		int y = yInit();
 		final int rampCount = m_ramps.size();
+		Ramp rampPre = m_ramps.get(rampCount - 1);
 		for (int r = 0; r < rampCount; r++) {
-			final int rnext = (r + 1) % rampCount;
 			final Ramp ramp = m_ramps.get(r);
-			final Ramp rampNext = m_ramps.get(rnext);
 			final Bearing b = ramp.bearing;
 			final int c = ramp.count();
-			for (int i = c - 1; i >= 0; i--) {
-				final Bearing bnext = i > 0 ? b : rampNext.bearing;
-				fill(dst, image, x, y, b, bnext);
+			for (int i = 0; i < c; i++) {
+				final Bearing bpre = i == 0 ? rampPre.bearing : b;
+				fill(dst, image, x, y, bpre, b);
 				x += b.dx;
 				y += b.dy;
 			}
+			rampPre = ramp;
 		}
 		System.out.println("DST OUT");
 		System.out.println(dst);
