@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * @author roach
  */
-public class TestClusterMesh {
+public class TestClusterShape {
 
 	//@formatter:off
 	private static final float epsA = 0.8f;
@@ -43,15 +43,13 @@ public class TestClusterMesh {
 	@Test
 	public void a20_popB() {
 		final Strike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
-		final StrikeBounds bounds = StrikeBounds.newInstance(strikes);
-		final ClusterMesh cm = ClusterMesh.newInstance(strikes, bounds, epsB);
+		final StrikeClusterShape cm = StrikeClusterShape.newInstance(strikes, epsB);
 	}
 
 	@Test
 	public void a30_popA() {
 		final Strike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
-		final StrikeBounds bounds = StrikeBounds.newInstance(strikes);
-		final ClusterMesh cm = ClusterMesh.newInstance(strikes, bounds, epsA);
+		final StrikeClusterShape cm = StrikeClusterShape.newInstance(strikes, epsA);
 	}
 
 }

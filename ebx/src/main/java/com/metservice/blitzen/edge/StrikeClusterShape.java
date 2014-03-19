@@ -5,17 +5,30 @@
  */
 package com.metservice.blitzen.edge;
 
+import java.util.List;
+
 /**
  * @author roach
  */
-class ClusterMesh {
+class StrikeClusterShape {
 
-	public static ClusterMesh newInstance(BitMesh store, StrikeBounds bounds, float eps) {
+	private static StrikeClusterShape newInstance(BitMesh store, StrikeBounds bounds, float eps) {
+		final VertexGenerator vg = new VertexGenerator(store);
+		final List<IPolyline> polylines = vg.newShape();
+		final int count = polylines.size();
+		for (int i = 0; i < count; i++) {
+			final IPolyline p = polylines.get(i);
+			if (p instanceof Polygon) {
 
-		return new ClusterMesh();
+			}
+
+		}
+		return new StrikeClusterShape();
 	}
 
-	public static ClusterMesh newInstance(Strike[] strikes, StrikeBounds bounds, float eps) {
+	public static StrikeClusterShape newInstance(Strike[] strikes, float eps) {
+		if (strikes == null || strikes.length == 0) throw new IllegalArgumentException("array is null or empty");
+		final StrikeBounds bounds = StrikeBounds.newInstance(strikes);
 		final int height = ((int) (bounds.height() / eps)) + 1;
 		final int width = ((int) (bounds.width() / eps)) + 1;
 		final BitMesh store = new BitMesh(height, width);
@@ -29,6 +42,6 @@ class ClusterMesh {
 		return newInstance(store, bounds, eps);
 	}
 
-	private ClusterMesh() {
+	private StrikeClusterShape() {
 	}
 }

@@ -165,10 +165,6 @@ class EdgeBuilder {
 		if (dst == null) throw new IllegalArgumentException("object is null");
 		final BitMesh image = newRampImage();
 		outline(image);
-		System.out.println("IMAGE");
-		System.out.println(image);
-		System.out.println("DST IN");
-		System.out.println(dst);
 		int x = xInit();
 		int y = yInit();
 		final int rampCount = m_ramps.size();
@@ -185,8 +181,6 @@ class EdgeBuilder {
 			}
 			rampPre = ramp;
 		}
-		System.out.println("DST OUT");
-		System.out.println(dst);
 	}
 
 	public List<Vertex> newVertices() {
