@@ -25,6 +25,11 @@ enum Bearing {
 		return dy < 0 ? SE : NE;
 	}
 
+	public int deltaCW(Bearing rhs) {
+		final int d = (m_index + 4) - rhs.m_index;
+		return d < 0 ? (d + 8) : d;
+	}
+
 	public boolean isAdjacent(Bearing rhs, boolean orthogonal) {
 		if (rhs == null) throw new IllegalArgumentException("object is null");
 		final int offset = orthogonal ? 2 : 1;

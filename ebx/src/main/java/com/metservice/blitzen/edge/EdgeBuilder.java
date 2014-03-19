@@ -43,10 +43,14 @@ class EdgeBuilder {
 	}
 
 	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing bpre, Bearing b) {
+		if (bpre == Bearing.W || b == Bearing.E) return;
 		final Bearing brpre = bpre.orthogonalRight();
 		final Bearing br = b.orthogonalRight();
 		if (brpre.dx == 1 || br.dx == 1) {
-			fillRight(dst, image, x + 1, y);
+			final int delta = brpre.deltaCW(br);
+			if (delta > 2) {
+				fillRight(dst, image, x + 1, y);
+			}
 		}
 	}
 

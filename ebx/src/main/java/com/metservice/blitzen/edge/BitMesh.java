@@ -52,9 +52,15 @@ class BitMesh {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
+		sb.append('/');
+		for (int x = 0; x < m_w; x++) {
+			sb.append(x % 10);
+		}
+		sb.append('\n');
 		for (int y = m_h - 1; y >= 0; y--) {
+			sb.append(y % 10);
 			for (int x = 0; x < m_w; x++) {
-				final char ch = value(x, y) ? '*' : '.';
+				final char ch = value(x, y) ? 'X' : '=';
 				sb.append(ch);
 			}
 			sb.append('\n');
