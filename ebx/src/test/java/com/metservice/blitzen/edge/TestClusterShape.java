@@ -36,20 +36,20 @@ public class TestClusterShape {
 		 "1342014685240,-6.3908, 152.9207,-2.0,GROUND"
 	};
 	//@formatter:on
-	private static Strike[] sa(List<Strike> list) {
-		return list.toArray(new Strike[list.size()]);
+	private static BzeStrike[] sa(List<BzeStrike> list) {
+		return list.toArray(new BzeStrike[list.size()]);
 	}
 
 	@Test
 	public void a20_popB() {
-		final Strike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
-		final StrikeClusterShape cm = StrikeClusterShape.newInstance(strikes, epsB);
+		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
+		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsB);
 	}
 
 	@Test
 	public void a30_popA() {
-		final Strike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
-		final StrikeClusterShape cm = StrikeClusterShape.newInstance(strikes, epsA);
+		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
+		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsA);
 	}
 
 }

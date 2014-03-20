@@ -10,6 +10,22 @@ package com.metservice.blitzen.edge;
  */
 class Vertex implements IPolyline {
 
+	public static float strikeX(Vertex v, float xL, float eps) {
+		return (eps * v.x) + xL;
+	}
+
+	public static float strikeY(Vertex v, float yB, float eps) {
+		return (eps * v.y) + yB;
+	}
+
+	public float strikeX(BzeStrikeBounds bounds, float eps) {
+		return strikeX(this, bounds.xL, eps);
+	}
+
+	public float strikeY(BzeStrikeBounds bounds, float eps) {
+		return strikeY(this, bounds.yB, eps);
+	}
+
 	@Override
 	public String toString() {
 		return "(" + x + "," + y + ")";

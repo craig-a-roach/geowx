@@ -8,17 +8,17 @@ package com.metservice.blitzen.edge;
 /**
  * @author roach
  */
-class StrikeClusterTable {
+public class BzeStrikeClusterTable {
 
-	public StrikeBounds bounds() {
+	public BzeStrikeBounds bounds() {
 		return m_bounds;
 	}
 
-	public StrikeCluster[] clusterArray() {
+	public BzeStrikeCluster[] clusterArray() {
 		return m_clusterArray;
 	}
 
-	public Strike[] noiseArray() {
+	public BzeStrike[] noiseArray() {
 		return m_noiseArray;
 	}
 
@@ -43,8 +43,8 @@ class StrikeClusterTable {
 		return sb.toString();
 	}
 
-	public StrikeClusterTable(float eps, StrikeCluster[] clusterArray, Strike[] noiseArray, int strikeCount, float sumClusterMag,
-			float sumNoiseMag, StrikeBounds bounds) {
+	public BzeStrikeClusterTable(float eps, BzeStrikeCluster[] clusterArray, BzeStrike[] noiseArray, int strikeCount,
+			float sumClusterMag, float sumNoiseMag, BzeStrikeBounds bounds) {
 		if (clusterArray == null) throw new IllegalArgumentException("object is null");
 		if (noiseArray == null) throw new IllegalArgumentException("object is null");
 		m_eps = eps;
@@ -56,10 +56,10 @@ class StrikeClusterTable {
 		m_bounds = bounds;
 	}
 	private final float m_eps;
-	private final StrikeCluster[] m_clusterArray;
-	private final Strike[] m_noiseArray;
+	private final BzeStrikeCluster[] m_clusterArray;
+	private final BzeStrike[] m_noiseArray;
 	private final int m_strikeCount;
 	private final float m_sumClusterMagnitude;
 	private final float m_sumNoiseMagnitude;
-	private final StrikeBounds m_bounds;
+	private final BzeStrikeBounds m_bounds;
 }

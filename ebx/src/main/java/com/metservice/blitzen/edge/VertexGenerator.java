@@ -64,14 +64,17 @@ class VertexGenerator {
 				detecting = false;
 				continue;
 			}
-			eb.add(pivotHead);
 			final int headX = pivotX + pivotHead.dx;
 			final int headY = pivotY + pivotHead.dy;
 			if (headX == start.x && headY == start.y) {
-				isClosed = true;
+				if (eb.isCloseable()) {
+					eb.add(pivotHead);
+					isClosed = true;
+				}
 				detecting = false;
 				continue;
 			}
+			eb.add(pivotHead);
 			originX = pivotX;
 			originY = pivotY;
 			pivotX = headX;
@@ -81,9 +84,7 @@ class VertexGenerator {
 		if (isClosed) {
 			eb.fillPolygon(m_store);
 		}
-		final List<Vertex> vertices = eb.newVertices();
-		if (isClosed) return new Polygon(vertices);
-		return new Polyline(vertices);
+		return eb.newPolyline(isClosed);
 	}
 
 	public List<IPolyline> newShape() {
@@ -101,7 +102,6 @@ class VertexGenerator {
 				continue;
 			}
 			final IPolyline polyline = consumePolyline(oLB, oPM);
-			System.out.println(polyline);
 			result.add(polyline);
 		}
 

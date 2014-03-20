@@ -8,8 +8,9 @@ package com.metservice.blitzen.edge;
 /**
  * @author roach
  */
-enum StrikeType {
+public class BzeStrikePolyline {
 
-	GROUND, CLOUD
+	public BzeStrikePolyline(float[] xyPairs) {
 
+	}
 }

@@ -8,14 +8,14 @@ package com.metservice.blitzen.edge;
 /**
  * @author roach
  */
-class Strike {
+public class BzeStrike {
 
 	@Override
 	public String toString() {
 		return "y" + y + ", x" + x + " @" + t + ":" + qty + "," + type;
 	}
 
-	public Strike(long t, float y, float x, float qty, StrikeType type) {
+	public BzeStrike(long t, float y, float x, float qty, BzeStrikeType type) {
 		this.t = t;
 		this.y = y;
 		this.x = x;
@@ -26,5 +26,5 @@ class Strike {
 	public final float y;
 	public final float x;
 	public final float qty;
-	public final StrikeType type;
+	public final BzeStrikeType type;
 }

@@ -5,8 +5,6 @@
  */
 package com.metservice.blitzen.edge;
 
-import java.util.List;
-
 import org.junit.Test;
 
 /**
@@ -55,7 +53,7 @@ public class TestEdgeBuilder {
 		// 17|S*2
 		// 18|SW*1
 		// 19|W*1|
-		final List<Vertex> vertices = eb.newVertices();
-		System.out.println(vertices);
+		final IPolyline polyline = eb.newPolyline(false);
+		System.out.println(polyline);
 	}
 }

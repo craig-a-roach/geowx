@@ -5,17 +5,17 @@
  */
 package com.metservice.blitzen.edge;
 
-class StrikeBounds {
+public class BzeStrikeBounds {
 
-	public static StrikeBounds newInstance(Strike[] strikes) {
+	public static BzeStrikeBounds newInstance(BzeStrike[] strikes) {
 		assert strikes != null;
 		final int strikeCount = strikes.length;
 		assert strikeCount > 0;
-		final Strike s0 = strikes[0];
+		final BzeStrike s0 = strikes[0];
 		float yB = s0.y, xL = s0.x;
 		float yT = yB, xR = xL;
 		for (int i = 1; i < strikeCount; i++) {
-			final Strike strike = strikes[i];
+			final BzeStrike strike = strikes[i];
 			final float sy = strike.y;
 			final float sx = strike.x;
 			if (sy < yB) {
@@ -31,7 +31,7 @@ class StrikeBounds {
 				xR = sx;
 			}
 		}
-		return new StrikeBounds(yB, xL, yT, xR);
+		return new BzeStrikeBounds(yB, xL, yT, xR);
 	}
 
 	public boolean contains(float y, float x) {
@@ -42,7 +42,7 @@ class StrikeBounds {
 		return yT - yB;
 	}
 
-	public boolean intersects(StrikeBounds rhs) {
+	public boolean intersects(BzeStrikeBounds rhs) {
 		return rhs.yB <= yT && rhs.yT >= yB && rhs.xL <= xR && rhs.xR >= xL;
 	}
 
@@ -67,7 +67,7 @@ class StrikeBounds {
 		return yB + ((yT - yB) / 2.0f);
 	}
 
-	public StrikeBounds(float yB, float xL, float yT, float xR) {
+	public BzeStrikeBounds(float yB, float xL, float yT, float xR) {
 		this.yB = yB;
 		this.xL = xL;
 		this.yT = yT;

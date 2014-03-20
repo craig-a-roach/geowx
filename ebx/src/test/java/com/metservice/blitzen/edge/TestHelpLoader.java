@@ -36,10 +36,10 @@ class TestHelpLoader {
 		}
 	}
 
-	private static StrikeType fieldType(String in, int lineno, String tag) {
+	private static BzeStrikeType fieldType(String in, int lineno, String tag) {
 		final String quctw = qtw(in, lineno, tag).toUpperCase();
-		if (quctw.equals("GROUND")) return StrikeType.GROUND;
-		if (quctw.equals("CLOUD")) return StrikeType.CLOUD;
+		if (quctw.equals("GROUND")) return BzeStrikeType.GROUND;
+		if (quctw.equals("CLOUD")) return BzeStrikeType.CLOUD;
 		throw new IllegalArgumentException("Malformed " + tag + " at line #" + lineno + "..." + in);
 	}
 
@@ -49,7 +49,7 @@ class TestHelpLoader {
 		return ztw;
 	}
 
-	public static Strike createStrike(String src, int lineno) {
+	public static BzeStrike createStrike(String src, int lineno) {
 		if (src == null) return null;
 		final String ztwSrc = src.trim();
 		if (ztwSrc.length() == 0) return null;
@@ -59,14 +59,14 @@ class TestHelpLoader {
 		final float y = fieldFloat(fields[1], lineno, "latitude");
 		final float x = fieldFloat(fields[2], lineno, "longitude");
 		final float qty = fieldFloat(fields[3], lineno, "qty");
-		final StrikeType type = fieldType(fields[4], lineno, "type");
-		return new Strike(t, y, x, qty, type);
+		final BzeStrikeType type = fieldType(fields[4], lineno, "type");
+		return new BzeStrike(t, y, x, qty, type);
 	}
 
-	public static Strike[] newArrayFromLines(String[] zlines) {
-		final List<Strike> zl = newListFromLines(zlines);
+	public static BzeStrike[] newArrayFromLines(String[] zlines) {
+		final List<BzeStrike> zl = newListFromLines(zlines);
 		final int sz = zl.size();
-		return zl.toArray(new Strike[sz]);
+		return zl.toArray(new BzeStrike[sz]);
 	}
 
 	public static BitMesh newBitMeshFromLines(String[] zlines, char mark) {
@@ -88,10 +88,10 @@ class TestHelpLoader {
 		return bm;
 	}
 
-	public static List<Strike> newListFromGenerator(String spec) {
+	public static List<BzeStrike> newListFromGenerator(String spec) {
 		final Pattern lineSplitter = Pattern.compile("[|]");
 		final Pattern genSplitter = Pattern.compile("[,:]");
-		final List<Strike> zl = new ArrayList<>();
+		final List<BzeStrike> zl = new ArrayList<>();
 		final String[] lines = lineSplitter.split(spec);
 		long t = 1000L;
 		for (int iline = 0; iline < lines.length; iline++) {
@@ -100,7 +100,7 @@ class TestHelpLoader {
 			for (int ic = 1; ic < gen.length; ic++) {
 				final String xg = gen[ic];
 				final String src = t + "," + yg + "," + xg + ",1,GROUND";
-				final Strike strike = createStrike(src, iline);
+				final BzeStrike strike = createStrike(src, iline);
 				zl.add(strike);
 				t++;
 			}
@@ -108,11 +108,11 @@ class TestHelpLoader {
 		return zl;
 	}
 
-	public static List<Strike> newListFromLines(String[] zlines) {
-		final List<Strike> zl = new ArrayList<>(zlines.length);
+	public static List<BzeStrike> newListFromLines(String[] zlines) {
+		final List<BzeStrike> zl = new ArrayList<>(zlines.length);
 		for (int i = 0; i < zlines.length; i++) {
 			final String line = zlines[i].trim();
-			final Strike oStrike = createStrike(line, (i + 1));
+			final BzeStrike oStrike = createStrike(line, (i + 1));
 			if (oStrike != null) {
 				zl.add(oStrike);
 			}
@@ -120,12 +120,12 @@ class TestHelpLoader {
 		return zl;
 	}
 
-	public static List<Strike> newListFromResource(Class<?> ref, String path) {
+	public static List<BzeStrike> newListFromResource(Class<?> ref, String path) {
 		final InputStream ins = ref.getResourceAsStream(path);
 		if (ins == null) throw new IllegalArgumentException("Resource '" + path + "' not found under " + ref.getName());
 		final BufferedReader rdr = new BufferedReader(new InputStreamReader(ins));
 		try {
-			final List<Strike> strikes = new ArrayList<Strike>();
+			final List<BzeStrike> strikes = new ArrayList<BzeStrike>();
 			int lineNo = 0;
 			boolean more = true;
 			while (more) {
@@ -139,7 +139,7 @@ class TestHelpLoader {
 				if (ztwLine.length() == 0) {
 					continue;
 				}
-				final Strike oStrike = createStrike(ztwLine, lineNo);
+				final BzeStrike oStrike = createStrike(ztwLine, lineNo);
 				if (oStrike != null) {
 					strikes.add(oStrike);
 				}

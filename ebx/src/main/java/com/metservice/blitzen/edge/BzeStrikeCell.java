@@ -5,20 +5,12 @@
  */
 package com.metservice.blitzen.edge;
 
-import java.util.List;
-
 /**
  * @author roach
  */
-class Polygon implements IPolyline {
+public class BzeStrikeCell {
 
-	@Override
-	public String toString() {
-		return m_vertices.toString();
-	}
+	public BzeStrikeCell(float x, float y, float r) {
 
-	public Polygon(List<Vertex> vertices) {
-		m_vertices = vertices;
 	}
-	private final List<Vertex> m_vertices;
 }

@@ -10,15 +10,15 @@ import java.util.List;
 /**
  * @author roach
  */
-class StrikeClusteringEngine {
+public class BzeStrikeClusteringEngine {
 
 	private static final int CID_NOISE = -1;
 	private static final int CID_UNCLASSIFIED = 0;
 	private static final int CID_FIRST = 1;
 
-	public static StrikeClusteringEngine newInstance(List<Strike> strikeList) {
+	public static BzeStrikeClusteringEngine newInstance(List<BzeStrike> strikeList) {
 		final StrikeBase base = StrikeBase.newInstance(strikeList);
-		return new StrikeClusteringEngine(base);
+		return new BzeStrikeClusteringEngine(base);
 	}
 
 	private boolean expandCluster(Constraint cons, ClusterState clusterState, int strikeId, int clusterId) {
@@ -52,7 +52,7 @@ class StrikeClusteringEngine {
 		return true;
 	}
 
-	public StrikeClusterTable solve(float eps, int minStrikes) {
+	public BzeStrikeClusterTable solve(float eps, int minStrikes) {
 		final Constraint cons = new Constraint(eps, minStrikes);
 		final ClusterState clusterState = ClusterState.newInstance(m_base);
 		int clusterId = CID_FIRST;
@@ -66,11 +66,11 @@ class StrikeClusteringEngine {
 			}
 		}
 		final int lastClusterId = clusterId == CID_FIRST ? 0 : (clusterId - 1);
-		final StrikeClusterTable table = clusterState.newTable(eps, lastClusterId);
+		final BzeStrikeClusterTable table = clusterState.newTable(eps, lastClusterId);
 		return table;
 	}
 
-	private StrikeClusteringEngine(StrikeBase base) {
+	private BzeStrikeClusteringEngine(StrikeBase base) {
 		assert base != null;
 		m_base = base;
 	}
@@ -79,7 +79,7 @@ class StrikeClusteringEngine {
 
 	private static class ArrayBuilder {
 
-		public void add(Strike strike) {
+		public void add(BzeStrike strike) {
 			assert strike != null;
 			m_strikes[m_nextIndex] = strike;
 			m_nextIndex++;
@@ -88,27 +88,28 @@ class StrikeClusteringEngine {
 			m_qtyMagnitudeMax = Math.max(m_qtyMagnitudeMax, absQty);
 		}
 
-		public StrikeCluster newCluster(int cid) {
+		public BzeStrikeCluster newCluster(int cid, float eps) {
 			final int depth = m_strikes.length;
 			if (depth != m_nextIndex) {
 				final String msg = "Expecting " + depth + " in cluster # " + cid + ", but " + m_nextIndex;
 				throw new IllegalStateException(msg);
 			}
-			return new StrikeCluster(cid, m_strikes, m_qtyMagnitudeMax, m_qtyMagnitudeMax);
+			final BzeStrikeClusterShape clusterShape = BzeStrikeClusterShape.newInstance(m_strikes, eps);
+			return new BzeStrikeCluster(cid, m_strikes, clusterShape, m_qtyMagnitudeMax, m_qtyMagnitudeMax);
 		}
 
 		public float qtyMagnitudeSum() {
 			return m_qtyMagnitudeSum;
 		}
 
-		public Strike[] strikes() {
+		public BzeStrike[] strikes() {
 			return m_strikes;
 		}
 
 		public ArrayBuilder(int depth) {
-			m_strikes = new Strike[depth];
+			m_strikes = new BzeStrike[depth];
 		}
-		private final Strike[] m_strikes;
+		private final BzeStrike[] m_strikes;
 		private int m_nextIndex;
 		private float m_qtyMagnitudeSum;
 		private float m_qtyMagnitudeMax;
@@ -155,31 +156,31 @@ class StrikeClusteringEngine {
 			return m_cidArray[strikeId];
 		}
 
-		public StrikeClusterTable newTable(float eps, int lastClusterId) {
+		public BzeStrikeClusterTable newTable(float eps, int lastClusterId) {
 			final int[] extentArray = newExtentArray(lastClusterId);
 			final int noiseCount = extentArray[0];
 			final ArrayBuilder noiseBuilder = new ArrayBuilder(noiseCount);
 			final ArrayBuilder[] builderArray = newBuilderArray(extentArray, lastClusterId);
 			final int strikeCount = m_cidArray.length;
 			for (int strikeId = 0; strikeId < strikeCount; strikeId++) {
-				final Strike strike = m_base.strike(strikeId);
+				final BzeStrike strike = m_base.strike(strikeId);
 				final int clusterId = m_cidArray[strikeId];
 				final boolean isNoise = clusterId < CID_FIRST;
 				final ArrayBuilder builder = isNoise ? noiseBuilder : builderArray[clusterId];
 				builder.add(strike);
 			}
-			final StrikeCluster[] clusterArray = new StrikeCluster[lastClusterId];
+			final BzeStrikeCluster[] clusterArray = new BzeStrikeCluster[lastClusterId];
 			float sumMag = 0.0f;
 			for (int clusterId = 0; clusterId < lastClusterId; clusterId++) {
 				final ArrayBuilder ab = builderArray[clusterId + 1];
-				final StrikeCluster cluster = ab.newCluster(clusterId);
+				final BzeStrikeCluster cluster = ab.newCluster(clusterId, eps);
 				clusterArray[clusterId] = cluster;
 				sumMag += cluster.qtyMagnitudeSum();
 			}
-			final Strike[] noiseArray = noiseBuilder.strikes();
+			final BzeStrike[] noiseArray = noiseBuilder.strikes();
 			final float noiseSumMag = noiseBuilder.qtyMagnitudeSum();
-			final StrikeBounds bounds = m_base.bounds();
-			return new StrikeClusterTable(eps, clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, bounds);
+			final BzeStrikeBounds bounds = m_base.bounds();
+			return new BzeStrikeClusterTable(eps, clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, bounds);
 		}
 
 		public void setClusterId(Agenda agenda, int clusterId) {
@@ -220,16 +221,16 @@ class StrikeClusteringEngine {
 
 	private static class StrikeBase {
 
-		public static StrikeBase newInstance(List<Strike> strikeList) {
+		public static StrikeBase newInstance(List<BzeStrike> strikeList) {
 			if (strikeList == null) throw new IllegalArgumentException("object is null");
 			final int strikeCount = strikeList.size();
 			if (strikeCount == 0) throw new IllegalArgumentException("empty strike list");
-			final Strike[] strikes = strikeList.toArray(new Strike[strikeCount]);
+			final BzeStrike[] strikes = strikeList.toArray(new BzeStrike[strikeCount]);
 			final RTree tree = RTree.newInstance(strikes);
 			return new StrikeBase(strikes, tree);
 		}
 
-		public StrikeBounds bounds() {
+		public BzeStrikeBounds bounds() {
 			return m_tree.bounds();
 		}
 
@@ -241,7 +242,7 @@ class StrikeClusteringEngine {
 			m_tree.query(m_strikes, strikeId, cons.eps, agenda);
 		}
 
-		public Strike strike(int strikeId) {
+		public BzeStrike strike(int strikeId) {
 			return m_strikes[strikeId];
 		}
 
@@ -249,14 +250,14 @@ class StrikeClusteringEngine {
 			return m_strikeCount;
 		}
 
-		public StrikeBase(Strike[] strikes, RTree tree) {
+		public StrikeBase(BzeStrike[] strikes, RTree tree) {
 			assert strikes != null;
 			assert tree != null;
 			m_strikes = strikes;
 			m_tree = tree;
 			m_strikeCount = strikes.length;
 		}
-		private final Strike[] m_strikes;
+		private final BzeStrike[] m_strikes;
 		private final RTree m_tree;
 		private final int m_strikeCount;
 	}

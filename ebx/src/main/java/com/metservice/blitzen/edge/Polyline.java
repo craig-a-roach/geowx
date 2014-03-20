@@ -12,13 +12,33 @@ import java.util.List;
  */
 class Polyline implements IPolyline {
 
-	@Override
-	public String toString() {
-		return m_vertices.toString();
+	public boolean isPolygon() {
+		return m_isClosed;
 	}
 
-	public Polyline(List<Vertex> vertices) {
+	@Override
+	public String toString() {
+		return (m_isClosed ? "POLYGON:" : "") + m_vertices.toString();
+	}
+
+	public float[] xyPairs(BzeStrikeBounds bounds, float eps) {
+		final int vertexCount = m_vertices.size();
+		final int coordCount = vertexCount * 2;
+		final float[] xy = new float[coordCount];
+		final float xL = bounds.xL;
+		final float yB = bounds.yB;
+		for (int iv = 0, ix = 0, iy = 1; iv < vertexCount; iv++, ix += 2, iy += 2) {
+			final Vertex vertex = m_vertices.get(iv);
+			xy[ix] = Vertex.strikeX(vertex, xL, eps);
+			xy[iy] = Vertex.strikeY(vertex, yB, eps);
+		}
+		return xy;
+	}
+
+	public Polyline(List<Vertex> vertices, boolean isClosed) {
 		m_vertices = vertices;
+		m_isClosed = isClosed;
 	}
 	private final List<Vertex> m_vertices;
+	private final boolean m_isClosed;
 }

@@ -106,23 +106,24 @@ class EdgeBuilder {
 		return new Edge(dx, dy);
 	}
 
+	private IPolyline newPolyline(List<IEdge> edges, boolean isClosed) {
+		final int edgeCount = edges.size();
+		final int vertexCount = isClosed ? edgeCount : (edgeCount + 1);
+		final List<Vertex> vertices = new ArrayList<Vertex>(vertexCount);
+		vertices.add(m_start);
+		Vertex head = m_start;
+		for (int iv = 1, ie = 0; iv < vertexCount; iv++, ie++) {
+			final IEdge edge = edges.get(ie);
+			head = new Vertex(head.x + edge.dx(), head.y + edge.dy());
+			vertices.add(head);
+		}
+		return new Polyline(vertices, isClosed);
+	}
+
 	private BitMesh newRampImage() {
 		final int width = m_xR - m_xL + 1;
 		final int height = m_yT - m_yB + 1;
 		return new BitMesh(width, height);
-	}
-
-	private List<Vertex> newVertices(List<IEdge> edges) {
-		final int edgeCount = edges.size();
-		final List<Vertex> vertices = new ArrayList<Vertex>(edgeCount + 1);
-		vertices.add(m_start);
-		Vertex head = m_start;
-		for (int i = 0; i < edgeCount; i++) {
-			final IEdge edge = edges.get(i);
-			head = new Vertex(head.x + edge.dx(), head.y + edge.dy());
-			vertices.add(head);
-		}
-		return vertices;
 	}
 
 	private void outline(BitMesh image) {
@@ -183,7 +184,11 @@ class EdgeBuilder {
 		}
 	}
 
-	public List<Vertex> newVertices() {
+	public boolean isCloseable() {
+		return m_ramps.size() > 1;
+	}
+
+	public IPolyline newPolyline(boolean isClosed) {
 		final int rampCount = m_ramps.size();
 		final List<IEdge> dst = new ArrayList<IEdge>(rampCount);
 		int pos = 0;
@@ -196,7 +201,7 @@ class EdgeBuilder {
 				pos++;
 			}
 		}
-		return newVertices(dst);
+		return newPolyline(dst, isClosed);
 	}
 
 	@Override
