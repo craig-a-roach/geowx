@@ -16,13 +16,7 @@ public class BzeStrikeClusterShape {
 	private static final BzeStrikePolyline[] ZEROPOLYLINES = new BzeStrikePolyline[0];
 	private static final BzeStrikePolygon[] ZEROPOLYGONS = new BzeStrikePolygon[0];
 
-	private static BzeStrikeClusterShape newInstance(BitMesh store, BzeStrikeBounds bounds, float eps) {
-		final VertexGenerator vg = new VertexGenerator(store);
-		final List<IPolyline> polylines = vg.newShape();
-		return newInstance(polylines, bounds, eps);
-	}
-
-	private static BzeStrikeClusterShape newInstance(List<IPolyline> polylines, BzeStrikeBounds bounds, float eps) {
+	private static BzeStrikeClusterShape newEmpty(List<IPolyline> polylines, BzeStrikeBounds bounds) {
 		final int count = polylines.size();
 		int cellCount = 0;
 		int polylineCount = 0;
@@ -56,6 +50,18 @@ public class BzeStrikeClusterShape {
 		if (polygonCount > 0) {
 			polygonArray = new BzeStrikePolygon[polygonCount];
 		}
+		return new BzeStrikeClusterShape(cellArray, polylineArray, polygonArray, bounds);
+	}
+
+	private static BzeStrikeClusterShape newInstance(BitMesh store, BzeStrikeBounds bounds, float eps) {
+		final VertexGenerator vg = new VertexGenerator(store);
+		final List<IPolyline> polylines = vg.newShape();
+		return newInstance(polylines, bounds, eps);
+	}
+
+	private static BzeStrikeClusterShape newInstance(List<IPolyline> polylines, BzeStrikeBounds bounds, float eps) {
+		final int count = polylines.size();
+		final BzeStrikeClusterShape neo = newEmpty(polylines, bounds);
 		int cellIndex = 0;
 		int polylineIndex = 0;
 		int polygonIndex = 0;
@@ -65,7 +71,7 @@ public class BzeStrikeClusterShape {
 				final Vertex vertex = (Vertex) p;
 				final float sx = vertex.strikeX(bounds, eps);
 				final float sy = vertex.strikeY(bounds, eps);
-				cellArray[cellIndex] = new BzeStrikeCell(sx, sy, eps);
+				neo.m_cellArray[cellIndex] = new BzeStrikeCell(sx, sy, eps);
 				cellIndex++;
 				continue;
 			}
@@ -73,17 +79,16 @@ public class BzeStrikeClusterShape {
 				final Polyline polyline = (Polyline) p;
 				final float[] xyPairs = polyline.xyPairs(bounds, eps);
 				if (polyline.isPolygon()) {
-					polygonArray[polygonIndex] = new BzeStrikePolygon(xyPairs);
+					neo.m_polygonArray[polygonIndex] = new BzeStrikePolygon(xyPairs);
 					polygonIndex++;
 				} else {
-					polylineArray[polylineIndex] = new BzeStrikePolyline(xyPairs);
+					neo.m_polylineArray[polylineIndex] = new BzeStrikePolyline(xyPairs);
 					polylineIndex++;
 				}
-				polylineCount++;
 				continue;
 			}
 		}
-		return new BzeStrikeClusterShape(cellArray, polylineArray, polygonArray, bounds);
+		return neo;
 	}
 
 	public static BzeStrikeClusterShape newInstance(BzeStrike[] strikes, float eps) {

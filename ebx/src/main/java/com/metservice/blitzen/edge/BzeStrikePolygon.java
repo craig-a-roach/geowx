@@ -8,10 +8,14 @@ package com.metservice.blitzen.edge;
 /**
  * @author roach
  */
-public class BzeStrikePolygon {
+public class BzeStrikePolygon extends AbstractStrikePolyline {
 
-	public BzeStrikePolygon(float[] xyPairs) {
-
+	@Override
+	boolean isClosed() {
+		return true;
 	}
 
+	public BzeStrikePolygon(float[] xyPairs) {
+		super(xyPairs);
+	}
 }
