@@ -44,12 +44,14 @@ public class TestClusterShape {
 	public void a20_popB() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
 		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsB);
+		System.out.println(cm);
 	}
 
 	@Test
 	public void a30_popA() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
 		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsA);
+		System.out.println(cm);
 	}
 
 }

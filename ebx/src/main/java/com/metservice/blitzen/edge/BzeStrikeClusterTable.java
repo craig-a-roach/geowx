@@ -27,7 +27,6 @@ public class BzeStrikeClusterTable {
 		final int clusterCount = m_clusterArray.length;
 		final int noiseCount = m_noiseArray.length;
 		final StringBuilder sb = new StringBuilder();
-		sb.append("eps=").append(m_eps).append('\n');
 		sb.append("strikes=").append(m_strikeCount).append('\n');
 		sb.append("clusterCount=").append(clusterCount).append("\n");
 		sb.append("noiseCount=").append(noiseCount).append(")\n");
@@ -43,11 +42,10 @@ public class BzeStrikeClusterTable {
 		return sb.toString();
 	}
 
-	public BzeStrikeClusterTable(float eps, BzeStrikeCluster[] clusterArray, BzeStrike[] noiseArray, int strikeCount,
-			float sumClusterMag, float sumNoiseMag, BzeStrikeBounds bounds) {
+	public BzeStrikeClusterTable(BzeStrikeCluster[] clusterArray, BzeStrike[] noiseArray, int strikeCount, float sumClusterMag,
+			float sumNoiseMag, BzeStrikeBounds bounds) {
 		if (clusterArray == null) throw new IllegalArgumentException("object is null");
 		if (noiseArray == null) throw new IllegalArgumentException("object is null");
-		m_eps = eps;
 		m_clusterArray = clusterArray;
 		m_noiseArray = noiseArray;
 		m_strikeCount = strikeCount;
@@ -55,7 +53,6 @@ public class BzeStrikeClusterTable {
 		m_sumNoiseMagnitude = sumNoiseMag;
 		m_bounds = bounds;
 	}
-	private final float m_eps;
 	private final BzeStrikeCluster[] m_clusterArray;
 	private final BzeStrike[] m_noiseArray;
 	private final int m_strikeCount;

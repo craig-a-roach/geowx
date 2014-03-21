@@ -180,7 +180,7 @@ public class BzeStrikeClusteringEngine {
 			final BzeStrike[] noiseArray = noiseBuilder.strikes();
 			final float noiseSumMag = noiseBuilder.qtyMagnitudeSum();
 			final BzeStrikeBounds bounds = m_base.bounds();
-			return new BzeStrikeClusterTable(eps, clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, bounds);
+			return new BzeStrikeClusterTable(clusterArray, noiseArray, strikeCount, sumMag, noiseSumMag, bounds);
 		}
 
 		public void setClusterId(Agenda agenda, int clusterId) {

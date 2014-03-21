@@ -108,6 +108,11 @@ class VertexGenerator {
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		return m_store.toString();
+	}
+
 	public VertexGenerator(BitMesh store) {
 		if (store == null) throw new IllegalArgumentException("object is null");
 		m_store = store;

@@ -123,6 +123,16 @@ public class BzeStrikeClusterShape {
 		return m_polylineArray;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("polygons=").append(m_polygonArray.length);
+		sb.append(", polylines=").append(m_polylineArray.length);
+		sb.append(", cells=").append(m_cellArray.length);
+		sb.append(", bounds(").append(m_bounds).append(")");
+		return sb.toString();
+	}
+
 	private BzeStrikeClusterShape(BzeStrikeCell[] cellArray, BzeStrikePolyline[] polylineArray, BzeStrikePolygon[] polygonArray,
 			BzeStrikeBounds bounds) {
 		assert cellArray != null;
