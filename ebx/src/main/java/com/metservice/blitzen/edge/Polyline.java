@@ -18,7 +18,17 @@ class Polyline implements IPolyline {
 
 	@Override
 	public String toString() {
-		return (m_isClosed ? "POLYGON:" : "") + m_vertices.toString();
+		final StringBuilder sb = new StringBuilder();
+		final int count = m_vertices.size();
+		sb.append('[');
+		for (int i = 0; i < count; i++) {
+			sb.append(m_vertices.get(i));
+		}
+		if (m_isClosed) {
+			sb.append("CLOSE");
+		}
+		sb.append(']');
+		return sb.toString();
 	}
 
 	public float[] xyPairs(BzeStrikeBounds bounds, float eps) {

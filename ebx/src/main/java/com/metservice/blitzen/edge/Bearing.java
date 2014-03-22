@@ -25,11 +25,6 @@ enum Bearing {
 		return dy < 0 ? SE : NE;
 	}
 
-	public int deltaCW(Bearing rhs) {
-		final int d = (m_index + 4) - rhs.m_index;
-		return d < 0 ? (d + 8) : d;
-	}
-
 	public boolean isAdjacent(Bearing rhs, boolean orthogonal) {
 		if (rhs == null) throw new IllegalArgumentException("object is null");
 		final int offset = orthogonal ? 2 : 1;
@@ -38,11 +33,6 @@ enum Bearing {
 		final int lhsHi = (m_index + 8 + offset) % 8;
 		if (lhsLo > lhsHi) return rhsIndex >= lhsLo || rhsIndex <= lhsHi;
 		return rhsIndex >= lhsLo && rhsIndex <= lhsHi;
-	}
-
-	public Bearing orthogonalRight() {
-		final int neo = (m_index + 2) % 8;
-		return Paths[neo];
 	}
 
 	public Bearing path(int index) {

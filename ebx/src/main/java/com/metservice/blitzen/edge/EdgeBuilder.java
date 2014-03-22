@@ -42,15 +42,27 @@ class EdgeBuilder {
 		return advance;
 	}
 
-	private void fill(BitMesh dst, BitMesh image, int x, int y, Bearing bpre, Bearing b) {
-		if (bpre == Bearing.W || b == Bearing.E) return;
-		final Bearing brpre = bpre.orthogonalRight();
-		final Bearing br = b.orthogonalRight();
-		if (brpre.dx == 1 || br.dx == 1) {
-			final int delta = brpre.deltaCW(br);
-			if (delta > 2) {
-				fillRight(dst, image, x + 1, y);
-			}
+	private boolean canFillRight(Bearing bpre, Bearing b) {
+		if (b == Bearing.E) return false;
+		switch (bpre) {
+			case N:
+				return b != Bearing.SE;
+			case NE:
+				return b.dy == 1;
+			case E:
+				return b.dy == 1;
+			case SE:
+				return b == Bearing.N || b == Bearing.NE;
+			case S:
+				return false;
+			case SW:
+				return false;
+			case W:
+				return false;
+			case NW:
+				return true;
+			default:
+				return false;
 		}
 	}
 
@@ -176,7 +188,9 @@ class EdgeBuilder {
 			final int c = ramp.count();
 			for (int i = 0; i < c; i++) {
 				final Bearing bpre = i == 0 ? rampPre.bearing : b;
-				fill(dst, image, x, y, bpre, b);
+				if (canFillRight(bpre, b)) {
+					fillRight(dst, image, x + 1, y);
+				}
 				x += b.dx;
 				y += b.dy;
 			}

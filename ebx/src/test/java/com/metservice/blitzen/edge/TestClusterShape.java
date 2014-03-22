@@ -7,6 +7,7 @@ package com.metservice.blitzen.edge;
 
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -15,7 +16,6 @@ import org.junit.Test;
 public class TestClusterShape {
 
 	//@formatter:off
-	private static final float epsA = 0.8f;
 	private static final String popA =
 			"   3.5:1.5,2.0,2.5,3.0,3.5"
 			+"|3.0:2.0,2.5,3.0,3.5,4.0|"
@@ -41,17 +41,32 @@ public class TestClusterShape {
 	}
 
 	@Test
-	public void a20_popB() {
-		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
-		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsB);
-		System.out.println(cm);
+	public void a30_popA1() {
+		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
+		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, 0.8f);
+		Assert.assertEquals(1, cm.polygons().length);
+		Assert.assertEquals(0, cm.polylines().length);
+		Assert.assertEquals(0, cm.cells().length);
+		System.out.println(cm.polygons()[0].toString());
 	}
 
 	@Test
-	public void a30_popA() {
+	public void a32_popA2() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
-		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsA);
-		System.out.println(cm);
+		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, 0.5f);
+		Assert.assertEquals(0, cm.polygons().length);
+		Assert.assertEquals(1, cm.polylines().length);
+		Assert.assertEquals(0, cm.cells().length);
+		System.out.println(cm.polylines()[0].toString());
+	}
+
+	@Test
+	public void a50_popB() {
+		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
+		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsB);
+		Assert.assertEquals(1, cm.polygons().length);
+		Assert.assertEquals(0, cm.polylines().length);
+		Assert.assertEquals(0, cm.cells().length);
 	}
 
 }
