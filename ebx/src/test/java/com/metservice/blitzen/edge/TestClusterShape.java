@@ -5,6 +5,7 @@
  */
 package com.metservice.blitzen.edge;
 
+import java.awt.Color;
 import java.util.List;
 
 import org.junit.Assert;
@@ -40,33 +41,59 @@ public class TestClusterShape {
 		return list.toArray(new BzeStrike[list.size()]);
 	}
 
+	private void paint(BzeStrikeClusterShape shape, String filePrefix, BzeStrike[] strikes) {
+		final BzeStrikeBounds bounds = shape.bounds();
+		final TestHelpCanvas canvas = new TestHelpCanvas(bounds, 500, 400);
+		final BzeStrikePolygon[] polygons = shape.polygons();
+		for (int i = 0; i < polygons.length; i++) {
+			canvas.plot(polygons[i], Color.cyan, null);
+		}
+		final BzeStrikePolyline[] polylines = shape.polylines();
+		for (int i = 0; i < polylines.length; i++) {
+			canvas.plot(polylines[i], Color.orange, null);
+		}
+		final BzeStrikeCell[] cells = shape.cells();
+		for (int i = 0; i < cells.length; i++) {
+			canvas.plot(cells[i], Color.green, null);
+		}
+		for (int i = 0; i < strikes.length; i++) {
+			final BzeStrike strike = strikes[i];
+			final String text = "[" + strike.x + "," + strike.y + "]";
+			canvas.plot(strike, Color.darkGray, text);
+		}
+		canvas.save(filePrefix);
+	}
+
 	@Test
 	public void a30_popA1() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
-		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, 0.8f);
-		Assert.assertEquals(1, cm.polygons().length);
-		Assert.assertEquals(0, cm.polylines().length);
-		Assert.assertEquals(0, cm.cells().length);
-		System.out.println(cm.polygons()[0].toString());
+		final BzeStrikeClusterShape cs = BzeStrikeClusterShape.newInstance(strikes, 0.8f);
+		Assert.assertEquals(1, cs.polygons().length);
+		Assert.assertEquals(0, cs.polylines().length);
+		Assert.assertEquals(0, cs.cells().length);
+		System.out.println(cs.polygons()[0].toString());
+		paint(cs, "a30", strikes);
 	}
 
 	@Test
 	public void a32_popA2() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
-		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, 0.5f);
-		Assert.assertEquals(0, cm.polygons().length);
-		Assert.assertEquals(1, cm.polylines().length);
-		Assert.assertEquals(0, cm.cells().length);
-		System.out.println(cm.polylines()[0].toString());
+		final BzeStrikeClusterShape cs = BzeStrikeClusterShape.newInstance(strikes, 0.5f);
+		Assert.assertEquals(0, cs.polygons().length);
+		Assert.assertEquals(1, cs.polylines().length);
+		Assert.assertEquals(0, cs.cells().length);
+		System.out.println(cs.polylines()[0].toString());
+		paint(cs, "a32", strikes);
 	}
 
 	@Test
 	public void a50_popB() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromLines(popB));
-		final BzeStrikeClusterShape cm = BzeStrikeClusterShape.newInstance(strikes, epsB);
-		Assert.assertEquals(1, cm.polygons().length);
-		Assert.assertEquals(0, cm.polylines().length);
-		Assert.assertEquals(0, cm.cells().length);
+		final BzeStrikeClusterShape cs = BzeStrikeClusterShape.newInstance(strikes, epsB);
+		Assert.assertEquals(1, cs.polygons().length);
+		Assert.assertEquals(0, cs.polylines().length);
+		Assert.assertEquals(0, cs.cells().length);
+		paint(cs, "a50", strikes);
 	}
 
 }
