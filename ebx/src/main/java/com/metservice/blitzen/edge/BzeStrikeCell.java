@@ -11,7 +11,7 @@ package com.metservice.blitzen.edge;
 public class BzeStrikeCell {
 
 	public float height() {
-		return m_eps;
+		return m_grid;
 	}
 
 	@Override
@@ -19,12 +19,12 @@ public class BzeStrikeCell {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("xL=").append(m_xL);
 		sb.append(", yB=").append(m_yB);
-		sb.append(", e=").append(m_eps);
+		sb.append(", e=").append(m_grid);
 		return sb.toString();
 	}
 
 	public float width() {
-		return m_eps;
+		return m_grid;
 	}
 
 	public float xLeft() {
@@ -32,15 +32,15 @@ public class BzeStrikeCell {
 	}
 
 	public float yTop() {
-		return m_yB + m_eps;
+		return m_yB + m_grid;
 	}
 
-	public BzeStrikeCell(float x, float y, float eps) {
+	public BzeStrikeCell(float x, float y, float grid) {
 		m_xL = x;
 		m_yB = y;
-		m_eps = eps;
+		m_grid = grid;
 	}
 	private final float m_xL;
 	private final float m_yB;
-	private final float m_eps;
+	private final float m_grid;
 }

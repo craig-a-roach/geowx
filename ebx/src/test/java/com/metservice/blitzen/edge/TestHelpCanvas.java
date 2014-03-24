@@ -27,10 +27,11 @@ public class TestHelpCanvas {
 		return Math.round(height / bounds.height() * m_height);
 	}
 
-	public void plot(BzeStrike strike, Paint paint, String oText) {
+	public void plot(BzeStrike strike, Paint oPaint, String oText) {
+		if (oPaint == null) return;
 		final int xL = x(strike.x);
 		final int yB = y(strike.y);
-		m_g2d.setPaint(paint);
+		m_g2d.setPaint(oPaint);
 		m_g2d.fillRect(xL, yB + 4, 4, 4);
 		if (oText != null) {
 			m_g2d.setColor(Color.black);
@@ -51,49 +52,58 @@ public class TestHelpCanvas {
 		}
 	}
 
-	public void plot(BzeStrikeCell cell, Paint paint, String oText) {
-		final int xL = x(cell.xLeft());
-		final int yT = y(cell.yTop());
-		final int w = w(cell.width());
-		final int h = w(cell.height());
-		m_g2d.setPaint(paint);
-		m_g2d.fillRect(xL, yT, w, h);
-		if (oText != null) {
-			m_g2d.setColor(Color.black);
-			m_g2d.drawString(oText, xL, yT);
+	public void plot(BzeStrikeCell cell, Paint oPaint, String oText) {
+		if (oPaint != null) {
+			final int xL = x(cell.xLeft());
+			final int yT = y(cell.yTop());
+			final int w = w(cell.width());
+			final int h = w(cell.height());
+			m_g2d.setPaint(oPaint);
+			m_g2d.fillRect(xL, yT, w, h);
+			if (oText != null) {
+				m_g2d.setColor(Color.black);
+				m_g2d.drawString(oText, xL, yT);
+			}
 		}
+		m_vertexSum++;
 	}
 
-	public void plot(BzeStrikePolygon polygon, Color paint, String oText) {
+	public void plot(BzeStrikePolygon polygon, Color oPaint, String oText) {
 		final int vertexCount = polygon.vertexCount();
-		final int[] xPoints = new int[vertexCount];
-		final int[] yPoints = new int[vertexCount];
-		for (int i = 0; i < vertexCount; i++) {
-			xPoints[i] = x(polygon.x(i));
-			yPoints[i] = y(polygon.y(i));
+		if (oPaint != null) {
+			final int[] xPoints = new int[vertexCount];
+			final int[] yPoints = new int[vertexCount];
+			for (int i = 0; i < vertexCount; i++) {
+				xPoints[i] = x(polygon.x(i));
+				yPoints[i] = y(polygon.y(i));
+			}
+			m_g2d.setPaint(oPaint);
+			m_g2d.fillPolygon(xPoints, yPoints, vertexCount);
+			if (oText != null) {
+				m_g2d.setColor(Color.black);
+				m_g2d.drawString(oText, xPoints[0], yPoints[0]);
+			}
 		}
-		m_g2d.setPaint(paint);
-		m_g2d.fillPolygon(xPoints, yPoints, vertexCount);
-		if (oText != null) {
-			m_g2d.setColor(Color.black);
-			m_g2d.drawString(oText, xPoints[0], yPoints[0]);
-		}
+		m_vertexSum += vertexCount;
 	}
 
-	public void plot(BzeStrikePolyline polyline, Color outline, String oText) {
+	public void plot(BzeStrikePolyline polyline, Color oOutline, String oText) {
 		final int vertexCount = polyline.vertexCount();
-		final int[] xPoints = new int[vertexCount];
-		final int[] yPoints = new int[vertexCount];
-		for (int i = 0; i < vertexCount; i++) {
-			xPoints[i] = x(polyline.x(i));
-			yPoints[i] = y(polyline.y(i));
+		if (oOutline != null) {
+			final int[] xPoints = new int[vertexCount];
+			final int[] yPoints = new int[vertexCount];
+			for (int i = 0; i < vertexCount; i++) {
+				xPoints[i] = x(polyline.x(i));
+				yPoints[i] = y(polyline.y(i));
+			}
+			m_g2d.setColor(oOutline);
+			m_g2d.drawPolyline(xPoints, yPoints, vertexCount);
+			if (oText != null) {
+				m_g2d.setColor(Color.black);
+				m_g2d.drawString(oText, xPoints[0], yPoints[0]);
+			}
 		}
-		m_g2d.setColor(outline);
-		m_g2d.drawPolyline(xPoints, yPoints, vertexCount);
-		if (oText != null) {
-			m_g2d.setColor(Color.black);
-			m_g2d.drawString(oText, xPoints[0], yPoints[0]);
-		}
+		m_vertexSum += vertexCount;
 	}
 
 	public Path save(String filePrefix) {
@@ -104,6 +114,7 @@ public class TestHelpCanvas {
 			final Path outPath = homePath.resolve(filePrefix + ".png");
 			ImageIO.write(m_bimg, "png", outPath.toFile());
 			System.out.println("Saved to " + outPath);
+			System.out.println("Vertices=" + m_vertexSum);
 			return outPath;
 		} catch (final IOException ex) {
 			System.err.println(ex);
@@ -143,5 +154,6 @@ public class TestHelpCanvas {
 	private final int m_height;
 	private final BufferedImage m_bimg;
 	private final Graphics2D m_g2d;
+	private int m_vertexSum;
 
 }

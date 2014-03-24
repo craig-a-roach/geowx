@@ -31,7 +31,7 @@ class Polyline implements IPolyline {
 		return sb.toString();
 	}
 
-	public float[] xyPairs(BzeStrikeBounds bounds, float eps) {
+	public float[] xyPairs(BzeStrikeBounds bounds, float grid) {
 		final int vertexCount = m_vertices.size();
 		final int coordCount = vertexCount * 2;
 		final float[] xy = new float[coordCount];
@@ -39,8 +39,8 @@ class Polyline implements IPolyline {
 		final float yB = bounds.yB;
 		for (int iv = 0, ix = 0, iy = 1; iv < vertexCount; iv++, ix += 2, iy += 2) {
 			final Vertex vertex = m_vertices.get(iv);
-			xy[ix] = Vertex.strikeX(vertex, xL, eps);
-			xy[iy] = Vertex.strikeY(vertex, yB, eps);
+			xy[ix] = Vertex.strikeX(vertex, xL, grid);
+			xy[iy] = Vertex.strikeY(vertex, yB, grid);
 		}
 		return xy;
 	}

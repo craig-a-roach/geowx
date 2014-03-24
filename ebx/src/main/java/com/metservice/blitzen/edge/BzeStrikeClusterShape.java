@@ -16,14 +16,14 @@ public class BzeStrikeClusterShape {
 	private static final BzeStrikePolyline[] ZEROPOLYLINES = new BzeStrikePolyline[0];
 	private static final BzeStrikePolygon[] ZEROPOLYGONS = new BzeStrikePolygon[0];
 
-	private static void fillMesh(BzeStrike[] strikes, float eps, BzeStrikeBounds bounds, BitMesh store) {
+	private static void fillMesh(BzeStrike[] strikes, float grid, BzeStrikeBounds bounds, BitMesh store) {
 		final float xL = bounds.xL;
 		final float yB = bounds.yB;
 		final int strikeCount = strikes.length;
 		for (int i = 0; i < strikeCount; i++) {
 			final BzeStrike strike = strikes[i];
-			final int ex = (int) ((strike.x - xL) / eps);
-			final int ey = (int) ((strike.y - yB) / eps);
+			final int ex = (int) ((strike.x - xL) / grid);
+			final int ey = (int) ((strike.y - yB) / grid);
 			store.set(ex, ey, true);
 		}
 	}
@@ -65,13 +65,13 @@ public class BzeStrikeClusterShape {
 		return new BzeStrikeClusterShape(cellArray, polylineArray, polygonArray, bounds);
 	}
 
-	private static BzeStrikeClusterShape newInstance(BitMesh store, BzeStrikeBounds bounds, float eps) {
+	private static BzeStrikeClusterShape newInstance(BitMesh store, BzeStrikeBounds bounds, float grid) {
 		final VertexGenerator vg = new VertexGenerator(store);
 		final List<IPolyline> polylines = vg.newShape();
-		return newInstance(polylines, bounds, eps);
+		return newInstance(polylines, bounds, grid);
 	}
 
-	private static BzeStrikeClusterShape newInstance(List<IPolyline> polylines, BzeStrikeBounds bounds, float eps) {
+	private static BzeStrikeClusterShape newInstance(List<IPolyline> polylines, BzeStrikeBounds bounds, float grid) {
 		final int count = polylines.size();
 		final BzeStrikeClusterShape neo = newEmpty(polylines, bounds);
 		int cellIndex = 0;
@@ -81,15 +81,15 @@ public class BzeStrikeClusterShape {
 			final IPolyline p = polylines.get(i);
 			if (p instanceof Vertex) {
 				final Vertex vertex = (Vertex) p;
-				final float sx = vertex.strikeX(bounds, eps);
-				final float sy = vertex.strikeY(bounds, eps);
-				neo.m_cellArray[cellIndex] = new BzeStrikeCell(sx, sy, eps);
+				final float sx = vertex.strikeX(bounds, grid);
+				final float sy = vertex.strikeY(bounds, grid);
+				neo.m_cellArray[cellIndex] = new BzeStrikeCell(sx, sy, grid);
 				cellIndex++;
 				continue;
 			}
 			if (p instanceof Polyline) {
 				final Polyline polyline = (Polyline) p;
-				final float[] xyPairs = polyline.xyPairs(bounds, eps);
+				final float[] xyPairs = polyline.xyPairs(bounds, grid);
 				if (polyline.isPolygon()) {
 					neo.m_polygonArray[polygonIndex] = new BzeStrikePolygon(xyPairs);
 					polygonIndex++;
@@ -103,14 +103,14 @@ public class BzeStrikeClusterShape {
 		return neo;
 	}
 
-	public static BzeStrikeClusterShape newInstance(BzeStrike[] strikes, float eps) {
+	public static BzeStrikeClusterShape newInstance(BzeStrike[] strikes, float grid) {
 		if (strikes == null || strikes.length == 0) throw new IllegalArgumentException("array is null or empty");
 		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikes);
-		final int width = ((int) (bounds.width() / eps)) + 1;
-		final int height = ((int) (bounds.height() / eps)) + 1;
+		final int width = ((int) (bounds.width() / grid)) + 1;
+		final int height = ((int) (bounds.height() / grid)) + 1;
 		final BitMesh store = new BitMesh(width, height);
-		fillMesh(strikes, eps, bounds, store);
-		return newInstance(store, bounds, eps);
+		fillMesh(strikes, grid, bounds, store);
+		return newInstance(store, bounds, grid);
 	}
 
 	public BzeStrikeBounds bounds() {

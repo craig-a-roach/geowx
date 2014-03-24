@@ -52,7 +52,7 @@ public class BzeStrikeClusteringEngine {
 		return true;
 	}
 
-	public BzeStrikeClusterTable solve(float eps, int minStrikes) {
+	public BzeStrikeClusterTable solve(float eps, int minStrikes, float quality) {
 		final Constraint cons = new Constraint(eps, minStrikes);
 		final ClusterState clusterState = ClusterState.newInstance(m_base);
 		int clusterId = CID_FIRST;
@@ -66,7 +66,7 @@ public class BzeStrikeClusteringEngine {
 			}
 		}
 		final int lastClusterId = clusterId == CID_FIRST ? 0 : (clusterId - 1);
-		final BzeStrikeClusterTable table = clusterState.newTable(eps, lastClusterId);
+		final BzeStrikeClusterTable table = clusterState.newTable(eps, quality, lastClusterId);
 		return table;
 	}
 
@@ -88,13 +88,14 @@ public class BzeStrikeClusteringEngine {
 			m_qtyMagnitudeMax = Math.max(m_qtyMagnitudeMax, absQty);
 		}
 
-		public BzeStrikeCluster newCluster(int cid, float eps) {
+		public BzeStrikeCluster newCluster(int cid, float eps, float quality) {
 			final int depth = m_strikes.length;
 			if (depth != m_nextIndex) {
 				final String msg = "Expecting " + depth + " in cluster # " + cid + ", but " + m_nextIndex;
 				throw new IllegalStateException(msg);
 			}
-			final BzeStrikeClusterShape clusterShape = BzeStrikeClusterShape.newInstance(m_strikes, eps);
+			final float grid = eps / Math.max(0.01f, quality);
+			final BzeStrikeClusterShape clusterShape = BzeStrikeClusterShape.newInstance(m_strikes, grid);
 			return new BzeStrikeCluster(cid, m_strikes, clusterShape, m_qtyMagnitudeMax, m_qtyMagnitudeMax);
 		}
 
@@ -156,7 +157,7 @@ public class BzeStrikeClusteringEngine {
 			return m_cidArray[strikeId];
 		}
 
-		public BzeStrikeClusterTable newTable(float eps, int lastClusterId) {
+		public BzeStrikeClusterTable newTable(float eps, float quality, int lastClusterId) {
 			final int[] extentArray = newExtentArray(lastClusterId);
 			final int noiseCount = extentArray[0];
 			final ArrayBuilder noiseBuilder = new ArrayBuilder(noiseCount);
@@ -173,7 +174,7 @@ public class BzeStrikeClusteringEngine {
 			float sumMag = 0.0f;
 			for (int clusterId = 0; clusterId < lastClusterId; clusterId++) {
 				final ArrayBuilder ab = builderArray[clusterId + 1];
-				final BzeStrikeCluster cluster = ab.newCluster(clusterId, eps);
+				final BzeStrikeCluster cluster = ab.newCluster(clusterId, eps, quality);
 				clusterArray[clusterId] = cluster;
 				sumMag += cluster.qtyMagnitudeSum();
 			}
