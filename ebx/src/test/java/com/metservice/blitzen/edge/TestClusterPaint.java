@@ -6,6 +6,8 @@
 package com.metservice.blitzen.edge;
 
 import java.awt.Color;
+import java.text.NumberFormat;
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Test;
@@ -15,12 +17,42 @@ import org.junit.Test;
  */
 public class TestClusterPaint {
 
-	private static final Color colorStrike = null; // new Color(0.8f, 0.8f, 0.1f, 0.2f);
-	private static final Color colorCell = new Color(0.3f, 0.9f, 0.3f, 0.9f);
-	private static final Color colorPolygon = new Color(0.7f, 0.9f, 0.9f, 0.9f);
-	private static final Color colorPolyline = new Color(0.3f, 0.3f, 0.7f, 0.9f);
+	private static final Color colorStrike = new Color(0.8f, 0.8f, 0.1f, 0.2f);
+	private static final Color colorPolygon = new Color(0.1f, 0.5f, 0.9f, 0.9f);
+	private static final Color colorPolyline = colorPolygon; // new Color(0.3f, 0.3f, 0.7f, 0.9f);
+	private static final Color colorCell = colorPolygon; // new Color(0.3f, 0.9f, 0.3f, 0.9f);
+	private static final NumberFormat formatMag = formatMag();
 
-	private void paint(TestHelpCanvas canvas, BzeStrikeClusterShape shape, String label, BzeStrike[] strikes) {
+	private static NumberFormat formatMag() {
+		final NumberFormat nf = NumberFormat.getInstance();
+		nf.setMinimumFractionDigits(1);
+		nf.setMaximumFractionDigits(1);
+		return nf;
+	}
+
+	private void drawMag(TestHelpCanvas canvas, BzeStrikeClusterTable table, float minMag) {
+		final BzeStrikeCluster[] clusters = table.clusterArray();
+		for (int cid = 0; cid < clusters.length; cid++) {
+			final BzeStrikeCluster cluster = clusters[cid];
+			final BzeStrikeClusterShape shape = cluster.clusterShape();
+			final float avg = cluster.qtyMagnitudeAverage();
+			if (avg > minMag) {
+				final float max = cluster.qtyMagnitudeMax();
+				final String mag = formatMag.format(avg) + "/" + formatMag.format(max);
+				canvas.text(shape.bounds(), mag);
+			}
+		}
+	}
+
+	private void paint(TestHelpCanvas canvas, BzeStrike[] strikes) {
+		final int strikeCount = strikes.length;
+		for (int i = 0; i < strikeCount; i++) {
+			final BzeStrike strike = strikes[i];
+			canvas.plot(strike, colorStrike, null);
+		}
+	}
+
+	private void paint(TestHelpCanvas canvas, BzeStrikeClusterShape shape, String label) {
 		final BzeStrikePolygon[] polygons = shape.polygons();
 		for (int i = 0; i < polygons.length; i++) {
 			canvas.plot(polygons[i], colorPolygon, null);
@@ -33,11 +65,6 @@ public class TestClusterPaint {
 		for (int i = 0; i < cells.length; i++) {
 			canvas.plot(cells[i], colorCell, null);
 		}
-		final int strikeCount = strikes.length;
-		for (int i = 0; i < strikeCount; i++) {
-			final BzeStrike strike = strikes[i];
-			canvas.plot(strike, colorStrike, null);
-		}
 	}
 
 	private void paint(TestHelpCanvas canvas, BzeStrikeClusterTable table) {
@@ -45,21 +72,61 @@ public class TestClusterPaint {
 		for (int cid = 0; cid < clusters.length; cid++) {
 			final BzeStrikeCluster cluster = clusters[cid];
 			final BzeStrikeClusterShape shape = cluster.clusterShape();
-			final BzeStrike[] strikes = cluster.strikes();
-			paint(canvas, shape, "#" + cid, strikes);
+			paint(canvas, shape, "#" + cid);
 		}
+	}
+
+	private void printStrikeInfo(List<BzeStrike> strikes) {
+		final int count = strikes.size();
+		if (count == 0) return;
+		long tmin = strikes.get(0).t;
+		long tmax = tmin;
+		for (int i = 1; i < count; i++) {
+			final BzeStrike strike = strikes.get(i);
+			tmin = Math.min(tmin, strike.t);
+			tmax = Math.max(tmax, strike.t);
+		}
+		System.out.println("c=" + count + ", t=" + new Date(tmin) + " to " + new Date(tmax));
 	}
 
 	@Test
 	public void t50() {
 		final List<BzeStrike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
-		System.out.println("Strikes=" + strikes.size());
+		final int strikeCount = strikes.size();
+		final BzeStrike[] strikeArray = strikes.toArray(new BzeStrike[strikeCount]);
+		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikeArray);
+		printStrikeInfo(strikes);
+		if (strikeCount == 0) return;
+		final int pixelW = 1600;
+		final int pixelH = 1200;
+		final float minMag = Float.MAX_VALUE;
 		final BzeStrikeClusteringEngine engine = BzeStrikeClusteringEngine.newInstance(strikes);
-		final BzeStrikeClusterTable table = engine.solve(0.1f, 3, 0.6f);
-		final BzeStrikeBounds bounds = table.bounds();
-		final TestHelpCanvas canvas = new TestHelpCanvas(bounds, 1500, 1200);
-		paint(canvas, table);
-		canvas.save("t50");
+		for (int n = 3; n <= 3; n++) {
+			for (int e = 1; e <= 4; e++) {
+				final float eps = 0.05f * e;
+				for (int q = 0; q < 10; q++) {
+					final float quality = 0.2f + (q * 0.2f);
+					final long tsStart = System.currentTimeMillis();
+					final BzeStrikeClusterTable table = engine.solve(eps, n, quality);
+					final long tsElapsed = System.currentTimeMillis() - tsStart;
+					final int vertexCount = table.vertexCount();
+					final int vertexPct = Math.round(vertexCount * 100.0f / strikeCount);
+					final int polygonCount = table.polygonCount();
+					final String legend1 = "Cluster: n >=" + n + ", separation<=" + eps + "deg | Quality=" + quality;
+					final String legend2 = "vertices=" + vertexCount + "(" + vertexPct + "%) fills=" + polygonCount
+							+ ", strikes=" + strikeCount + ", elapsed=" + tsElapsed + "ms, bounds=" + bounds + " deg";
+					final TestHelpCanvas canvas = new TestHelpCanvas(bounds, pixelW, pixelH, legend1, legend2);
+					paint(canvas, strikeArray);
+					paint(canvas, table);
+					drawMag(canvas, table, minMag);
+					final String fname = "cluster" + n + "_e" + e + "_q" + q;
+					canvas.save(fname, "series");
+				}
+			}
+		}
+		final TestHelpCanvas canvas = new TestHelpCanvas(bounds, pixelW, pixelH, "No Clustering: 11-July-2012", "strikes="
+				+ strikeCount + ", bounds=" + bounds + " deg");
+		paint(canvas, strikeArray);
+		canvas.save("strikes", "series");
 	}
-
 }

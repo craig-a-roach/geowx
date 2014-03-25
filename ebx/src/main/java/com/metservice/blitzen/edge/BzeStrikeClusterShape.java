@@ -94,7 +94,7 @@ public class BzeStrikeClusterShape {
 					neo.m_polygonArray[polygonIndex] = new BzeStrikePolygon(xyPairs);
 					polygonIndex++;
 				} else {
-					neo.m_polylineArray[polylineIndex] = new BzeStrikePolyline(xyPairs);
+					neo.m_polylineArray[polylineIndex] = new BzeStrikePolyline(xyPairs, grid);
 					polylineIndex++;
 				}
 				continue;
@@ -117,12 +117,24 @@ public class BzeStrikeClusterShape {
 		return m_bounds;
 	}
 
+	public int cellCount() {
+		return m_cellArray.length;
+	}
+
 	public BzeStrikeCell[] cells() {
 		return m_cellArray;
 	}
 
+	public int polygonCount() {
+		return m_polygonArray.length;
+	}
+
 	public BzeStrikePolygon[] polygons() {
 		return m_polygonArray;
+	}
+
+	public int polylineCount() {
+		return m_polylineArray.length;
 	}
 
 	public BzeStrikePolyline[] polylines() {
@@ -137,6 +149,17 @@ public class BzeStrikeClusterShape {
 		sb.append(", cells=").append(m_cellArray.length);
 		sb.append(", bounds(").append(m_bounds).append(")");
 		return sb.toString();
+	}
+
+	public int vertexCount() {
+		int sum = m_cellArray.length;
+		for (int i = 0; i < m_polylineArray.length; i++) {
+			sum += m_polylineArray[i].vertexCount();
+		}
+		for (int i = 0; i < m_polygonArray.length; i++) {
+			sum += m_polygonArray[i].vertexCount();
+		}
+		return sum;
 	}
 
 	private BzeStrikeClusterShape(BzeStrikeCell[] cellArray, BzeStrikePolyline[] polylineArray, BzeStrikePolygon[] polygonArray,

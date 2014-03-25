@@ -14,12 +14,36 @@ public class BzeStrikeClusterTable {
 		return m_bounds;
 	}
 
+	public int cellCount() {
+		int sum = 0;
+		for (int i = 0; i < m_clusterArray.length; i++) {
+			sum += m_clusterArray[i].clusterShape().cellCount();
+		}
+		return sum;
+	}
+
 	public BzeStrikeCluster[] clusterArray() {
 		return m_clusterArray;
 	}
 
 	public BzeStrike[] noiseArray() {
 		return m_noiseArray;
+	}
+
+	public int polygonCount() {
+		int sum = 0;
+		for (int i = 0; i < m_clusterArray.length; i++) {
+			sum += m_clusterArray[i].clusterShape().polygonCount();
+		}
+		return sum;
+	}
+
+	public int polylineCount() {
+		int sum = 0;
+		for (int i = 0; i < m_clusterArray.length; i++) {
+			sum += m_clusterArray[i].clusterShape().polylineCount();
+		}
+		return sum;
 	}
 
 	@Override
@@ -40,6 +64,14 @@ public class BzeStrikeClusterTable {
 		}
 		sb.append(")");
 		return sb.toString();
+	}
+
+	public int vertexCount() {
+		int sum = 0;
+		for (int i = 0; i < m_clusterArray.length; i++) {
+			sum += m_clusterArray[i].clusterShape().vertexCount();
+		}
+		return sum;
 	}
 
 	public BzeStrikeClusterTable(BzeStrikeCluster[] clusterArray, BzeStrike[] noiseArray, int strikeCount, float sumClusterMag,

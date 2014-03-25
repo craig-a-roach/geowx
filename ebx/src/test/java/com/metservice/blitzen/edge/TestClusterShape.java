@@ -43,7 +43,7 @@ public class TestClusterShape {
 
 	private void paint(BzeStrikeClusterShape shape, String filePrefix, BzeStrike[] strikes) {
 		final BzeStrikeBounds bounds = shape.bounds();
-		final TestHelpCanvas canvas = new TestHelpCanvas(bounds, 500, 400);
+		final TestHelpCanvas canvas = new TestHelpCanvas(bounds, 500, 400, null, null);
 		final BzeStrikePolygon[] polygons = shape.polygons();
 		for (int i = 0; i < polygons.length; i++) {
 			canvas.plot(polygons[i], Color.cyan, null);
@@ -61,7 +61,7 @@ public class TestClusterShape {
 			final String text = "[" + strike.x + "," + strike.y + "]";
 			canvas.plot(strike, Color.darkGray, text);
 		}
-		canvas.save(filePrefix);
+		canvas.save(filePrefix, "shape");
 	}
 
 	@Test

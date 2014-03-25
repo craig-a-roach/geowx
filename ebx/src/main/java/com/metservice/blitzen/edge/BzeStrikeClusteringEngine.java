@@ -96,7 +96,7 @@ public class BzeStrikeClusteringEngine {
 			}
 			final float grid = eps / Math.max(0.01f, quality);
 			final BzeStrikeClusterShape clusterShape = BzeStrikeClusterShape.newInstance(m_strikes, grid);
-			return new BzeStrikeCluster(cid, m_strikes, clusterShape, m_qtyMagnitudeMax, m_qtyMagnitudeMax);
+			return new BzeStrikeCluster(cid, m_strikes, clusterShape, m_qtyMagnitudeSum, m_qtyMagnitudeMax);
 		}
 
 		public float qtyMagnitudeSum() {

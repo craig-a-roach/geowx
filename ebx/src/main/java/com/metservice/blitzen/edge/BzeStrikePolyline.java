@@ -15,7 +15,13 @@ public class BzeStrikePolyline extends AbstractStrikePolyline {
 		return false;
 	}
 
-	public BzeStrikePolyline(float[] xyPairs) {
-		super(xyPairs);
+	public float thick() {
+		return m_grid;
 	}
+
+	public BzeStrikePolyline(float[] xyPairs, float grid) {
+		super(xyPairs);
+		m_grid = grid;
+	}
+	private final float m_grid;
 }
