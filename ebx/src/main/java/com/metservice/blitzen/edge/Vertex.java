@@ -10,6 +10,14 @@ package com.metservice.blitzen.edge;
  */
 class Vertex implements IPolyline {
 
+	public static int gridX(BzeStrike s, BzeStrikeBounds bounds, float grid) {
+		return Math.round((s.x - bounds.xL) / grid);
+	}
+
+	public static int gridY(BzeStrike s, BzeStrikeBounds bounds, float grid) {
+		return Math.round((s.y - bounds.yB) / grid);
+	}
+
 	public static float strikeX(Vertex v, float xL, float grid) {
 		return (grid * v.x) + xL;
 	}

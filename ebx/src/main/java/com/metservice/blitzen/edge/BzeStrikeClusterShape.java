@@ -17,13 +17,11 @@ public class BzeStrikeClusterShape {
 	private static final BzeStrikePolygon[] ZEROPOLYGONS = new BzeStrikePolygon[0];
 
 	private static void fillMesh(BzeStrike[] strikes, float grid, BzeStrikeBounds bounds, BitMesh store) {
-		final float xL = bounds.xL;
-		final float yB = bounds.yB;
 		final int strikeCount = strikes.length;
 		for (int i = 0; i < strikeCount; i++) {
 			final BzeStrike strike = strikes[i];
-			final int ex = (int) ((strike.x - xL) / grid);
-			final int ey = (int) ((strike.y - yB) / grid);
+			final int ex = Vertex.gridX(strike, bounds, grid);
+			final int ey = Vertex.gridY(strike, bounds, grid);
 			store.set(ex, ey, true);
 		}
 	}
@@ -105,9 +103,9 @@ public class BzeStrikeClusterShape {
 
 	public static BzeStrikeClusterShape newInstance(BzeStrike[] strikes, float grid) {
 		if (strikes == null || strikes.length == 0) throw new IllegalArgumentException("array is null or empty");
-		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikes);
-		final int width = ((int) (bounds.width() / grid)) + 1;
-		final int height = ((int) (bounds.height() / grid)) + 1;
+		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikes, grid);
+		final int width = bounds.widthGrid(grid);
+		final int height = bounds.heightGrid(grid);
 		final BitMesh store = new BitMesh(width, height);
 		fillMesh(strikes, grid, bounds, store);
 		return newInstance(store, bounds, grid);
