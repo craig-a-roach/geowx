@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -19,6 +21,17 @@ import java.util.regex.Pattern;
 class TestHelpLoader {
 
 	private static final Pattern CommaSeparator = Pattern.compile("[,]");
+	private static final long MsToHour = 1000 * 3600;
+
+	private static final Comparator<BzeStrike> StrikesByTime = new Comparator<BzeStrike>() {
+
+		@Override
+		public int compare(BzeStrike lhs, BzeStrike rhs) {
+			if (lhs.t < rhs.t) return -1;
+			if (lhs.t > rhs.t) return +1;
+			return 0;
+		}
+	};
 
 	private static float fieldFloat(String in, int lineno, String tag) {
 		try {
@@ -88,6 +101,66 @@ class TestHelpLoader {
 		return bm;
 	}
 
+	public static List<BzeStrike> newHourFromListByTime(List<BzeStrike> strikesAsc, int startHourOfDay, int hourCount) {
+		if (strikesAsc == null) throw new IllegalArgumentException("object is null");
+		final int srcCount = strikesAsc.size();
+		if (srcCount == 0) return Collections.emptyList();
+		final long tRef = strikesAsc.get(0).t;
+		final long tStart = tRef + (startHourOfDay * MsToHour);
+		final long tEnd = tStart + (hourCount * MsToHour);
+		final List<BzeStrike> out = new ArrayList<BzeStrike>(srcCount / 2);
+		for (int i = 0; i < srcCount; i++) {
+			final BzeStrike s = strikesAsc.get(i);
+			if (s.t >= tStart && s.t < tEnd) {
+				out.add(s);
+			}
+		}
+		return out;
+	}
+
+	public static List<BzeStrike> newListByTimeFromResource(Class<?> ref, String path) {
+		return newListByTimeFromResource(ref, path, 0.0f);
+	}
+
+	public static List<BzeStrike> newListByTimeFromResource(Class<?> ref, String path, float minMag) {
+		final InputStream ins = ref.getResourceAsStream(path);
+		if (ins == null) throw new IllegalArgumentException("Resource '" + path + "' not found under " + ref.getName());
+		final BufferedReader rdr = new BufferedReader(new InputStreamReader(ins));
+		try {
+			final List<BzeStrike> strikesAsc = new ArrayList<BzeStrike>();
+			int lineNo = 0;
+			boolean more = true;
+			while (more) {
+				final String oLine = rdr.readLine();
+				if (oLine == null) {
+					more = false;
+					continue;
+				}
+				lineNo++;
+				final String ztwLine = oLine.trim();
+				if (ztwLine.length() == 0) {
+					continue;
+				}
+				final BzeStrike oStrike = createStrike(ztwLine, lineNo);
+				if (oStrike == null) {
+					continue;
+				}
+				if (Math.abs(oStrike.qty) >= minMag) {
+					strikesAsc.add(oStrike);
+				}
+			}
+			Collections.sort(strikesAsc, StrikesByTime);
+			return strikesAsc;
+		} catch (final IOException ex) {
+			throw new IllegalArgumentException("Cannot read '" + path + "'..." + ex.getMessage());
+		} finally {
+			try {
+				rdr.close();
+			} catch (final IOException ex) {
+			}
+		}
+	}
+
 	public static List<BzeStrike> newListFromGenerator(String spec) {
 		final Pattern lineSplitter = Pattern.compile("[|]");
 		final Pattern genSplitter = Pattern.compile("[,:]");
@@ -120,39 +193,9 @@ class TestHelpLoader {
 		return zl;
 	}
 
-	public static List<BzeStrike> newListFromResource(Class<?> ref, String path) {
-		final InputStream ins = ref.getResourceAsStream(path);
-		if (ins == null) throw new IllegalArgumentException("Resource '" + path + "' not found under " + ref.getName());
-		final BufferedReader rdr = new BufferedReader(new InputStreamReader(ins));
-		try {
-			final List<BzeStrike> strikes = new ArrayList<BzeStrike>();
-			int lineNo = 0;
-			boolean more = true;
-			while (more) {
-				final String oLine = rdr.readLine();
-				if (oLine == null) {
-					more = false;
-					continue;
-				}
-				lineNo++;
-				final String ztwLine = oLine.trim();
-				if (ztwLine.length() == 0) {
-					continue;
-				}
-				final BzeStrike oStrike = createStrike(ztwLine, lineNo);
-				if (oStrike != null) {
-					strikes.add(oStrike);
-				}
-			}
-			return strikes;
-		} catch (final IOException ex) {
-			throw new IllegalArgumentException("Cannot read '" + path + "'..." + ex.getMessage());
-		} finally {
-			try {
-				rdr.close();
-			} catch (final IOException ex) {
-			}
-		}
+	public static BzeStrike[] toArray(List<BzeStrike> strikes) {
+		final int strikeCount = strikes.size();
+		return strikes.toArray(new BzeStrike[strikeCount]);
 	}
 
 }

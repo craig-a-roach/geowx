@@ -89,12 +89,12 @@ public class TestClusterPaint {
 		System.out.println("c=" + count + ", t=" + new Date(tmin) + " to " + new Date(tmax));
 	}
 
-	@Test
+	// @Test
 	public void t50() {
-		final List<BzeStrike> strikes = TestHelpLoader.newListFromResource(getClass(), "2012_07_11_lightning_data.csv");
-		final int strikeCount = strikes.size();
-		final BzeStrike[] strikeArray = strikes.toArray(new BzeStrike[strikeCount]);
+		final List<BzeStrike> strikes = TestHelpLoader.newListByTimeFromResource(getClass(), "2012_07_11_lightning_data.csv");
+		final BzeStrike[] strikeArray = TestHelpLoader.toArray(strikes);
 		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikeArray);
+		final int strikeCount = strikeArray.length;
 		printStrikeInfo(strikes);
 		if (strikeCount == 0) return;
 		final int pixelW = 1600;
@@ -129,4 +129,39 @@ public class TestClusterPaint {
 		paint(canvas, strikeArray);
 		canvas.save("strikes", "series");
 	}
+
+	@Test
+	public void t60() {
+		final List<BzeStrike> strikesDay = TestHelpLoader
+				.newListByTimeFromResource(getClass(), "2012_07_11_lightning_data.csv");
+		final BzeStrike[] strikeDayArray = TestHelpLoader.toArray(strikesDay);
+		final BzeStrikeBounds bounds = BzeStrikeBounds.newInstance(strikeDayArray);
+		final int pixelW = 1600;
+		final int pixelH = 1200;
+		final int n = 3;
+		final float eps = 0.1f;
+		final float quality = 0.6f;
+		for (int hour = 0; hour < 23; hour++) {
+			final List<BzeStrike> strikes = TestHelpLoader.newHourFromListByTime(strikesDay, hour, 1);
+			final int strikeCount = strikes.size();
+			final BzeStrike[] strikeArray = TestHelpLoader.toArray(strikes);
+			printStrikeInfo(strikes);
+			final BzeStrikeClusteringEngine engine = BzeStrikeClusteringEngine.newInstance(strikes);
+			final long tsStart = System.currentTimeMillis();
+			final BzeStrikeClusterTable table = engine.solve(eps, n, quality);
+			final long tsElapsed = System.currentTimeMillis() - tsStart;
+			final int vertexCount = table.vertexCount();
+			final int vertexPct = Math.round(vertexCount * 100.0f / strikeCount);
+			final int polygonCount = table.polygonCount();
+			final String legend1 = "Cluster: n >=" + n + ", separation<=" + eps + "deg | Quality=" + quality;
+			final String legend2 = "vertices=" + vertexCount + "(" + vertexPct + "%) fills=" + polygonCount + ", strikes="
+					+ strikeCount + ", elapsed=" + tsElapsed + "ms, bounds=" + bounds + " deg";
+			final TestHelpCanvas canvas = new TestHelpCanvas(bounds, pixelW, pixelH, legend1, legend2);
+			paint(canvas, strikeArray);
+			paint(canvas, table);
+			final String fname = "hour" + hour;
+			canvas.save(fname, "day");
+		}
+	}
+
 }

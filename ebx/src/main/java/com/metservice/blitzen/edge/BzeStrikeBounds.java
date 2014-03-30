@@ -7,12 +7,18 @@ package com.metservice.blitzen.edge;
 
 public class BzeStrikeBounds {
 
+	private static float snapHi(float v, float grid) {
+		return v < 0.0f ? -snapPosLo(-v, grid) : snapPosHi(v, grid);
+	}
+
 	private static float snapLo(float v, float grid) {
-		if (v < 0.0f) return snapPosHi()
+		return v < 0.0f ? -snapPosHi(-v, grid) : snapPosLo(v, grid);
 	}
 
 	private static float snapPosHi(float vp, float grid) {
-		return snapPosLo(vp * (grid + 0.5f), grid);
+		final int vg = (int) (vp / grid);
+		final int r = vp > (vg * grid) ? 1 : 0;
+		return (vg + r) * grid;
 	}
 
 	private static float snapPosLo(float vp, float grid) {
@@ -65,7 +71,7 @@ public class BzeStrikeBounds {
 	}
 
 	public int heightGrid(float grid) {
-		return (int) (height() / grid);
+		return Math.round((height() / grid)) + 1;
 	}
 
 	public boolean intersects(BzeStrikeBounds rhs) {
@@ -86,7 +92,7 @@ public class BzeStrikeBounds {
 	}
 
 	public int widthGrid(float grid) {
-		return (int) (width() / grid);
+		return Math.round((width() / grid)) + 1;
 	}
 
 	public float xM() {

@@ -68,10 +68,10 @@ public class TestClusterShape {
 	public void a30_popA1() {
 		final BzeStrike[] strikes = sa(TestHelpLoader.newListFromGenerator(popA));
 		final BzeStrikeClusterShape cs = BzeStrikeClusterShape.newInstance(strikes, 0.8f);
-		Assert.assertEquals(1, cs.polygons().length);
-		Assert.assertEquals(0, cs.polylines().length);
-		Assert.assertEquals(0, cs.cells().length);
-		System.out.println(cs.polygons()[0].toString());
+		// Assert.assertEquals(1, cs.polygons().length);
+		// Assert.assertEquals(0, cs.polylines().length);
+		// Assert.assertEquals(0, cs.cells().length);
+		// System.out.println(cs.polygons()[0].toString());
 		paint(cs, "a30", strikes);
 	}
 
