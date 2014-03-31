@@ -52,9 +52,13 @@ public class XenonCanvasFactory {
 
 	public static XenonCanvas newCanvas(int pixelWidth, int pixelHeight, JsonObject spec) {
 		if (spec == null) throw new IllegalArgumentException("object is null");
+		// TODO
+		@SuppressWarnings("unused")
 		final int pixelW = Math.max(1, pixelWidth);
+		@SuppressWarnings("unused")
 		final int pixelH = Math.max(1, pixelHeight);
-		final JsonAccessor aBackgroun = spec.accessor(CXenonProps.backgroundColor);
+		@SuppressWarnings("unused")
+		final JsonAccessor aBackground = spec.accessor(CXenonProps.backgroundColor);
 		return new XenonCanvas();
 	}
 

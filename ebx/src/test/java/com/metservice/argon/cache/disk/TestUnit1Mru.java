@@ -864,6 +864,7 @@ public class TestUnit1Mru {
 			m_map.put(qccResourceId, item);
 		}
 
+		@SuppressWarnings("unused")
 		public void putError(String qccResourceId) {
 			final SupplyItem item = new SupplyItem(-2, null, null);
 			m_map.put(qccResourceId, item);

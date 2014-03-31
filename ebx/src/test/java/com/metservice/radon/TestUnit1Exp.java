@@ -38,6 +38,7 @@ public class TestUnit1Exp {
 			dbCfg.setAllowCreate(true);
 			oDb = oEnv.openDatabase(null, "tseries", dbCfg);
 			final Binary kb = Binary.newFromStringASCII("atom|93439");
+			@SuppressWarnings("unused")
 			final DatabaseEntry key = new DatabaseEntry(kb.zptReadOnly);
 		} finally {
 			if (oDb != null) {
