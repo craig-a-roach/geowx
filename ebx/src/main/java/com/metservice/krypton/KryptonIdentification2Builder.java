@@ -10,36 +10,50 @@ import java.util.Date;
 /**
  * @author roach
  */
-public class KryptonIdentification2Builder {
+public class KryptonIdentification2Builder extends Section2Builder {
 
 	public static final int NoSubCentre = 0;
-	public static final short MasterTablesNotUsed = 255;
+	public static final short DefaultMasterTablesVersion = 11;
+	public static final short NoLocalTables = 0;
 
 	public static final Table1_2 SignificanceOfRefTime = new Table1_2();
+
+	public void localTablesVersion(short valueTable1_1) {
+		m_localTablesVersion = valueTable1_1;
+	}
+
+	public void masterTablesVersion(short valueTable1_0) {
+		m_masterTablesVersion = valueTable1_0;
+	}
 
 	public KryptonIdentification2Builder newInstance(int originatingCentre, Date refTime) {
 		if (refTime == null) throw new IllegalArgumentException("object is null");
 		return new KryptonIdentification2Builder(originatingCentre, refTime.getTime());
 	}
 
-	public void originatingSubCentre(int code_C) {
-		m_originatingSubCentre = code_C;
+	public void originatingSubCentre(int valueTableC) {
+		m_originatingSubCentre = valueTableC;
 	}
 
-	public void significanceOfRefTime(short code_1_2) {
-		m_significanceOfRefTime = code_1_2;
+	@Override
+	public byte sectionNo() {
+		return 1;
+	}
+
+	public void significanceOfRefTime(short valueTable1_2) {
+		m_significanceOfRefTime = valueTable1_2;
 	}
 
 	private KryptonIdentification2Builder(int originatingCentre, long refTime) {
 		m_originatingCentre = originatingCentre;
 		m_refTime = refTime;
 	}
-
 	private final int m_originatingCentre;
 	private final long m_refTime;
 	private int m_originatingSubCentre = NoSubCentre;
 	private short m_significanceOfRefTime = Table1_2.Analysis;
-	private final short m_masterTablesVersion = MasterTablesNotUsed;
+	private short m_masterTablesVersion = DefaultMasterTablesVersion;
+	private short m_localTablesVersion = NoLocalTables;
 
 	public static class Table1_2 {
 
