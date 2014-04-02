@@ -12,6 +12,11 @@
 			<artifactId>grib</artifactId>
 			<version>8.0.29</version>
 		</dependency>
+		<dependency>
+			<groupId>edu.ucar</groupId>
+			<artifactId>netcdf</artifactId>
+			<version>4.3.20</version>
+		</dependency>
 		<!-- beryllium -->
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>

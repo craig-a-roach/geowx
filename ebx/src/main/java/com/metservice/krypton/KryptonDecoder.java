@@ -188,6 +188,8 @@ public class KryptonDecoder {
 		final String source = CSection.ID2("6-9");
 		final int centre = r.b0607_originatingCentre();
 		final int subCentre = r.b0809_originatingSubCentre();
+		final short b10 = r.b10_masterTablesVersion(); // 2
+		final short b11_localTablesVersion = r.b11_localTablesVersion(); // 1
 		return newCentre(source, centre, subCentre);
 	}
 
