@@ -64,6 +64,30 @@ class UGrib {
 		return octet - SectionG2LengthNumberBc - 1;
 	}
 
+	public static int calDayOfMonth(Calendar cal) {
+		return cal.get(Calendar.DATE);
+	}
+
+	public static int calHourOfDay(Calendar cal) {
+		return cal.get(Calendar.HOUR_OF_DAY);
+	}
+
+	public static int calMinuteOfHour(Calendar cal) {
+		return cal.get(Calendar.MINUTE);
+	}
+
+	public static int calMonthOfYear(Calendar cal) {
+		return cal.get(Calendar.MONTH) + 1;
+	}
+
+	public static int calSecondOfMinute(Calendar cal) {
+		return cal.get(Calendar.SECOND);
+	}
+
+	public static int calYear(Calendar cal) {
+		return cal.get(Calendar.YEAR);
+	}
+
 	public static char char1(byte[] buffer, int pos) {
 		return (char) (buffer[pos] & 0xFF);
 	}
@@ -448,6 +472,16 @@ class UGrib {
 		return long8(section, biOctetG1(octetStart), value);
 	}
 
+	public static Calendar newGMT() {
+		return Calendar.getInstance(GMT);
+	}
+
+	public static Calendar newGMT(long ts) {
+		final Calendar cal = newGMT();
+		cal.setTimeInMillis(ts);
+		return cal;
+	}
+
 	public static short shortu1(byte[] buffer, int pos) {
 		return (short) (buffer[pos] & 0xFF);
 	}
@@ -569,7 +603,7 @@ class UGrib {
 	public static long tsG1(String source, int century, int yoc, int moy, int dom, int hod, int moh)
 			throws KryptonCodeException {
 		try {
-			final Calendar cal = Calendar.getInstance(GMT);
+			final Calendar cal = newGMT();
 			cal.setLenient(false);
 			cal.set(Calendar.YEAR, ((century * 100) + yoc));
 			cal.set(Calendar.MONTH, moy - 1);
@@ -589,7 +623,7 @@ class UGrib {
 	public static long tsG2(String source, int year, int moy, int dom, int hod, int moh, int sec)
 			throws KryptonCodeException {
 		try {
-			final Calendar cal = Calendar.getInstance(GMT);
+			final Calendar cal = newGMT();
 			cal.setLenient(false);
 			cal.set(Calendar.YEAR, year);
 			cal.set(Calendar.MONTH, moy - 1);

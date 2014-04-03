@@ -5,12 +5,14 @@
  */
 package com.metservice.krypton;
 
+import java.util.Calendar;
+
 /**
  * @author roach
  */
 class Section2Buffer {
 
-	private static final int Min = 16;
+	private static final int Min = 5;
 
 	private void ensure(int plus) {
 		final int neoOctet = m_octet + plus;
@@ -21,16 +23,63 @@ class Section2Buffer {
 		System.arraycopy(save, 0, m_buffer, 0, m_octet);
 	}
 
-	public void u1(byte value) {
+	public int emit(byte[] dest, int destPos) {
+		UGrib.int4(m_buffer, 0, m_octet);
+		System.arraycopy(m_buffer, 0, dest, destPos, m_octet);
+		return m_octet;
+	}
+
+	public void int2(int value) {
+		ensure(2);
+		UGrib.int2(m_buffer, m_octet, value);
+		m_octet += 2;
+	}
+
+	public void int4(int value) {
+		ensure(4);
+		UGrib.int4(m_buffer, m_octet, value);
+		m_octet += 4;
+	}
+
+	public void ts(long value) {
+		ensure(7);
+		final Calendar cal = UGrib.newGMT(value);
+		final int year = UGrib.calYear(cal);
+		final int moy = UGrib.calMonthOfYear(cal);
+		final int dom = UGrib.calDayOfMonth(cal);
+		final int hod = UGrib.calHourOfDay(cal);
+		final int moh = UGrib.calMinuteOfHour(cal);
+		final int som = UGrib.calSecondOfMinute(cal);
+		UGrib.int2(m_buffer, m_octet, year);
+		m_octet += 2;
+		UGrib.intu1(m_buffer, m_octet, moy);
+		m_octet++;
+		UGrib.intu1(m_buffer, m_octet, dom);
+		m_octet++;
+		UGrib.intu1(m_buffer, m_octet, hod);
+		m_octet++;
+		UGrib.intu1(m_buffer, m_octet, moh);
+		m_octet++;
+		UGrib.intu1(m_buffer, m_octet, som);
+		m_octet++;
+	}
+
+	public void u1(int value) {
 		ensure(1);
+		UGrib.intu1(m_buffer, m_octet, value);
+		m_octet++;
 	}
 
-	public void u1(short value) {
-
+	public void u2(int value) {
+		ensure(2);
+		UGrib.intu2(m_buffer, m_octet, value);
+		m_octet += 2;
 	}
 
-	public Section2Buffer(int min) {
-		m_buffer = new byte[Math.max(Min, min)];
+	public Section2Buffer(int sectionNo, int est) {
+		m_buffer = new byte[Math.max(Min, est)];
+		m_buffer[4] = (byte) sectionNo;
+		m_octet = 5;
 	}
 
 	private byte[] m_buffer;
