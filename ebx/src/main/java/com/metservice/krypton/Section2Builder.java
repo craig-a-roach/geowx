@@ -10,7 +10,9 @@ package com.metservice.krypton;
  */
 abstract class Section2Builder {
 
-	public abstract int estimatedOctetCount();
+	public int estimatedOctetCount() {
+		return 256;
+	}
 
 	public final Section2Buffer newBuffer() {
 		final int sectionNo = sectionNo();

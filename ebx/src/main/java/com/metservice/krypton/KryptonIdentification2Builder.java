@@ -18,22 +18,12 @@ public class KryptonIdentification2Builder extends Section2Builder {
 
 	public static final Table1_2 SignificanceOfRefTime = new Table1_2();
 
-	@Override
-	public int estimatedOctetCount() {
-		return 21;
-	}
-
 	public void localTablesVersion(int valueTable1_1) {
 		m_localTablesVersion = valueTable1_1;
 	}
 
 	public void masterTablesVersion(int valueTable1_0) {
 		m_masterTablesVersion = valueTable1_0;
-	}
-
-	public KryptonIdentification2Builder newInstance(int originatingCentre_Table0, int typeOfData_Table1_4, Date refTime) {
-		if (refTime == null) throw new IllegalArgumentException("object is null");
-		return new KryptonIdentification2Builder(originatingCentre_Table0, typeOfData_Table1_4, refTime.getTime());
 	}
 
 	public void originatingSubCentre(int valueTableC) {
@@ -65,10 +55,11 @@ public class KryptonIdentification2Builder extends Section2Builder {
 		m_significanceOfRefTime = valueTable1_2;
 	}
 
-	private KryptonIdentification2Builder(int originatingCentre_Table0, int typeOfData_Table1_4, long refTime) {
+	public KryptonIdentification2Builder(int originatingCentre_Table0, int typeOfData_Table1_4, Date refTime) {
+		if (refTime == null) throw new IllegalArgumentException("object is null");
 		m_originatingCentre = originatingCentre_Table0;
 		m_typeOfData = typeOfData_Table1_4;
-		m_refTime = refTime;
+		m_refTime = refTime.getTime();
 	}
 	private final int m_originatingCentre;
 	private final int m_typeOfData;
@@ -76,7 +67,6 @@ public class KryptonIdentification2Builder extends Section2Builder {
 	private int m_originatingSubCentre = NoSubCentre;
 	private int m_significanceOfRefTime = Table1_2.Analysis;
 	private int m_masterTablesVersion = DefaultMasterTablesVersion;
-
 	private int m_localTablesVersion = NoLocalTables;
 	private int m_productionStatus = Table1_3.Operational;
 
