@@ -16,8 +16,6 @@ public class KryptonIdentification2Builder extends Section2Builder {
 	public static final int DefaultMasterTablesVersion = 11;
 	public static final int NoLocalTables = 0;
 
-	public static final Table1_2 SignificanceOfRefTime = new Table1_2();
-
 	public void localTablesVersion(int valueTable1_1) {
 		m_localTablesVersion = valueTable1_1;
 	}

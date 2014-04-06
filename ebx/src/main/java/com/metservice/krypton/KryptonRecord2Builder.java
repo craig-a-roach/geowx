@@ -10,7 +10,7 @@ package com.metservice.krypton;
  */
 public class KryptonRecord2Builder {
 
-	public static final short METEOROLOGICAL = 0;
+	public static final int METEOROLOGICAL = 0;
 
 	public KryptonRecord2Builder newInstance(short discipline) {
 		return new KryptonRecord2Builder(discipline);
@@ -20,8 +20,8 @@ public class KryptonRecord2Builder {
 		return new KryptonRecord2Builder(METEOROLOGICAL);
 	}
 
-	private KryptonRecord2Builder(short discipline) {
+	private KryptonRecord2Builder(int discipline) {
 		m_discipline = discipline;
 	}
-	private final short m_discipline;
+	private final int m_discipline;
 }
