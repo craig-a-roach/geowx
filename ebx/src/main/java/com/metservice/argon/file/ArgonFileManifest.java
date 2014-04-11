@@ -25,27 +25,6 @@ import com.metservice.argon.Ds;
  */
 public class ArgonFileManifest {
 
-	public Map<String, File> newFileNameMap() {
-		if (m_zptFilesAscPath.length == 0) return Collections.emptyMap();
-		final Map<String, File> xm = new HashMap<String, File>(m_zptFilesAscPath.length);
-		for (int i = 0; i < m_zptFilesAscPath.length; i++) {
-			final File f = m_zptFilesAscPath[i];
-			xm.put(f.getName(), f);
-		}
-		return xm;
-	}
-
-	@Override
-	public String toString() {
-		final Ds ds = Ds.o(getClass());
-		ds.a("files", m_zptFilesAscPath);
-		return ds.s();
-	}
-
-	public File[] zptFilesAscPath() {
-		return m_zptFilesAscPath;
-	}
-
 	private static void addDirectory(Set<String> zscanonPath, File cndir, Pattern oAcceptName, Pattern oRejectName) {
 		final File[] ozptFiles = cndir.listFiles();
 		if (ozptFiles == null) return;
@@ -88,18 +67,13 @@ public class ArgonFileManifest {
 	public static ArgonFileManifest newInstance(String zSpec, Pattern oDelimiter, Pattern oAcceptName, Pattern oRejectName)
 			throws ArgonPermissionException {
 		if (zSpec == null) throw new IllegalArgumentException("object is null");
-		final String ztwSpec = zSpec.trim();
+		final String ztwSpec = zSpec.trim().replace("~", UArgonFile.qUserHome());
 		String[] zptqtwPaths;
-		if (ztwSpec.length() == 0 || ztwSpec.equals("~")) {
+		if (oDelimiter == null) {
 			zptqtwPaths = new String[1];
-			zptqtwPaths[0] = UArgonFile.qUserHome();
+			zptqtwPaths[0] = ztwSpec;
 		} else {
-			if (oDelimiter == null) {
-				zptqtwPaths = new String[1];
-				zptqtwPaths[0] = ztwSpec;
-			} else {
-				zptqtwPaths = ArgonSplitter.zptqtwSplit(ztwSpec, oDelimiter);
-			}
+			zptqtwPaths = ArgonSplitter.zptqtwSplit(ztwSpec, oDelimiter);
 		}
 		return newInstance(zptqtwPaths, oAcceptName, oRejectName);
 	}
@@ -132,6 +106,27 @@ public class ArgonFileManifest {
 			zptFilesAscPath[i] = new File(zlCanonPathsAsc.get(i));
 		}
 		return new ArgonFileManifest(zptFilesAscPath);
+	}
+
+	public Map<String, File> newFileNameMap() {
+		if (m_zptFilesAscPath.length == 0) return Collections.emptyMap();
+		final Map<String, File> xm = new HashMap<String, File>(m_zptFilesAscPath.length);
+		for (int i = 0; i < m_zptFilesAscPath.length; i++) {
+			final File f = m_zptFilesAscPath[i];
+			xm.put(f.getName(), f);
+		}
+		return xm;
+	}
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		ds.a("files", m_zptFilesAscPath);
+		return ds.s();
+	}
+
+	public File[] zptFilesAscPath() {
+		return m_zptFilesAscPath;
 	}
 
 	private ArgonFileManifest(File[] zptFilesAscPath) {

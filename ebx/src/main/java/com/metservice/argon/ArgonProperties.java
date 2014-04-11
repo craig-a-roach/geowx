@@ -97,6 +97,11 @@ public class ArgonProperties {
 			return this;
 		}
 
+		public BuilderFromArgs putMappedArg(String destPropertyName)
+				throws ArgonArgsException {
+			return putMappedArg(destPropertyName, destPropertyName);
+		}
+
 		public BuilderFromArgs putMappedArg(String sourceArgName, String destPropertyName)
 				throws ArgonArgsException {
 			if (sourceArgName == null || sourceArgName.length() == 0)
