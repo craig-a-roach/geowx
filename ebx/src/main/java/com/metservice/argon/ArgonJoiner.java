@@ -52,6 +52,20 @@ public class ArgonJoiner {
 		return sb.toString();
 	}
 
+	public static String zCsv(int[] array) {
+		if (array == null) throw new IllegalArgumentException("object is null");
+		final int len = array.length;
+		final StringBuilder sb = new StringBuilder(len * 8);
+		if (len > 0) {
+			sb.append(array[0]);
+		}
+		for (int i = 1; i < len; i++) {
+			sb.append(',');
+			sb.append(array[i]);
+		}
+		return sb.toString();
+	}
+
 	public static String zCsv(String[] zptIn) {
 		return zQuotedDelimited(zptIn, ',', true);
 	}

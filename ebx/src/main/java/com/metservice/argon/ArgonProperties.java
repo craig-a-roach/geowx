@@ -8,6 +8,7 @@ package com.metservice.argon;
 import java.io.File;
 import java.util.Properties;
 
+import com.metservice.argon.ArgonArgs.Tag;
 import com.metservice.argon.file.ArgonCompactLoader;
 import com.metservice.argon.file.ArgonDirectoryManagement;
 
@@ -37,7 +38,8 @@ public class ArgonProperties {
 	private String ozValue(String pname) {
 		assert pname != null && pname.length() > 0;
 		if (m_oProperties == null) return null;
-		return m_oProperties.getProperty(pname);
+		final Tag tag = ArgonArgs.newTag(pname);
+		return m_oProperties.getProperty(tag.qtwName);
 	}
 
 	public ArgonPropertiesAttribute find(String pname) {
@@ -97,9 +99,10 @@ public class ArgonProperties {
 			return this;
 		}
 
-		public BuilderFromArgs putMappedArg(String destPropertyName)
+		public BuilderFromArgs putMappedArg(String sourceArgName)
 				throws ArgonArgsException {
-			return putMappedArg(destPropertyName, destPropertyName);
+			final Tag tag = ArgonArgs.newTag(sourceArgName);
+			return putMappedArg(sourceArgName, tag.qtwName);
 		}
 
 		public BuilderFromArgs putMappedArg(String sourceArgName, String destPropertyName)
@@ -112,6 +115,14 @@ public class ArgonProperties {
 			if (oqtwValue != null) {
 				m_dest.put(destPropertyName, oqtwValue);
 			}
+			return this;
+		}
+
+		public BuilderFromArgs putMappedFlag(String sourceArgName)
+				throws ArgonArgsException {
+			final Tag tag = ArgonArgs.newTag(sourceArgName);
+			final boolean flag = m_source.consumeFlag(tag);
+			putProperty(tag.qtwName, flag);
 			return this;
 		}
 

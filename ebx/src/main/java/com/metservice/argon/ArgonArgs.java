@@ -16,6 +16,20 @@ public class ArgonArgs {
 	private static final char NOCODE = ' ';
 	private static final char CODESEPARATOR = ':';
 
+	static Tag newTag(String qTagSpec) {
+		if (qTagSpec == null || qTagSpec.length() == 0) throw new IllegalArgumentException("string is null or empty");
+		final int codePos = qTagSpec.indexOf(CODESEPARATOR);
+		final String zTagName = codePos < 0 ? qTagSpec : qTagSpec.substring(0, codePos);
+		final String zTagCode = codePos < 0 ? "" : qTagSpec.substring(codePos + 1);
+		final int nameLen = zTagName.length();
+		final int codeLen = zTagCode.length();
+		if (nameLen > 0 && codeLen > 0) return new Tag(zTagName, zTagCode.charAt(0));
+		if (nameLen > 0 && codeLen == 0) return new Tag(zTagName);
+		if (nameLen == 0 && codeLen > 0) return new Tag(zTagCode.charAt(0));
+		final String m = "Malformed Tag Spec '" + qTagSpec + "'";
+		throw new IllegalArgumentException(m);
+	}
+
 	private ArgonArgsAccessor consumeAllTagValuePairs(Tag tag) {
 		assert tag != null;
 		final boolean hasCode = tag.hasCode();
@@ -80,7 +94,7 @@ public class ArgonArgs {
 		return false;
 	}
 
-	private boolean consumeFlag(Tag tag) {
+	boolean consumeFlag(Tag tag) {
 		assert tag != null;
 		for (int i = 0; i < m_ztqtw.length; i++) {
 			final String oarg = m_ztqtw[i];
@@ -196,20 +210,6 @@ public class ArgonArgs {
 		}
 	}
 
-	private static Tag newTag(String qTagSpec) {
-		if (qTagSpec == null || qTagSpec.length() == 0) throw new IllegalArgumentException("string is null or empty");
-		final int codePos = qTagSpec.indexOf(CODESEPARATOR);
-		final String zTagName = codePos < 0 ? qTagSpec : qTagSpec.substring(0, codePos);
-		final String zTagCode = codePos < 0 ? "" : qTagSpec.substring(codePos + 1);
-		final int nameLen = zTagName.length();
-		final int codeLen = zTagCode.length();
-		if (nameLen > 0 && codeLen > 0) return new Tag(zTagName, zTagCode.charAt(0));
-		if (nameLen > 0 && codeLen == 0) return new Tag(zTagName);
-		if (nameLen == 0 && codeLen > 0) return new Tag(zTagCode.charAt(0));
-		final String m = "Malformed Tag Spec '" + qTagSpec + "'";
-		throw new IllegalArgumentException(m);
-	}
-
 	public ArgonArgs(String[] args) {
 		if (args == null || args.length == 0) {
 			m_ztqtw = new String[0];
@@ -230,7 +230,7 @@ public class ArgonArgs {
 
 	private final String[] m_ztqtw;
 
-	private static class Tag {
+	static class Tag {
 
 		public boolean hasCode() {
 			return this.code != NOCODE;
