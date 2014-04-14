@@ -55,10 +55,9 @@ public class ArgonJoiner {
 	public static String zCsv(int[] array) {
 		if (array == null) throw new IllegalArgumentException("object is null");
 		final int len = array.length;
+		if (len == 0) return "";
 		final StringBuilder sb = new StringBuilder(len * 8);
-		if (len > 0) {
-			sb.append(array[0]);
-		}
+		sb.append(array[0]);
 		for (int i = 1; i < len; i++) {
 			sb.append(',');
 			sb.append(array[i]);

@@ -113,6 +113,8 @@ abstract class AbstractTranscoder {
 			transcode(ncFile);
 		} catch (final IOException ex) {
 			throw new TranscodeException("Read operation on " + fileTypeDescription + " failed", ex);
+		} catch (final RuntimeException ex) {
+			throw new TranscodeException("Operation on " + fileTypeDescription + " failed", ex);
 		} finally {
 			try {
 				ncFile.close();

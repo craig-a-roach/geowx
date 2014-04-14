@@ -69,6 +69,17 @@ public class ArgonProperties {
 
 	public static class BuilderFromArgs {
 
+		BuilderFromArgs putProperty(Tag tag, boolean value) {
+			return putProperty(tag, Boolean.toString(value));
+		}
+
+		BuilderFromArgs putProperty(Tag tag, String zValue) {
+			if (tag == null) throw new IllegalArgumentException("object is null");
+			if (zValue == null) throw new IllegalArgumentException("object is null");
+			m_dest.put(tag.qtwName, zValue);
+			return this;
+		}
+
 		public boolean consumeFlag(String qTagSpec) {
 			return m_source.consumeFlag(qTagSpec);
 		}
@@ -101,8 +112,7 @@ public class ArgonProperties {
 
 		public BuilderFromArgs putMappedArg(String sourceArgName)
 				throws ArgonArgsException {
-			final Tag tag = ArgonArgs.newTag(sourceArgName);
-			return putMappedArg(sourceArgName, tag.qtwName);
+			return putMappedArg(sourceArgName, sourceArgName);
 		}
 
 		public BuilderFromArgs putMappedArg(String sourceArgName, String destPropertyName)
@@ -111,9 +121,11 @@ public class ArgonProperties {
 				throw new IllegalArgumentException("string is null or empty");
 			if (destPropertyName == null || destPropertyName.length() == 0)
 				throw new IllegalArgumentException("string is null or empty");
-			final String oqtwValue = m_source.consumeAllTagValuePairs(sourceArgName).oqtwValue();
+			final Tag tagSource = ArgonArgs.newTag(sourceArgName);
+			final Tag tagDest = ArgonArgs.newTag(destPropertyName);
+			final String oqtwValue = m_source.consumeAllTagValuePairs(tagSource).oqtwValue();
 			if (oqtwValue != null) {
-				m_dest.put(destPropertyName, oqtwValue);
+				m_dest.put(tagDest.qtwName, oqtwValue);
 			}
 			return this;
 		}
@@ -147,19 +159,15 @@ public class ArgonProperties {
 		}
 
 		public BuilderFromArgs putProperty(String propertyName, boolean value) {
-			return putProperty(propertyName, Boolean.toString(value));
+			return putProperty(ArgonArgs.newTag(propertyName), value);
 		}
 
 		public BuilderFromArgs putProperty(String propertyName, int value) {
-			return putProperty(propertyName, Integer.toString(value));
+			return putProperty(ArgonArgs.newTag(propertyName), Integer.toString(value));
 		}
 
 		public BuilderFromArgs putProperty(String propertyName, String zValue) {
-			if (propertyName == null || propertyName.length() == 0)
-				throw new IllegalArgumentException("string is null or empty");
-			if (zValue == null) throw new IllegalArgumentException("object is null");
-			m_dest.put(propertyName, zValue);
-			return this;
+			return putProperty(ArgonArgs.newTag(propertyName), zValue);
 		}
 
 		BuilderFromArgs(ArgonArgs source) {

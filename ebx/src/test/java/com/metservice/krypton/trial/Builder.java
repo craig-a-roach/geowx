@@ -17,6 +17,7 @@ import com.metservice.argon.ArgonStreamWriteException;
 import com.metservice.argon.file.ArgonFileManifest;
 import com.metservice.krypton.KryptonCentre;
 import com.metservice.krypton.KryptonCodeException;
+import com.metservice.krypton.KryptonDataRecord;
 import com.metservice.krypton.KryptonDecoder;
 import com.metservice.krypton.KryptonDecoderConfig;
 import com.metservice.krypton.KryptonFileReader;
@@ -55,7 +56,8 @@ public class Builder {
 					final KryptonRecordReader rr = oFileReader.nextRecordReader();
 					final int recordIndex = rr.recordIndex();
 					try {
-						final KryptonMetaRecord meta = rr.newMetaRecord();
+						final KryptonDataRecord data = rr.newDataRecord();
+						final KryptonMetaRecord meta = data.meta();
 						final KryptonCentre recordCentre = meta.centre();
 						final String oqErrRecordCentre = outcome.validateRecordCentre(recordCentre);
 						if (oqErrRecordCentre == null) {

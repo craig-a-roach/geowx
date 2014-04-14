@@ -75,10 +75,10 @@ public class Command {
 			b.putProperty(PNAME_TIMING, false);
 			b.putProperty(PNAME_VERBOSE, false);
 			b.putFiles(ARG_PFILE);
-			b.putAssignments();
 			b.putMappedArg(PNAME_NCPATH);
 			b.putMappedFlag(PNAME_TIMING);
 			b.putMappedFlag(PNAME_VERBOSE);
+			b.putAssignments();
 			b.printlnUnsupportedMessage();
 			main(b.newProperties());
 		} catch (final ArgonArgsException | ArgonFormatException | ArgonPermissionException ex) {

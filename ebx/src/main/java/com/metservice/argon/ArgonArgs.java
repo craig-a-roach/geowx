@@ -30,7 +30,36 @@ public class ArgonArgs {
 		throw new IllegalArgumentException(m);
 	}
 
-	private ArgonArgsAccessor consumeAllTagValuePairs(Tag tag) {
+	private boolean consumeFlag(char flagCode) {
+		for (int i = 0; i < m_ztqtw.length; i++) {
+			final String oarg = m_ztqtw[i];
+			if (oarg == null) {
+				continue;
+			}
+			if (oarg.charAt(0) != '-') {
+				continue;
+			}
+			final int alen = oarg.length();
+			if (alen >= 2 && oarg.charAt(1) == '-') {
+				continue;
+			}
+			final String zPattern = oarg.substring(1);
+			final int codePos = zPattern.indexOf(flagCode);
+			if (codePos < 0) {
+				continue;
+			}
+			final String zNeo = zPattern.substring(0, codePos) + zPattern.substring(codePos + 1);
+			if (zNeo.length() == 0) {
+				m_ztqtw[i] = null;
+			} else {
+				m_ztqtw[i] = "-" + zNeo;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	ArgonArgsAccessor consumeAllTagValuePairs(Tag tag) {
 		assert tag != null;
 		final boolean hasCode = tag.hasCode();
 		final List<String> zlqtwValues = new ArrayList<String>();
@@ -63,35 +92,6 @@ public class ArgonArgs {
 			}
 		}
 		return new ArgonArgsAccessor(tag.qtwName, zlqtwValues);
-	}
-
-	private boolean consumeFlag(char flagCode) {
-		for (int i = 0; i < m_ztqtw.length; i++) {
-			final String oarg = m_ztqtw[i];
-			if (oarg == null) {
-				continue;
-			}
-			if (oarg.charAt(0) != '-') {
-				continue;
-			}
-			final int alen = oarg.length();
-			if (alen >= 2 && oarg.charAt(1) == '-') {
-				continue;
-			}
-			final String zPattern = oarg.substring(1);
-			final int codePos = zPattern.indexOf(flagCode);
-			if (codePos < 0) {
-				continue;
-			}
-			final String zNeo = zPattern.substring(0, codePos) + zPattern.substring(codePos + 1);
-			if (zNeo.length() == 0) {
-				m_ztqtw[i] = null;
-			} else {
-				m_ztqtw[i] = "-" + zNeo;
-			}
-			return true;
-		}
-		return false;
 	}
 
 	boolean consumeFlag(Tag tag) {
