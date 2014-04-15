@@ -44,6 +44,7 @@ class UGrib {
 	private static final long MASK2L = 0xFF0000L;
 	private static final long MASK1L = 0xFF00L;
 	private static final long MASK0L = 0xFFL;
+	private static final int MASK3 = 0xFF000000;
 	private static final int MASK3S = 0x7F000000;
 	private static final int MASK2 = 0xFF0000;
 	private static final int MASK2S = 0x7F0000;
@@ -161,6 +162,19 @@ class UGrib {
 		final int c = buffer[pos + 2] & 0xFF;
 		final int d = buffer[pos + 3] & 0xFF;
 		return float4IEEE(a, b, c, d);
+	}
+
+	public static byte[] float4IEEE(byte[] buffer, int pos, float value) {
+		final int ivalue = Float.floatToIntBits(value);
+		final int a = (ivalue & MASK3) >> 24;
+		final int b = (ivalue & MASK2) >> 16;
+		final int c = (ivalue & MASK1) >> 8;
+		final int d = ivalue & MASK0;
+		buffer[pos + 0] = (byte) a;
+		buffer[pos + 1] = (byte) b;
+		buffer[pos + 2] = (byte) c;
+		buffer[pos + 3] = (byte) d;
+		return buffer;
 	}
 
 	public static float float4IEEE(int a, int b, int c, int d) {

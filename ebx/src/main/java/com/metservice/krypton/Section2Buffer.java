@@ -29,6 +29,12 @@ class Section2Buffer {
 		return m_octet;
 	}
 
+	public void float4(float value) {
+		ensure(4);
+		UGrib.float4IEEE(m_buffer, m_octet, value);
+		m_octet += 4;
+	}
+
 	public void int2(int value) {
 		ensure(2);
 		UGrib.int2(m_buffer, m_octet, value);
@@ -39,6 +45,13 @@ class Section2Buffer {
 		ensure(4);
 		UGrib.int4(m_buffer, m_octet, value);
 		m_octet += 4;
+	}
+
+	public void octets(byte[] octetArray) {
+		final int srcLen = octetArray.length;
+		ensure(srcLen);
+		System.arraycopy(octetArray, 0, m_buffer, m_octet, srcLen);
+		m_octet += srcLen;
 	}
 
 	public void ts(long value) {
@@ -76,12 +89,17 @@ class Section2Buffer {
 		m_octet += 2;
 	}
 
+	public void u3(int value) {
+		ensure(3);
+		UGrib.intu3(m_buffer, m_octet, value);
+		m_octet += 3;
+	}
+
 	public Section2Buffer(int sectionNo, int est) {
 		m_buffer = new byte[Math.max(Min, est)];
 		m_buffer[4] = (byte) sectionNo;
 		m_octet = 5;
 	}
-
 	private byte[] m_buffer;
 	private int m_octet;
 }

@@ -104,7 +104,7 @@ public class TestUnit1GribBytes {
 	}
 
 	@Test
-	public void t70_float() {
+	public void t70_floatIBM() {
 
 		final List<F4> tests = new ArrayList<F4>();
 		tests.add(new F4(65399.5f, 68, 255, 119, 128, 10000.0f));
@@ -126,16 +126,53 @@ public class TestUnit1GribBytes {
 		}
 	}
 
+	@Test
+	public void t75_floatIEEE() {
+
+		final List<F4> tests = new ArrayList<F4>();
+		tests.add(new F4(65399.5f, 0x47, 0x7f, 0x77, 0x80, 10000.0f));
+		tests.add(new F4(273.96875f, 0x43, 0x88, 0xfc, 0x00, 100.0f));
+		tests.add(new F4(264.98682f, 0x43, 0x84, 0x7e, 0x50, 100.0f));
+
+		tests.add(new F4(-10.0f, 0xc1, 0x20, 0x0, 0x0, 10.0f));
+		tests.add(new F4(-9.9f, 0xc1, 0x1e, 0x66, 0x66, 10.0f));
+		tests.add(new F4(-9.3f, 0xc1, 0x14, 0xcc, 0xcd, 10.0f));
+		tests.add(new F4(-0.7f, 0xbf, 0x33, 0x33, 0x33, 1.0f));
+		tests.add(new F4(0.0f, 0x00, 0x00, 0x00, 0x00, 0.1f));
+		tests.add(new F4(0.1f, 0x3d, 0xcc, 0xcc, 0xcd, 1.0f));
+		tests.add(new F4(0.3f, 0x3e, 0x99, 0x99, 0x9a, 1.0f));
+		tests.add(new F4(9.9f, 0x41, 0x1e, 0x66, 0x66, 10.0f));
+
+		for (final F4 t : tests) {
+			System.out.println(t.showBytesIEEE());
+			Assert.assertEquals(t.f4, UGrib.float4IEEE(t.bytes, 0), Math.ulp(t.ulp));
+			Assert.assertArrayEquals(t.bytes, UGrib.float4IEEE(new byte[4], 0, t.f4));
+		}
+	}
+
 	private static class F4 {
+
+		private static String showBytes(byte[] ba) {
+			final StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < ba.length; i++) {
+				if (i > 0) {
+					sb.append(',');
+				}
+				sb.append("0x");
+				sb.append(Integer.toHexString(ba[i] & 0xFF));
+			}
+			return sb.toString();
+		}
+
+		public String showBytesIEEE() {
+			final byte[] buffer = new byte[4];
+			UGrib.float4IEEE(buffer, 0, f4);
+			return showBytes(buffer);
+		}
 
 		@Override
 		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("0x");
-			for (int i = 0; i < bytes.length; i++) {
-				sb.append(Integer.toHexString(bytes[i] & 0xFF));
-			}
-			return sb.toString();
+			return showBytes(bytes);
 		}
 
 		public F4(float f4, int b0, int b1, int b2, int b3, float ulp) {
