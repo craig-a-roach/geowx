@@ -35,6 +35,10 @@ class Section2Buffer {
 		m_octet += 4;
 	}
 
+	public void increaseCapacityBy(int plus) {
+		ensure(plus);
+	}
+
 	public void int2(int value) {
 		ensure(2);
 		UGrib.int2(m_buffer, m_octet, value);
@@ -45,6 +49,12 @@ class Section2Buffer {
 		ensure(4);
 		UGrib.int4(m_buffer, m_octet, value);
 		m_octet += 4;
+	}
+
+	public void octet(byte value) {
+		ensure(1);
+		m_buffer[m_octet] = value;
+		m_octet++;
 	}
 
 	public void octets(byte[] octetArray) {

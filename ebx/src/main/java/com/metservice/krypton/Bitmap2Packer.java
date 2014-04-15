@@ -35,9 +35,9 @@ class Bitmap2Packer {
 		dst.octets(m_octetArray);
 	}
 
-	public Bitmap2Packer(int valueCount) {
-		int bc = valueCount >> 3;
-		if (valueCount % 8 != 0) {
+	public Bitmap2Packer(int gridCount) {
+		int bc = gridCount >> 3;
+		if (gridCount % 8 != 0) {
 			bc++;
 		}
 		m_octetArray = new byte[bc];

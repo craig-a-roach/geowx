@@ -10,10 +10,6 @@ package com.metservice.krypton;
  */
 public class KryptonData2Packer00 {
 
-	// out = (R + (in * 2^E)) / 10^D
-	// (out * 10^DD) - R = in * 2^E
-	// in = ((out * 10^D) - R) / 2^E
-
 	private static final double ToLog2 = Math.log(2.0);
 
 	private static int bitDepth(int deltaBits, int maxBits) {
@@ -34,6 +30,7 @@ public class KryptonData2Packer00 {
 		final int maxBits = maxOctets << 3;
 		float vmin = xptSparseData[0];
 		float vmax = vmin;
+		int validCount = 0;
 		for (int i = 1; i < len; i++) {
 			final float v = xptSparseData[i];
 			if (Float.isNaN(v)) {
@@ -45,6 +42,7 @@ public class KryptonData2Packer00 {
 			if (v > vmax) {
 				vmax = v;
 			}
+			validCount++;
 		}
 		final float nmin = unitConverter * vmin;
 		final float nmax = unitConverter * vmax;
@@ -54,12 +52,42 @@ public class KryptonData2Packer00 {
 		final int deltaBits = (int) Math.ceil((Math.log(delta10) / ToLog2));
 		final int binaryScale = Math.max(0, deltaBits - maxBits);
 		final int bitDepth = bitDepth(maxBits, deltaBits);
-		new SimplePackingSpec(referenceValue, binaryScale, decimalScale, bitDepth);
-
-		return new KryptonData2Packer00();
+		final SimplePackingSpec spec = new SimplePackingSpec(referenceValue, binaryScale, decimalScale, bitDepth);
+		return new KryptonData2Packer00(xptSparseData, unitConverter, spec, validCount);
 	}
 
-	private KryptonData2Packer00() {
+	public void saveBitmap(Section2Buffer dst) {
+
 	}
 
+	public void saveData(Section2Buffer dst) {
+		final int gridLen = m_xptSparseData.length;
+		final double DD = Math.pow(10.0, m_spec.decimalScale);
+		final double EE = Math.pow(2.0, m_spec.binaryScale);
+		final float R = m_spec.referenceValue;
+		for (int i = 0; i < gridLen; i++) {
+			final float v = m_xptSparseData[i];
+			if (Float.isNaN(v)) {
+				continue;
+			}
+			// in = ((out * 10^D) - R) / 2^E
+			final double dev = ((v * m_unitConverter * DD) - R) / EE;
+			final int ev = (int) Math.round(dev);
+
+		}
+
+	}
+
+	private KryptonData2Packer00(float[] xptSparseData, float unitConverter, SimplePackingSpec spec, int validCount) {
+		assert xptSparseData != null;
+		assert spec != null;
+		m_xptSparseData = xptSparseData;
+		m_unitConverter = unitConverter;
+		m_spec = spec;
+		m_validCount = validCount;
+	}
+	private final float[] m_xptSparseData;
+	private final float m_unitConverter;
+	private final SimplePackingSpec m_spec;
+	private final int m_validCount;
 }
