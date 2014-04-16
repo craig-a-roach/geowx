@@ -19,6 +19,11 @@ public class KryptonData2Packer00 {
 		return 24;
 	}
 
+	private static int bitsToBytes(int bitCount) {
+		final int b = bitCount / 8;
+		return (bitCount % 8 == 0) ? b : (b + 1);
+	}
+
 	public static KryptonData2Packer00 newInstance(float[] xptSparseData, float unitConverter, int decimalScale,
 			int maxDepthOctets) {
 		if (xptSparseData == null) throw new IllegalArgumentException("object is null");
@@ -57,7 +62,28 @@ public class KryptonData2Packer00 {
 	}
 
 	public void saveBitmap(Section2Buffer dst) {
-
+		final int gridLen = m_xptSparseData.length;
+		final int reqdBytes = bitsToBytes(gridLen);
+		dst.increaseCapacityBy(reqdBytes);
+		int bitIndex = 0;
+		byte buffer = 0x0;
+		for (int i = 0; i < gridLen; i++) {
+			final boolean isMissing = Float.isNaN(m_xptSparseData[i]);
+			if (isMissing) {
+				continue;
+			}
+			final int ex = buffer & 0xFF;
+			buffer = (byte) (ex | 1 << bitIndex);
+			bitIndex++;
+			if (bitIndex == 8) {
+				dst.octet(buffer);
+				bitIndex = 0;
+				buffer = 0x0;
+			}
+		}
+		if (bitIndex > 0) {
+			dst.octet(buffer);
+		}
 	}
 
 	public void saveData(Section2Buffer dst) {
@@ -65,6 +91,10 @@ public class KryptonData2Packer00 {
 		final double DD = Math.pow(10.0, m_spec.decimalScale);
 		final double EE = Math.pow(2.0, m_spec.binaryScale);
 		final float R = m_spec.referenceValue;
+		final int bitDepth = m_spec.bitDepth;
+
+		final int reqdBytes = bitsToBytes(m_validCount * bitDepth);
+		dst.increaseCapacityBy(reqdBytes);
 		for (int i = 0; i < gridLen; i++) {
 			final float v = m_xptSparseData[i];
 			if (Float.isNaN(v)) {

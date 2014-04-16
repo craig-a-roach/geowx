@@ -130,6 +130,10 @@ public class TestUnit1GribBytes {
 	public void t75_floatIEEE() {
 
 		final List<F4> tests = new ArrayList<F4>();
+		tests.add(new F4(-65399.5f, 0xc7, 0x7f, 0x77, 0x80, 10000.0f));
+		tests.add(new F4(-273.96875f, 0xC3, 0x88, 0xfc, 0x00, 100.0f));
+		tests.add(new F4(-264.98682f, 0xC3, 0x84, 0x7e, 0x50, 100.0f));
+
 		tests.add(new F4(65399.5f, 0x47, 0x7f, 0x77, 0x80, 10000.0f));
 		tests.add(new F4(273.96875f, 0x43, 0x88, 0xfc, 0x00, 100.0f));
 		tests.add(new F4(264.98682f, 0x43, 0x84, 0x7e, 0x50, 100.0f));
@@ -144,48 +148,9 @@ public class TestUnit1GribBytes {
 		tests.add(new F4(9.9f, 0x41, 0x1e, 0x66, 0x66, 10.0f));
 
 		for (final F4 t : tests) {
-			System.out.println(t.showBytesIEEE());
 			Assert.assertEquals(t.f4, UGrib.float4IEEE(t.bytes, 0), Math.ulp(t.ulp));
 			Assert.assertArrayEquals(t.bytes, UGrib.float4IEEE(new byte[4], 0, t.f4));
 		}
-	}
-
-	private static class F4 {
-
-		private static String showBytes(byte[] ba) {
-			final StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < ba.length; i++) {
-				if (i > 0) {
-					sb.append(',');
-				}
-				sb.append("0x");
-				sb.append(Integer.toHexString(ba[i] & 0xFF));
-			}
-			return sb.toString();
-		}
-
-		public String showBytesIEEE() {
-			final byte[] buffer = new byte[4];
-			UGrib.float4IEEE(buffer, 0, f4);
-			return showBytes(buffer);
-		}
-
-		@Override
-		public String toString() {
-			return showBytes(bytes);
-		}
-
-		public F4(float f4, int b0, int b1, int b2, int b3, float ulp) {
-			this.f4 = f4;
-			this.bytes[0] = (byte) b0;
-			this.bytes[1] = (byte) b1;
-			this.bytes[2] = (byte) b2;
-			this.bytes[3] = (byte) b3;
-			this.ulp = ulp;
-		}
-		public final float f4;
-		public final byte[] bytes = new byte[4];
-		public final float ulp;
 	}
 
 	private static class I2 {
@@ -279,6 +244,44 @@ public class TestUnit1GribBytes {
 		}
 		public final long l8;
 		public final byte[] bytes = new byte[8];
+	}
+
+	static class F4 {
+
+		private static String showBytes(byte[] ba) {
+			final StringBuilder sb = new StringBuilder();
+			for (int i = 0; i < ba.length; i++) {
+				if (i > 0) {
+					sb.append(',');
+				}
+				sb.append("0x");
+				sb.append(Integer.toHexString(ba[i] & 0xFF));
+			}
+			return sb.toString();
+		}
+
+		public String showBytesIEEE() {
+			final byte[] buffer = new byte[4];
+			UGrib.float4IEEE(buffer, 0, f4);
+			return showBytes(buffer);
+		}
+
+		@Override
+		public String toString() {
+			return showBytes(bytes);
+		}
+
+		public F4(float f4, int b0, int b1, int b2, int b3, float ulp) {
+			this.f4 = f4;
+			this.bytes[0] = (byte) b0;
+			this.bytes[1] = (byte) b1;
+			this.bytes[2] = (byte) b2;
+			this.bytes[3] = (byte) b3;
+			this.ulp = ulp;
+		}
+		public final float f4;
+		public final byte[] bytes = new byte[4];
+		public final float ulp;
 	}
 
 }
