@@ -496,6 +496,15 @@ class UGrib {
 		return cal;
 	}
 
+	public static void pack24(byte[] buffer, int value) {
+		final int a = (value & MASK2) >> 16;
+		final int b = (value & MASK1) >> 8;
+		final int c = value & MASK0;
+		buffer[0] = (byte) a;
+		buffer[1] = (byte) b;
+		buffer[2] = (byte) c;
+	}
+
 	public static short shortu1(byte[] buffer, int pos) {
 		return (short) (buffer[pos] & 0xFF);
 	}

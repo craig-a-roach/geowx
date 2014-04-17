@@ -18,44 +18,35 @@ public class TestUnit1BinaryPacking {
 		return (bitCount % 8 == 0) ? b : (b + 1);
 	}
 
-	@Test
-	public void t50() {
+	private void encoder(int[] data, int bitDepth, Destination dst) {
+		final int dataOctetCount = data.length;
+		if (dataOctetCount == 0) return;
+		final int sampleOctets = bitDepth >> 3;
+		final byte[] buffer = new byte[sampleOctets];
+		final byte[] r24 = new byte[3];
+		UGrib.pack24(r24, data[0]);
+		for (int r = 3, w = sampleOctets - 1; w >= 0; r--, w--) {
+			buffer[w] = r24[r];
+		}
 
-		final int BITDEPTH = 10;
-		final int[] Mask = { 0xFF << 24, 0xFF << 16, 0xFF << 8 };
-		final int[] data = { 0x3AB, 0x2CD, 0xEF };
-		final int bitsReqd = data.length * BITDEPTH;
+	}
+
+	private void pack(int[] data, int bitDepth) {
+		final int bitsReqd = data.length * bitDepth;
 		final int bytesReqd = bitsToBytes(bitsReqd);
 		final Destination dst = new Destination(bytesReqd);
-		int writeBuffer = 0x0;
-		int avail = 32;
-		for (int idata = 0; idata < data.length; idata++) {
-			final int datum = data[idata];
-			final int shift = avail - BITDEPTH;
-			writeBuffer |= (datum << shift);
-			System.out.println(Integer.toHexString(writeBuffer));
-			avail -= BITDEPTH;
-			if (avail < BITDEPTH) {
-				for (int m = 0, s = 24; m < 3; m++, s -= 8) {
-					final byte b = (byte) ((writeBuffer & Mask[m]) >> s);
-					dst.octet(b);
-				}
-				final int neoAvail = 32 - avail;
-				writeBuffer = writeBuffer << neoAvail;
-				System.out.println(Integer.toHexString(writeBuffer));
-				avail = neoAvail;
-			}
-		}
-		if (avail < 32) {
-			final byte b = (byte) (writeBuffer & 0xFF);
-			dst.octet(b);
-		}
-
 		final IntegerFactory factory = new IntegerFactory(dst);
+		encoder(data, bitDepth, dst);
 		final int[] decode = new int[data.length];
 		for (int i = 0; i < decode.length; i++) {
-			decode[i] = factory.nextInteger(BITDEPTH);
+			decode[i] = factory.nextInteger(bitDepth);
 		}
+	}
+
+	@Test
+	public void t50() {
+		final int[] data = { 0x3AB, 0x2CD, 0xEF, 0x123 };
+		pack(data, 10);
 	}
 
 	private static class Destination implements IOctetIndexer {
