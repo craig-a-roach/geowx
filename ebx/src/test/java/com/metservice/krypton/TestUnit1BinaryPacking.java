@@ -189,6 +189,24 @@ public class TestUnit1BinaryPacking {
 	}
 
 	private void encodeUnaligned(int[] xptData, int bitDepth, Section2Buffer dst) {
+		int buffer8 = 0;
+		final int bufferBitCount = 0;
+		final int datumCount = xptData.length;
+		for (int datumIndex = 0; datumIndex < datumCount; datumIndex++) {
+			final int datum = out("datum@" + datumIndex, xptData[datumIndex]);
+			int bufferBitRem = 8 - bufferBitCount;
+			if (bufferBitRem < bitDepth) {
+				final int shift = dout("shift", bitDepth - bufferBitRem);
+				final int mask = out("mask", (1 << bufferBitRem) - 1);
+				final int smask = out("smask", mask << shift);
+				buffer8 = buffer8 | ((datum & smask) >>> shift);
+				dst.octet(buffer8);
+				buffer8 = (datum & ~smask) << bufferBitRem;
+				bufferBitRem = shift;
+			} else {
+
+			}
+		}
 	}
 
 	private void encodeUnaligned2(int[] xptData, int bitDepth, Section2Buffer dst) {

@@ -68,6 +68,12 @@ class Section2Buffer {
 		m_octet++;
 	}
 
+	public void octet(int value) {
+		ensure(1);
+		m_buffer[m_octet] = (byte) value;
+		m_octet++;
+	}
+
 	public void octets(byte[] octetArray) {
 		final int srcLen = octetArray.length;
 		ensure(srcLen);
