@@ -12,7 +12,8 @@ import java.util.Calendar;
  */
 class Section2Buffer {
 
-	private static final int Min = 5;
+	public static final int FirstDataOctetIndex = 5;
+	private static final int Min = FirstDataOctetIndex;
 
 	private void ensure(int plus) {
 		final int neoOctet = m_octet + plus;
@@ -23,10 +24,20 @@ class Section2Buffer {
 		System.arraycopy(save, 0, m_buffer, 0, m_octet);
 	}
 
+	public byte[] emit() {
+		final byte[] dest = new byte[m_octet];
+		emit(dest, 0);
+		return dest;
+	}
+
 	public int emit(byte[] dest, int destPos) {
 		UGrib.int4(m_buffer, 0, m_octet);
 		System.arraycopy(m_buffer, 0, dest, destPos, m_octet);
 		return m_octet;
+	}
+
+	public int firstDataOctetIndex() {
+		return 5;
 	}
 
 	public void float4(float value) {
@@ -108,7 +119,7 @@ class Section2Buffer {
 	public Section2Buffer(int sectionNo, int est) {
 		m_buffer = new byte[Math.max(Min, est)];
 		m_buffer[4] = (byte) sectionNo;
-		m_octet = 5;
+		m_octet = FirstDataOctetIndex;
 	}
 	private byte[] m_buffer;
 	private int m_octet;
