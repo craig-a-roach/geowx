@@ -42,10 +42,13 @@ public class TestUnit1BinaryPacking {
 		return x;
 	}
 
+	// |11 1010 1011 |10 1100 1101|00 1110 1111|01 0010 0011|
+	// |11 1010 10|11 10 1100|1101 00 11|10 1111 01|0010 0011|
+
 	private static int[][] newDataRamp() {
 		final int[] data1 = { 0x1, 0x0, 0x1, 0x1, 0x0, 0x1, 0x0, 0x1, 0x1, 0x1 };
 		final int[] data2 = { 0x3, 0x2, 0x3, 0x2, 0x3, 0x2, 0x3, 0x2 };
-		final int[] data3 = { 0x7, 0x5, 0x6, 0x7, 0x5, 0x7, 0x6, 0x5 };
+		final int[] data3 = { 0x6, 0x7, 0x5, 0x7, 0x5, 0x7, 0x6, 0x5 };
 		final int[] data4 = { 0xB, 0xD, 0xF, 0xC, 0xF, 0xA, 0xF, 0xB };
 		final int[] data5 = { 0x1B, 0x1D, 0x1F, 0x1C, 0x1F, 0x1A, 0x1F, 0x1B };
 		final int[] data6 = { 0x3B, 0x2D, 0x3F, 0x2C, 0x3F, 0x2A, 0x3F, 0x2B };
@@ -67,14 +70,8 @@ public class TestUnit1BinaryPacking {
 		final int[] data22 = { 0x3BEFAB, 0x2CFECD, 0x3ABDEF, 0x29BCAC, 0x3DCFBF, 0x2EFCDA, 0x3BDACF, 0x28EBDB };
 		final int[] data23 = { 0x7BEFAB, 0x6CFECD, 0x5ABDEF, 0x49BCAC, 0x7DCFBF, 0x6EFCDA, 0x5BDACF, 0x48EBDB };
 		final int[] data24 = { 0xFBEFAB, 0xDCFECD, 0xEABDEF, 0xC9BCAC, 0xBDCFBF, 0xAEFCDA, 0xCBDACF, 0xD8EBDB };
-		final int[] data25 = { 0x1FBEFAB, 0x1DCFECD, 0x1EABDEF, 0x1C9BCAC, 0x1BDCFBF, 0x1AEFCDA, 0x1CBDACF, 0x1D8EBDB };
-		final int[] data26 = { 0x3FBEFAB, 0x2DCFECD, 0x3EABDEF, 0x2C9BCAC, 0x3BDCFBF, 0x2AEFCDA, 0x3CBDACF, 0x2D8EBDB };
-		final int[] data27 = { 0x7FBEFAB, 0x6DCFECD, 0x5EABDEF, 0x4C9BCAC, 0x7BDCFBF, 0x6AEFCDA, 0x5CBDACF, 0x4D8EBDB };
-		final int[] data28 = { 0xEFBEFAB, 0xFDCFECD, 0xEEABDEF, 0xFC9BCAC, 0xDBDCFBF, 0xCAEFCDA, 0xACBDACF, 0xBD8EBDB };
-		final int[] data29 = { 0x1EFBEFAB, 0x1FDCFECD, 0x1EEABDEF, 0x1FC9BCAC, 0x1DBDCFBF, 0x1CAEFCDA, 0x1ACBDACF, 0x1BD8EBDB };
 		final int[][] data = { null, data1, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12,
-				data13, data14, data15, data16, data17, data18, data19, data20, data21, data22, data23, data24, data25,
-				data26, data27, data28, data29 };
+				data13, data14, data15, data16, data17, data18, data19, data20, data21, data22, data23, data24 };
 		return data;
 	}
 
@@ -85,9 +82,6 @@ public class TestUnit1BinaryPacking {
 		}
 		return sampleData;
 	}
-
-	// |11 1010 1011 |10 1100 1101|00 1110 1111|01 0010 0011|
-	// |11 1010 10|11 10 1100|1101 00 11|10 1111 01|0010 0011|
 
 	private static byte out(String tag, byte b) {
 		final int x = 0xFF & b;
@@ -105,67 +99,6 @@ public class TestUnit1BinaryPacking {
 	private static int out(String tag, int x) {
 		System.out.println(tag + ": " + bin(x) + " [" + Integer.toHexString(x) + "] " + x);
 		return x;
-	}
-
-	private static byte[] pack10(int[] data) {
-		final int BD = 10;
-		final int FB = BD >> 3;
-		final int zbits = (data.length * BD);
-		final int zbc = (zbits / 8) + ((zbits % 8) == 0 ? 0 : 1);
-		final byte[] zout = new byte[zbc];
-		final int R = 10 - (FB << 3); // 2
-		final byte[] bf = new byte[FB + 1];
-
-		int residual = 0;
-		int cycle = dout("cycle", 0);
-		int s = dout("s", 8 - cycle - R);
-		int rs = dout("rs", BD + s);
-		int d = 0;
-		d = out("d0", data[0]);
-		UGrib.intu2(bf, 0, out("r<<rs|d<<s", (residual << rs) | (d << s)));
-		out("bf", bf);
-		zout[0] = out("z0", bf[0]);
-
-		System.out.println("--1110 1010");
-		residual = out("residual", (bf[1] & 0xFF) >> s);
-		System.out.println("--11");
-		cycle = dout("cycle", (cycle + BD) % 8);
-		s = dout("s", 8 - cycle - R);
-		rs = dout("rs", BD + s);
-
-		d = out("d1", data[1]);
-		UGrib.intu2(bf, 0, out("residual<<rs|d<<s", (residual << rs) | (d << s)));
-		out("bf", bf);
-		zout[1] = out("z1", bf[0]);
-		System.out.println("--1110 1100");
-		residual = out("residual", (bf[1] & 0xFF) >> s);
-		System.out.println("--1101");
-		cycle = dout("cycle", (cycle + BD) % 8);
-		s = dout("s", 8 - cycle - R);
-		rs = dout("rs", BD + s);
-
-		d = out("d2", data[2]);
-		UGrib.intu2(bf, 0, out("residual<<rs|d<<s", (residual << rs) | (d << s)));
-		out("bf", bf);
-		zout[2] = out("z2", bf[0]);
-		System.out.println("--1101 0011");
-		residual = out("residual", (bf[1] & 0xFF) >> s);
-		System.out.println("--10 1111");
-		cycle = dout("cycle", (cycle + BD) % 8);
-		s = dout("s", 8 - cycle - R);
-		rs = dout("rs", BD + s);
-
-		d = out("d3", data[3]);
-		UGrib.intu2(bf, 0, out("residual<<rs|d<<s", (residual << rs) | (d << s)));
-		out("bf", bf);
-		zout[3] = out("z3", bf[0]);
-		System.out.println("--1011 1101");
-
-		zout[4] = out("z4", bf[1]);
-		System.out.println("--0010 0011");
-
-		return zout;
-
 	}
 
 	private void encode(int[] data, int bitDepth, Section2Buffer dst) {
@@ -189,74 +122,56 @@ public class TestUnit1BinaryPacking {
 	}
 
 	private void encodeUnaligned(int[] xptData, int bitDepth, Section2Buffer dst) {
-		int buffer8 = 0;
-		final int bufferBitCount = 0;
 		final int datumCount = xptData.length;
+		int bufferR = 0;
+		int bufferBitCount = 0;
 		for (int datumIndex = 0; datumIndex < datumCount; datumIndex++) {
-			final int datum = out("datum@" + datumIndex, xptData[datumIndex]);
-			int bufferBitRem = 8 - bufferBitCount;
-			if (bufferBitRem < bitDepth) {
-				final int shift = dout("shift", bitDepth - bufferBitRem);
-				final int mask = out("mask", (1 << bufferBitRem) - 1);
-				final int smask = out("smask", mask << shift);
-				buffer8 = buffer8 | ((datum & smask) >>> shift);
-				dst.octet(buffer8);
-				buffer8 = (datum & ~smask) << bufferBitRem;
-				bufferBitRem = shift;
-			} else {
-
+			final int datum = xptData[datumIndex];
+			bufferR = (bufferR << bitDepth) | datum;
+			bufferBitCount += bitDepth;
+			while (bufferBitCount >= 8) {
+				final int shift = bufferBitCount - 8;
+				final int mask = 0xFF << shift;
+				final int dm = (bufferR & mask) >>> shift;
+				dst.octet(dm);
+				bufferR = bufferR & ~mask;
+				bufferBitCount -= 8;
 			}
+		}
+		if (bufferBitCount > 0) {
+			final int bufferL = bufferR << (8 - bufferBitCount);
+			dst.octet(bufferL);
 		}
 	}
 
-	private void encodeUnaligned2(int[] xptData, int bitDepth, Section2Buffer dst) {
+	private void encodeUnalignedT(int[] xptData, int bitDepth, Section2Buffer dst) {
 		final int datumCount = xptData.length;
-		final int fullBytesPerSample = bitDepth >> 3;
-		final int residualBitsPerSample = bitDepth - (fullBytesPerSample << 3);
-		final byte[] packingBuffer = new byte[fullBytesPerSample + 1];
-
-		int residual = dout("residual", 0);
-		int carryBits = dout("carry", 0);
-
+		int bufferR = 0;
+		int bufferBitCount = 0;
 		for (int datumIndex = 0; datumIndex < datumCount; datumIndex++) {
-			final int datumShift = dout("datumShift", 8 - carryBits - residualBitsPerSample);
-			final int residualShift = dout("residualShift", bitDepth + datumShift);
 			final int datum = out("datum@" + datumIndex, xptData[datumIndex]);
-			UGrib.pack(packingBuffer,
-					out("residual<<residualShift|datum<<datumShift", (residual << residualShift) | (datum << datumShift)));
-			out("packingBuffer", packingBuffer);
-			for (int byteIndex = 0; byteIndex < fullBytesPerSample; byteIndex++) {
-				dst.octet(out("add", packingBuffer[byteIndex]));
-			}
-			if (datumShift == 0) {
-				dst.octet(out("add", packingBuffer[fullBytesPerSample]));
-				residual = 0;
-				carryBits = 0;
-			} else {
-				residual = out("residual", (packingBuffer[fullBytesPerSample] & 0xFF) >> datumShift);
-				carryBits = dout("carryBits", carryBits + residualBitsPerSample);
+			bufferR = out("bufferR", (bufferR << bitDepth) | datum);
+			bufferBitCount = dout("bufferBitCount", bufferBitCount + bitDepth);
+			while (bufferBitCount >= 8) {
+				final int shift = dout("shift", bufferBitCount - 8);
+				final int mask = out("mask", 0xFF << shift);
+				final int dm = out("dm", (bufferR & mask) >>> shift);
+				dst.octet(dm);
+				bufferR = out("bufferR", bufferR & ~mask);
+				bufferBitCount = dout("bufferBitCount", bufferBitCount - 8);
 			}
 		}
-		if (carryBits > 0) {
-			dst.octet(out("add", packingBuffer[fullBytesPerSample]));
+		if (bufferBitCount > 0) {
+			final int bufferL = out("bufferL", bufferR << (8 - bufferBitCount));
+			dst.octet(bufferL);
 		}
 	}
 
 	@Test
-	public void a00() {
-		final int datum = out("datum", 0xABCDB7F);
-		final int avail = 10;
-		final int reqd = 3;
-		final int mask = out("mask", (1 << reqd) - 1);
-		final int x = out("x", (datum >> (avail - reqd)) & mask);
-
-	}
-
-	// @Test
 	public void a10() {
 		final int[][] data = newDataRamp();
 		final int bitDepth = 3;
-		final int limit = 3;
+		final int limit = 5;
 		final int[] sampleData = newSampleData(data[bitDepth], limit);
 		final Section2Buffer dst = new Section2Buffer(7, 1);
 		encode(sampleData, bitDepth, dst);
@@ -265,20 +180,7 @@ public class TestUnit1BinaryPacking {
 		Assert.assertArrayEquals(sampleData, decode);
 	}
 
-	// @Test
-	public void a20() {
-		final int[][] data = newDataRamp();
-		final int bitDepth = 10;
-		final int limit = 4;
-		final int[] sampleData = newSampleData(data[bitDepth], limit);
-		final Section2Buffer dst = new Section2Buffer(7, 1);
-		encode(sampleData, bitDepth, dst);
-		final Source src = new Source(dst);
-		final int[] decode = decode(src, bitDepth, limit);
-		Assert.assertArrayEquals(sampleData, decode);
-	}
-
-	// @Test
+	@Test
 	public void t50() {
 		final int[][] data = newDataRamp();
 		for (int bitDepth = 1; bitDepth < data.length; bitDepth++) {
