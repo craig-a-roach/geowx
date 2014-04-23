@@ -8,22 +8,31 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonData2Packer00 {
+public class KryptonData2Packer00 implements IBitmap2Emitter, IData2Emitter {
 
 	private static final double ToLog2 = Math.log(2.0);
 
+	private static int alignBitDepth(int value) {
+		final int f = value >> 3;
+		final int r = value - (f << 3);
+		final int fa = (r == 0) ? f : (f + 1);
+		return fa << 3;
+	}
+
+	private static int bitDepth(int calculated, int maxBitDepth, boolean aligned) {
+		final int climit = Math.max(1, Math.min(calculated, maxBitDepth));
+		return aligned ? alignBitDepth(climit) : climit;
+	}
+
 	private static int bitsToBytes(int bitCount) {
 		final int f = bitCount >> 3;
-		final int r = f - (f << 3);
+		final int r = bitCount - (f << 3);
 		return r == 0 ? f : (f + 1);
 	}
 
 	private static int maxBitDepth(int bitDepthLimit, boolean aligned) {
 		final int climit = Math.max(1, Math.min(bitDepthLimit, 24));
-		if (!aligned) return climit;
-		final int f = climit >> 3;
-		final int r = climit - (f << 3);
-		return r == 0 ? climit : (climit + 1);
+		return aligned ? alignBitDepth(climit) : climit;
 	}
 
 	public static KryptonData2Packer00 newInstance(float[] xptSparseData, float unitConverter, int decimalScale,
@@ -34,9 +43,10 @@ public class KryptonData2Packer00 {
 		final int dscale = Math.max(-10, Math.min(10, decimalScale));
 		final int maxBitDepth = maxBitDepth(bitDepthLimit, aligned);
 		final double dscale10 = Math.pow(10, dscale);
-		float vmin = xptSparseData[0];
-		float vmax = vmin;
-		int validCount = 0;
+		final float v0 = xptSparseData[0];
+		float vmin = v0;
+		float vmax = v0;
+		int validCount = Float.isNaN(v0) ? 0 : 1;
 		for (int i = 1; i < len; i++) {
 			final float v = xptSparseData[i];
 			if (Float.isNaN(v)) {
@@ -57,7 +67,7 @@ public class KryptonData2Packer00 {
 		final double delta10 = Math.ceil(delta * dscale10);
 		final int deltaBits = (int) Math.ceil((Math.log(delta10) / ToLog2));
 		final int binaryScale = Math.max(0, deltaBits - maxBitDepth);
-		final int bitDepth = Math.min(maxBitDepth, deltaBits);
+		final int bitDepth = bitDepth(deltaBits, maxBitDepth, aligned);
 		final SimplePackingSpec spec = new SimplePackingSpec(referenceValue, binaryScale, decimalScale, bitDepth);
 		return new KryptonData2Packer00(xptSparseData, unitConverter, spec, validCount);
 	}
@@ -66,21 +76,31 @@ public class KryptonData2Packer00 {
 		return m_spec;
 	}
 
+	@Override
+	public int bitmapByteCount() {
+		return m_bitmapByteCount;
+	}
+
+	@Override
+	public int dataByteCount() {
+		return m_dataByteCount;
+	}
+
 	public int gridPointCount() {
-		return m_xptSparseData.length;
+		return m_gridCount;
 	}
 
+	@Override
 	public boolean requiresBitmap() {
-		return m_validCount < m_xptSparseData.length;
+		return m_validCount < m_gridCount;
 	}
 
+	@Override
 	public void saveBitmap(Section2Buffer dst) {
-		final int gridLen = m_xptSparseData.length;
-		final int reqdBytes = bitsToBytes(gridLen);
-		dst.increaseCapacityBy(reqdBytes);
+		dst.increaseCapacityBy(m_bitmapByteCount);
 		int buffer = 0;
 		int bufferBitCount = 0;
-		for (int i = 0; i < gridLen; i++) {
+		for (int i = 0; i < m_gridCount; i++) {
 			final boolean isMissing = Float.isNaN(m_xptSparseData[i]);
 			buffer <<= 1;
 			if (!isMissing) {
@@ -99,16 +119,15 @@ public class KryptonData2Packer00 {
 		}
 	}
 
+	@Override
 	public void saveData(Section2Buffer dst) {
-		final int gridLen = m_xptSparseData.length;
 		final double DD = Math.pow(10.0, m_spec.decimalScale);
 		final double EE = Math.pow(2.0, m_spec.binaryScale);
 		final float R = m_spec.referenceValue;
 		final int bitDepth = m_spec.bitDepth;
 		final Encoder encoder = Encoder.newEncoder(dst, bitDepth);
-		final int reqdBytes = bitsToBytes(m_validCount * bitDepth);
-		dst.increaseCapacityBy(reqdBytes);
-		for (int i = 0; i < gridLen; i++) {
+		dst.increaseCapacityBy(m_dataByteCount);
+		for (int i = 0; i < m_gridCount; i++) {
 			final float v = m_xptSparseData[i];
 			if (Float.isNaN(v)) {
 				continue;
@@ -120,19 +139,29 @@ public class KryptonData2Packer00 {
 		encoder.flush();
 	}
 
+	public int validPointCount() {
+		return m_validCount;
+	}
+
 	private KryptonData2Packer00(float[] xptSparseData, float unitConverter, SimplePackingSpec spec, int validCount) {
 		assert xptSparseData != null;
 		assert spec != null;
 		m_xptSparseData = xptSparseData;
 		m_unitConverter = unitConverter;
 		m_spec = spec;
+		m_gridCount = xptSparseData.length;
 		m_validCount = validCount;
+		m_bitmapByteCount = bitsToBytes(xptSparseData.length);
+		m_dataByteCount = bitsToBytes(validCount * spec.bitDepth);
 	}
 
 	private final float[] m_xptSparseData;
 	private final float m_unitConverter;
 	private final SimplePackingSpec m_spec;
+	private final int m_gridCount;
 	private final int m_validCount;
+	private final int m_bitmapByteCount;
+	private final int m_dataByteCount;
 
 	private static abstract class Encoder {
 

@@ -26,6 +26,96 @@ public class TestUnit1Builder {
 		throw new IllegalArgumentException("invalid typ>" + typ + "<");
 	}
 
+	private float decodeFloat(byte[] dest, int octet, String typ) {
+		final int pos = octet - 1;
+		if (typ.equals("ieee4")) return UGrib.float4IEEE(dest, pos);
+		throw new IllegalArgumentException("invalid typ>" + typ + "<");
+	}
+
+	@Test
+	public void testBMS1() {
+		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
+				101.1f, 101.8f, 102.9f, Float.NaN };
+
+		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(data, 1.0f, 1, 10, true);
+		final KryptonBitmap2Builder b = new KryptonBitmap2Builder(p);
+		final Section2Buffer out = new Section2Buffer(b.sectionNo(), b.estimatedOctetCount());
+		b.save(out);
+		final byte[] dest = new byte[100];
+		final int bc = out.emit(dest, 0);
+		Assert.assertEquals(8, bc);
+		Assert.assertEquals(8, decode(dest, 1, "i4"));
+		Assert.assertEquals(6, decode(dest, 5, "u1"));
+		Assert.assertEquals(0, decode(dest, 6, "u1"));
+	}
+
+	@Test
+	public void testBMS2() {
+		final KryptonBitmap2Builder b = new KryptonBitmap2Builder(null);
+		final Section2Buffer out = new Section2Buffer(b.sectionNo(), b.estimatedOctetCount());
+		b.save(out);
+		final byte[] dest = new byte[100];
+		final int bc = out.emit(dest, 0);
+		Assert.assertEquals(6, bc);
+		Assert.assertEquals(6, decode(dest, 1, "i4"));
+		Assert.assertEquals(6, decode(dest, 5, "u1"));
+		Assert.assertEquals(255, decode(dest, 6, "u1"));
+	}
+
+	@Test
+	public void testBMS3() {
+		final float[] data = { 101.4f, 102.7f, 101.9f, 101.0f, 101.6f, 101.2f, 101.1f, 101.8f, 102.9f };
+		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(data, 1.0f, 1, 10, true);
+		final KryptonBitmap2Builder b = new KryptonBitmap2Builder(p);
+		final Section2Buffer out = new Section2Buffer(b.sectionNo(), b.estimatedOctetCount());
+		b.save(out);
+		final byte[] dest = new byte[100];
+		final int bc = out.emit(dest, 0);
+		Assert.assertEquals(6, bc);
+		Assert.assertEquals(6, decode(dest, 1, "i4"));
+		Assert.assertEquals(6, decode(dest, 5, "u1"));
+		Assert.assertEquals(255, decode(dest, 6, "u1"));
+	}
+
+	@Test
+	public void testDRS() {
+		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
+				101.1f, 101.8f, 102.9f, Float.NaN };
+
+		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(data, 1.0f, 1, 10, true);
+		final KryptonDataRepresentation2Builder b = new KryptonDataRepresentation2Builder(p);
+		final Section2Buffer out = new Section2Buffer(b.sectionNo(), 21);
+		b.save(out);
+		final byte[] dest = new byte[100];
+		final int bc = out.emit(dest, 0);
+		Assert.assertEquals(21, bc);
+		Assert.assertEquals(21, decode(dest, 1, "i4"));
+		Assert.assertEquals(5, decode(dest, 5, "u1"));
+		Assert.assertEquals(9, decode(dest, 6, "i4"));
+		Assert.assertEquals(0, decode(dest, 10, "u2"));
+		Assert.assertEquals(1010.0f, decodeFloat(dest, 12, "ieee4"), 0.1f);
+		Assert.assertEquals(0, decode(dest, 16, "i2"));
+		Assert.assertEquals(1, decode(dest, 18, "i2"));
+		Assert.assertEquals(8, decode(dest, 20, "u1"));
+		Assert.assertEquals(0, decode(dest, 21, "u1"));
+	}
+
+	@Test
+	public void testDS1() {
+		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
+				101.1f, 101.8f, 102.9f, Float.NaN };
+
+		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(data, 1.0f, 1, 10, true);
+		final KryptonDataBinary2Builder b = new KryptonDataBinary2Builder(p);
+		final Section2Buffer out = new Section2Buffer(b.sectionNo(), b.estimatedOctetCount());
+		b.save(out);
+		final byte[] dest = new byte[100];
+		final int bc = out.emit(dest, 0);
+		Assert.assertEquals(14, bc);
+		Assert.assertEquals(14, decode(dest, 1, "i4"));
+		Assert.assertEquals(7, decode(dest, 5, "u1"));
+	}
+
 	@Test
 	public void testGDS() {
 		final KryptonGrid2Builder b = new KryptonGrid2Builder();
