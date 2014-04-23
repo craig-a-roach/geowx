@@ -12,27 +12,28 @@ public class KryptonData2Packer00 {
 
 	private static final double ToLog2 = Math.log(2.0);
 
-	private static int bitDepth(int deltaBits, int maxBits) {
-		if (deltaBits >= maxBits) return maxBits;
-		if (deltaBits <= 8) return 8;
-		if (deltaBits <= 16) return 16;
-		return 24;
+	private static int bitsToBytes(int bitCount) {
+		final int f = bitCount >> 3;
+		final int r = f - (f << 3);
+		return r == 0 ? f : (f + 1);
 	}
 
-	private static int bitsToBytes(int bitCount) {
-		final int b = bitCount / 8;
-		return (bitCount % 8 == 0) ? b : (b + 1);
+	private static int maxBitDepth(int bitDepthLimit, boolean aligned) {
+		final int climit = Math.max(1, Math.min(bitDepthLimit, 24));
+		if (!aligned) return climit;
+		final int f = climit >> 3;
+		final int r = climit - (f << 3);
+		return r == 0 ? climit : (climit + 1);
 	}
 
 	public static KryptonData2Packer00 newInstance(float[] xptSparseData, float unitConverter, int decimalScale,
-			int maxDepthOctets) {
+			int bitDepthLimit, boolean aligned) {
 		if (xptSparseData == null) throw new IllegalArgumentException("object is null");
 		final int len = xptSparseData.length;
 		if (len == 0) throw new IllegalArgumentException("empty array");
 		final int dscale = Math.max(-10, Math.min(10, decimalScale));
-		final int maxOctets = Math.max(1, Math.min(3, maxDepthOctets));
+		final int maxBitDepth = maxBitDepth(bitDepthLimit, aligned);
 		final double dscale10 = Math.pow(10, dscale);
-		final int maxBits = maxOctets << 3;
 		float vmin = xptSparseData[0];
 		float vmax = vmin;
 		int validCount = 0;
@@ -55,34 +56,46 @@ public class KryptonData2Packer00 {
 		final float delta = nmax - nmin;
 		final double delta10 = Math.ceil(delta * dscale10);
 		final int deltaBits = (int) Math.ceil((Math.log(delta10) / ToLog2));
-		final int binaryScale = Math.max(0, deltaBits - maxBits);
-		final int bitDepth = bitDepth(maxBits, deltaBits);
+		final int binaryScale = Math.max(0, deltaBits - maxBitDepth);
+		final int bitDepth = Math.min(maxBitDepth, deltaBits);
 		final SimplePackingSpec spec = new SimplePackingSpec(referenceValue, binaryScale, decimalScale, bitDepth);
 		return new KryptonData2Packer00(xptSparseData, unitConverter, spec, validCount);
+	}
+
+	SimplePackingSpec packingSpec() {
+		return m_spec;
+	}
+
+	public int gridPointCount() {
+		return m_xptSparseData.length;
+	}
+
+	public boolean requiresBitmap() {
+		return m_validCount < m_xptSparseData.length;
 	}
 
 	public void saveBitmap(Section2Buffer dst) {
 		final int gridLen = m_xptSparseData.length;
 		final int reqdBytes = bitsToBytes(gridLen);
 		dst.increaseCapacityBy(reqdBytes);
-		int bitIndex = 0;
-		byte buffer = 0x0;
+		int buffer = 0;
+		int bufferBitCount = 0;
 		for (int i = 0; i < gridLen; i++) {
 			final boolean isMissing = Float.isNaN(m_xptSparseData[i]);
-			if (isMissing) {
-				continue;
+			buffer <<= 1;
+			if (!isMissing) {
+				buffer |= 1;
 			}
-			final int ex = buffer & 0xFF;
-			buffer = (byte) (ex | 1 << bitIndex);
-			bitIndex++;
-			if (bitIndex == 8) {
+			bufferBitCount++;
+			if (bufferBitCount == 8) {
 				dst.octet(buffer);
-				bitIndex = 0;
-				buffer = 0x0;
+				bufferBitCount = 0;
+				buffer = 0;
 			}
 		}
-		if (bitIndex > 0) {
-			dst.octet(buffer);
+		if (bufferBitCount > 0) {
+			final int bufferL = buffer << (8 - bufferBitCount);
+			dst.octet(bufferL);
 		}
 	}
 
@@ -92,7 +105,7 @@ public class KryptonData2Packer00 {
 		final double EE = Math.pow(2.0, m_spec.binaryScale);
 		final float R = m_spec.referenceValue;
 		final int bitDepth = m_spec.bitDepth;
-
+		final Encoder encoder = Encoder.newEncoder(dst, bitDepth);
 		final int reqdBytes = bitsToBytes(m_validCount * bitDepth);
 		dst.increaseCapacityBy(reqdBytes);
 		for (int i = 0; i < gridLen; i++) {
@@ -100,12 +113,11 @@ public class KryptonData2Packer00 {
 			if (Float.isNaN(v)) {
 				continue;
 			}
-			// in = ((out * 10^D) - R) / 2^E
 			final double dev = ((v * m_unitConverter * DD) - R) / EE;
 			final int ev = (int) Math.round(dev);
-
+			encoder.encode(ev);
 		}
-
+		encoder.flush();
 	}
 
 	private KryptonData2Packer00(float[] xptSparseData, float unitConverter, SimplePackingSpec spec, int validCount) {
@@ -116,8 +128,79 @@ public class KryptonData2Packer00 {
 		m_spec = spec;
 		m_validCount = validCount;
 	}
+
 	private final float[] m_xptSparseData;
 	private final float m_unitConverter;
 	private final SimplePackingSpec m_spec;
 	private final int m_validCount;
+
+	private static abstract class Encoder {
+
+		public static Encoder newEncoder(Section2Buffer dst, int bitDepth) {
+			if (bitDepth % 8 == 0) return new EncoderAligned(dst, bitDepth);
+			return new EncoderUnaligned(dst, bitDepth);
+		}
+
+		public abstract void encode(int datum);
+
+		public abstract void flush();
+
+		protected Encoder(Section2Buffer dst, int bitDepth) {
+			this.dst = dst;
+			this.bitDepth = bitDepth;
+		}
+		protected final Section2Buffer dst;
+		protected final int bitDepth;
+	}
+
+	private static class EncoderAligned extends Encoder {
+
+		@Override
+		public void encode(int datum) {
+			UGrib.pack(m_packBuffer, datum);
+			dst.octets(m_packBuffer);
+		}
+
+		@Override
+		public void flush() {
+		}
+
+		protected EncoderAligned(Section2Buffer dst, int bitDepth) {
+			super(dst, bitDepth);
+			final int octetDepth = bitDepth >> 3;
+			m_packBuffer = new byte[octetDepth];
+		}
+		private final byte[] m_packBuffer;
+	}
+
+	private static class EncoderUnaligned extends Encoder {
+
+		@Override
+		public void encode(int datum) {
+			m_bufferR = (m_bufferR << bitDepth) | datum;
+			m_bufferBitCount += bitDepth;
+			while (m_bufferBitCount >= 8) {
+				final int shift = m_bufferBitCount - 8;
+				final int mask = 0xFF << shift;
+				final int dm = (m_bufferR & mask) >>> shift;
+				dst.octet(dm);
+				m_bufferR &= ~mask;
+				m_bufferBitCount -= 8;
+			}
+		}
+
+		@Override
+		public void flush() {
+			if (m_bufferBitCount > 0) {
+				final int bufferL = m_bufferR << (8 - m_bufferBitCount);
+				dst.octet(bufferL);
+			}
+		}
+
+		protected EncoderUnaligned(Section2Buffer dst, int bitDepth) {
+			super(dst, bitDepth);
+		}
+		private int m_bufferR;
+		private int m_bufferBitCount;
+	}
 }

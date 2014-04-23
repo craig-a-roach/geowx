@@ -11,7 +11,7 @@ import org.junit.Test;
 /**
  * @author roach
  */
-public class TestUnit1BinaryPacking {
+public class TestUnit1BinaryPacking2 {
 
 	// final float[] data = { 8.5f, 7.5f, 15.5f, -1.5f, 5.0f, 0.0f };
 
@@ -28,6 +28,12 @@ public class TestUnit1BinaryPacking {
 		return sb.toString();
 	}
 
+	private static int bitsToBytes(int bitCount) {
+		final int f = bitCount >> 3;
+		final int r = f - (f << 3);
+		return r == 0 ? f : (f + 1);
+	}
+
 	private static int[] decode(Source src, int bitDepth, int dataCount) {
 		final IntegerFactory factory = new IntegerFactory(src);
 		final int[] decode = new int[dataCount];
@@ -37,13 +43,13 @@ public class TestUnit1BinaryPacking {
 		return decode;
 	}
 
+	// |11 1010 1011 |10 1100 1101|00 1110 1111|01 0010 0011|
+	// |11 1010 10|11 10 1100|1101 00 11|10 1111 01|0010 0011|
+
 	private static int dout(String tag, int x) {
 		System.out.println(tag + ": " + x);
 		return x;
 	}
-
-	// |11 1010 1011 |10 1100 1101|00 1110 1111|01 0010 0011|
-	// |11 1010 10|11 10 1100|1101 00 11|10 1111 01|0010 0011|
 
 	private static int[][] newDataRamp() {
 		final int[] data1 = { 0x1, 0x0, 0x1, 0x1, 0x0, 0x1, 0x0, 0x1, 0x1, 0x1 };
@@ -165,6 +171,39 @@ public class TestUnit1BinaryPacking {
 			final int bufferL = out("bufferL", bufferR << (8 - bufferBitCount));
 			dst.octet(bufferL);
 		}
+	}
+
+	@Test
+	public void a00() {
+		final float[] m_xptSparseData = { 101.4f, 102.7f, Float.NaN, 101.9f, 100.3f, Float.NaN, 101.6f, 101.2f, Float.NaN,
+				Float.NaN, 101.0f, 100.8f, Float.NaN, Float.NaN, Float.NaN, 101.5f, Float.NaN };
+		final Section2Buffer dst = new Section2Buffer(6, 1);
+		final int gridLen = m_xptSparseData.length;
+		final int reqdBytes = bitsToBytes(gridLen);
+		dst.increaseCapacityBy(reqdBytes);
+		int buffer = 0;
+		int bufferBitCount = 0;
+		for (int i = 0; i < gridLen; i++) {
+			final boolean isMissing = Float.isNaN(m_xptSparseData[i]);
+			buffer <<= 1;
+			if (!isMissing) {
+				buffer |= 1;
+			}
+			out("buffer", buffer);
+			bufferBitCount++;
+			if (bufferBitCount == 8) {
+				dst.octet(buffer);
+				bufferBitCount = 0;
+				buffer = 0;
+			}
+		}
+		if (bufferBitCount > 0) {
+			final int bufferL = buffer << (8 - bufferBitCount);
+			out("buffer", bufferL);
+			dst.octet(bufferL);
+		}
+		final Source src = new Source(dst);
+		System.out.println(src);
 	}
 
 	@Test
