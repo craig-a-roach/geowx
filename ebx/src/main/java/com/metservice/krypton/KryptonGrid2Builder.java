@@ -34,8 +34,9 @@ public class KryptonGrid2Builder extends Section2Builder {
 	}
 
 	@Override
-	public void save(Section2Buffer dst) {
-		if (m_oDefinition == null) throw new IllegalStateException("missing Template 3");
+	public void save(Section2Buffer dst)
+			throws KryptonBuildException {
+		if (m_oDefinition == null) throw new KryptonBuildException("Missing Template 3");
 		final int n = m_oDefinition.numberOfDataPoints();
 		dst.u1(SourceOfGridDefinition_Table3_0); // 6
 		dst.int4(n); // 7-10

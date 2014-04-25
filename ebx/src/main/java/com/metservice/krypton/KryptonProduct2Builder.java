@@ -19,8 +19,9 @@ public class KryptonProduct2Builder extends Section2Builder {
 	}
 
 	@Override
-	public void save(Section2Buffer dst) {
-		if (m_oDefinition == null) throw new IllegalStateException("missing Template 4");
+	public void save(Section2Buffer dst)
+			throws KryptonBuildException {
+		if (m_oDefinition == null) throw new KryptonBuildException("Missing Template 4");
 		dst.u2(CoordinateCount); // 6-7
 		m_oDefinition.save(dst); // 8+
 	}

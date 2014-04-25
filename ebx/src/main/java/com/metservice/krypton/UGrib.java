@@ -93,6 +93,11 @@ class UGrib {
 		return (char) (buffer[pos] & 0xFF);
 	}
 
+	public static byte[] charu1(byte[] buffer, int pos, char value) {
+		buffer[pos] = (byte) value;
+		return buffer;
+	}
+
 	public static double descale(int scaleFactor, int scaledValue) {
 		return ((scaleFactor == 0) || (scaledValue == 0)) ? scaledValue : scaledValue * Math.pow(10, -scaleFactor);
 	}
@@ -623,6 +628,14 @@ class UGrib {
 			throw new KryptonCodeException(source, m);
 		}
 		return (int) ssecs;
+	}
+
+	public static byte[] stringu1(byte[] buffer, int pos, String value) {
+		final int len = value.length();
+		for (int i = 0; i < len; i++) {
+			buffer[pos + i] = (byte) value.charAt(i);
+		}
+		return buffer;
 	}
 
 	public static long tsG1(String source, int century, int yoc, int moy, int dom, int hod, int moh)

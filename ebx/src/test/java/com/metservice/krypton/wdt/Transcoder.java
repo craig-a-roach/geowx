@@ -18,6 +18,7 @@ import ucar.nc2.Variable;
 
 import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.ArgonProperties;
+import com.metservice.krypton.KryptonData2Packer00;
 
 /**
  * @author roach
@@ -74,7 +75,7 @@ class Transcoder extends AbstractTranscoder {
 		final long tsStartDecode = System.currentTimeMillis();
 		final int gridLength = NX * NY;
 		final float[] grid = new float[gridLength];
-		Arrays.fill(grid, MissingData);
+		Arrays.fill(grid, Float.NaN);
 		for (int irun = 0; irun < runCount; irun++) {
 			final float datum = arrayDatum.getFloat(irun);
 			final int pixelNS = arrayPixelNS.getInt(irun);
@@ -89,6 +90,11 @@ class Transcoder extends AbstractTranscoder {
 			Arrays.fill(grid, istart, iend, datum);
 		}
 		trace.add("Decode elapsed=" + (System.currentTimeMillis() - tsStartDecode) + "ms");
+
+		final long tsStartEncode = System.currentTimeMillis();
+		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(grid, 1.0f, 1, 16, false);
+		System.out.println(p);
+		trace.add("Encode elapsed=" + (System.currentTimeMillis() - tsStartEncode) + "ms");
 	}
 
 	public Transcoder(ArgonProperties props, File inFile) {

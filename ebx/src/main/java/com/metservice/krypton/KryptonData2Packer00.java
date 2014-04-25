@@ -5,6 +5,8 @@
  */
 package com.metservice.krypton;
 
+import com.metservice.argon.Ds;
+
 /**
  * @author roach
  */
@@ -43,11 +45,21 @@ public class KryptonData2Packer00 implements IBitmap2Emitter, IData2Emitter {
 		final int dscale = Math.max(-10, Math.min(10, decimalScale));
 		final int maxBitDepth = maxBitDepth(bitDepthLimit, aligned);
 		final double dscale10 = Math.pow(10, dscale);
-		final float v0 = xptSparseData[0];
-		float vmin = v0;
-		float vmax = v0;
-		int validCount = Float.isNaN(v0) ? 0 : 1;
-		for (int i = 1; i < len; i++) {
+		int istart = 0;
+		while (istart < len) {
+			if (!Float.isNaN(xptSparseData[istart])) {
+				break;
+			}
+			istart++;
+		}
+		if (istart == len) {
+			final SimplePackingSpec spec = new SimplePackingSpec(0.0f, 0, 0, 1);
+			return new KryptonData2Packer00(xptSparseData, unitConverter, spec, 0);
+		}
+		float vmin = xptSparseData[istart];
+		float vmax = xptSparseData[istart];
+		int validCount = 1;
+		for (int i = istart + 1; i < len; i++) {
 			final float v = xptSparseData[i];
 			if (Float.isNaN(v)) {
 				continue;
@@ -65,9 +77,16 @@ public class KryptonData2Packer00 implements IBitmap2Emitter, IData2Emitter {
 		final float referenceValue = (float) (nmin * dscale10);
 		final float delta = nmax - nmin;
 		final double delta10 = Math.ceil(delta * dscale10);
-		final int deltaBits = (int) Math.ceil((Math.log(delta10) / ToLog2));
-		final int binaryScale = Math.max(0, deltaBits - maxBitDepth);
-		final int bitDepth = bitDepth(deltaBits, maxBitDepth, aligned);
+		final int binaryScale;
+		final int bitDepth;
+		if (delta10 < 2.0) {
+			binaryScale = 0;
+			bitDepth = 1;
+		} else {
+			final int deltaBits = (int) Math.ceil((Math.log(delta10) / ToLog2));
+			binaryScale = Math.max(0, deltaBits - maxBitDepth);
+			bitDepth = bitDepth(deltaBits, maxBitDepth, aligned);
+		}
 		final SimplePackingSpec spec = new SimplePackingSpec(referenceValue, binaryScale, decimalScale, bitDepth);
 		return new KryptonData2Packer00(xptSparseData, unitConverter, spec, validCount);
 	}
@@ -84,6 +103,15 @@ public class KryptonData2Packer00 implements IBitmap2Emitter, IData2Emitter {
 	@Override
 	public int dataByteCount() {
 		return m_dataByteCount;
+	}
+
+	public int deflatePercent() {
+		final int inBytes = m_xptSparseData.length * 4;
+		int pkBytes = m_dataByteCount;
+		if (requiresBitmap()) {
+			pkBytes += m_bitmapByteCount;
+		}
+		return Math.round((pkBytes * 100.f) / inBytes);
 	}
 
 	public int gridPointCount() {
@@ -137,6 +165,18 @@ public class KryptonData2Packer00 implements IBitmap2Emitter, IData2Emitter {
 			encoder.encode(ev);
 		}
 		encoder.flush();
+	}
+
+	@Override
+	public String toString() {
+		final Ds ds = Ds.o(getClass());
+		ds.a("gridCount", m_gridCount);
+		ds.a("validCount", m_validCount);
+		ds.a("bitmapByteCount", m_bitmapByteCount);
+		ds.a("dataByteCount", m_dataByteCount);
+		ds.a("deflate%", deflatePercent());
+		ds.a("packingSpec", m_spec);
+		return ds.s();
 	}
 
 	public int validPointCount() {

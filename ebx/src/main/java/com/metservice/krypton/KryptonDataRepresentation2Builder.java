@@ -25,8 +25,9 @@ public class KryptonDataRepresentation2Builder extends Section2Builder {
 	}
 
 	@Override
-	public void save(Section2Buffer dst) {
-		if (m_oDefinition == null) throw new IllegalStateException("missing Template 5");
+	public void save(Section2Buffer dst)
+			throws KryptonBuildException {
+		if (m_oDefinition == null) throw new KryptonBuildException("Missing Template 5");
 		dst.int4(m_countValidPoints); // 6-9
 		m_oDefinition.save(dst); // 10+
 	}

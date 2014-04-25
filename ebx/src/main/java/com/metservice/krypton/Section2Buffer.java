@@ -5,6 +5,8 @@
  */
 package com.metservice.krypton;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Calendar;
 
 /**
@@ -24,16 +26,19 @@ class Section2Buffer {
 		System.arraycopy(save, 0, m_buffer, 0, m_octet);
 	}
 
+	private byte[] headedBuffer() {
+		UGrib.int4(m_buffer, 0, m_octet);
+		return m_buffer;
+	}
+
 	public byte[] emit() {
 		final byte[] dest = new byte[m_octet];
 		emit(dest, 0);
 		return dest;
 	}
 
-	public int emit(byte[] dest, int destPos) {
-		UGrib.int4(m_buffer, 0, m_octet);
-		System.arraycopy(m_buffer, 0, dest, destPos, m_octet);
-		return m_octet;
+	public void emit(byte[] dest, int destPos) {
+		System.arraycopy(headedBuffer(), 0, dest, destPos, sectionOctetCount());
 	}
 
 	public int firstDataOctetIndex() {
@@ -79,6 +84,16 @@ class Section2Buffer {
 		ensure(srcLen);
 		System.arraycopy(octetArray, 0, m_buffer, m_octet, srcLen);
 		m_octet += srcLen;
+	}
+
+	public void save(OutputStream bos)
+			throws IOException {
+		if (bos == null) throw new IllegalArgumentException("object is null");
+		bos.write(headedBuffer(), 0, sectionOctetCount());
+	}
+
+	public int sectionOctetCount() {
+		return m_octet;
 	}
 
 	public void ts(long value) {

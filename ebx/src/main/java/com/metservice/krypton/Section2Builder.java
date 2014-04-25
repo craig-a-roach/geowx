@@ -14,7 +14,8 @@ abstract class Section2Builder {
 		return 256;
 	}
 
-	public final Section2Buffer newBuffer() {
+	public final Section2Buffer newBuffer()
+			throws KryptonBuildException {
 		final int sectionNo = sectionNo();
 		final int estimatedOctetCount = estimatedOctetCount();
 		final Section2Buffer buffer = new Section2Buffer(sectionNo, estimatedOctetCount);
@@ -22,7 +23,8 @@ abstract class Section2Builder {
 		return buffer;
 	}
 
-	public abstract void save(Section2Buffer dst);
+	public abstract void save(Section2Buffer dst)
+			throws KryptonBuildException;
 
 	public abstract int sectionNo();
 

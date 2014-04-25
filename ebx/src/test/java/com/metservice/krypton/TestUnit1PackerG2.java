@@ -13,12 +13,7 @@ import org.junit.Test;
  */
 public class TestUnit1PackerG2 {
 
-	@Test
-	public void t50() {
-
-		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
-				101.1f, 101.8f, 102.9f, Float.NaN };
-
+	private void decode(float[] data, int NX, int NY) {
 		final KryptonData2Packer00 p = KryptonData2Packer00.newInstance(data, 1.0f, 1, 24, false);
 		final Section2Buffer dst6 = new Section2Buffer(6, 1);
 		if (p.requiresBitmap()) {
@@ -36,7 +31,7 @@ public class TestUnit1PackerG2 {
 		final SimplePackingSpec spec = p.packingSpec();
 		final Source src7 = new Source(dst7);
 		final DataSourceBD2Template00 t = new DataSourceBD2Template00(spec, oBM, src7);
-		final KryptonArrayFactory af = new KryptonArrayFactory(7, 2);
+		final KryptonArrayFactory af = new KryptonArrayFactory(NX, NY);
 		final KryptonArray array = t.newArray(af);
 		final float epsilon = 0.01f;
 		for (int i = 0; i < data.length; i++) {
@@ -48,6 +43,43 @@ public class TestUnit1PackerG2 {
 				Assert.assertEquals("index " + i, x, a, epsilon);
 			}
 		}
+	}
+
+	@Test
+	public void t40() {
+
+		final int NX = 2;
+		final int NY = 2;
+		final float[] data = { 101.4f, 101.4f, 101.4f, 101.4f };
+		decode(data, NX, NY);
+	}
+
+	@Test
+	public void t50() {
+
+		final int NX = 7;
+		final int NY = 2;
+		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
+				101.1f, 101.8f, 102.9f, Float.NaN };
+		decode(data, NX, NY);
+	}
+
+	@Test
+	public void t60() {
+
+		final int NX = 2;
+		final int NY = 2;
+		final float[] data = { Float.NaN, 101.4f, 101.4f, Float.NaN };
+		decode(data, NX, NY);
+	}
+
+	@Test
+	public void t70() {
+
+		final int NX = 2;
+		final int NY = 2;
+		final float[] data = { Float.NaN, Float.NaN, Float.NaN, Float.NaN };
+		decode(data, NX, NY);
 	}
 
 	private static class Source implements IOctetIndexer {
