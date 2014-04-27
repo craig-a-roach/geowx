@@ -10,6 +10,9 @@ package com.metservice.krypton;
  */
 abstract class Section2Builder {
 
+	abstract void save(Section2Buffer dst)
+			throws KryptonBuildException;
+
 	public int estimatedOctetCount() {
 		return 256;
 	}
@@ -22,9 +25,6 @@ abstract class Section2Builder {
 		save(buffer);
 		return buffer;
 	}
-
-	public abstract void save(Section2Buffer dst)
-			throws KryptonBuildException;
 
 	public abstract int sectionNo();
 

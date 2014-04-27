@@ -13,6 +13,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.metservice.argon.DateFactory;
+import com.metservice.krypton.KryptonProduct2Builder.Template4_0;
 
 /**
  * @author roach
@@ -183,6 +184,27 @@ public class TestUnit1Builder {
 	}
 
 	@Test
+	public void testPDS()
+			throws KryptonBuildException {
+		final int parameterCategory = 16; // Forecast radar imagery
+		final int parameterNo = 4; // Reflectivity
+		final int heightM = KryptonProduct2Builder.Table4_5.SpecifiedHeightLevelAboveGround_m;
+		final KryptonProduct2Builder b = new KryptonProduct2Builder();
+		final Template4_0 t = b.newTemplate4_0(parameterCategory, parameterNo);
+		t.typeOfGeneratingProcess(KryptonProduct2Builder.Table4_3.Nowcast);
+		t.unitOfTimeRange(KryptonProduct2Builder.Table4_4.Hour);
+		t.forecastTime(2);
+		t.horizontalLayer().level1().type(heightM).scaledValue(10);
+		final byte[] dest = b.newBuffer().emit();
+		Assert.assertEquals(34, dest.length);
+		Assert.assertEquals(14, decode(dest, 12, "u1"));
+		Assert.assertEquals(2, decode(dest, 19, "i4"));
+		Assert.assertEquals(103, decode(dest, 23, "u1"));
+		Assert.assertEquals(10, decode(dest, 25, "i4"));
+		Assert.assertEquals(255, decode(dest, 29, "u1"));
+	}
+
+	// @Test
 	public void testRecord() {
 		final int centre = 72;
 		final int typeOfData = KryptonIdentification2Builder.Table1_4.Forecast_Products;

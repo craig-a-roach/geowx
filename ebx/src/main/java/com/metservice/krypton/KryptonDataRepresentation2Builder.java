@@ -14,6 +14,14 @@ public class KryptonDataRepresentation2Builder extends Section2Builder {
 	public static final int DefaultBinaryScale = 0;
 	public static final int DefaultDecimalScale = 0;
 
+	@Override
+	void save(Section2Buffer dst)
+			throws KryptonBuildException {
+		if (m_oDefinition == null) throw new KryptonBuildException("Missing Template 5");
+		dst.int4(m_countValidPoints); // 6-9
+		m_oDefinition.save(dst); // 10+
+	}
+
 	public void countValidPoints(int count) {
 		m_countValidPoints = count;
 	}
@@ -22,14 +30,6 @@ public class KryptonDataRepresentation2Builder extends Section2Builder {
 		final Template5_0 neo = new Template5_0(bitDepth);
 		m_oDefinition = neo;
 		return neo;
-	}
-
-	@Override
-	public void save(Section2Buffer dst)
-			throws KryptonBuildException {
-		if (m_oDefinition == null) throw new KryptonBuildException("Missing Template 5");
-		dst.int4(m_countValidPoints); // 6-9
-		m_oDefinition.save(dst); // 10+
 	}
 
 	@Override
@@ -57,7 +57,7 @@ public class KryptonDataRepresentation2Builder extends Section2Builder {
 	abstract static class DefinitionTemplate {
 
 		void save(Section2Buffer dst) {
-			dst.int2(m_templateNo); // 10-11
+			dst.u2(m_templateNo); // 10-11
 			dst.float4(m_referenceValue); // 12-15
 			dst.int2(m_binaryScale); // 16-17
 			dst.int2(m_decimalScale); // 18-19

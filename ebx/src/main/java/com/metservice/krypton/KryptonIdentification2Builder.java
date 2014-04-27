@@ -16,6 +16,18 @@ public class KryptonIdentification2Builder extends Section2Builder {
 	public static final int DefaultMasterTablesVersion = 11;
 	public static final int NoLocalTables = 0;
 
+	@Override
+	void save(Section2Buffer dst) {
+		dst.u2(m_originatingCentre); // 6-7
+		dst.u2(m_originatingSubCentre); // 8-9
+		dst.u1(m_masterTablesVersion); // 10
+		dst.u1(m_localTablesVersion); // 11
+		dst.u1(m_significanceOfRefTime); // 12
+		dst.ts(m_refTime); // 13-19
+		dst.u1(m_productionStatus); // 20
+		dst.u1(m_typeOfData); // 21
+	}
+
 	public void localTablesVersion(int valueTable1_1) {
 		m_localTablesVersion = valueTable1_1;
 	}
@@ -30,18 +42,6 @@ public class KryptonIdentification2Builder extends Section2Builder {
 
 	public void productionStatus(int valueTable1_3) {
 		m_productionStatus = valueTable1_3;
-	}
-
-	@Override
-	public void save(Section2Buffer dst) {
-		dst.u2(m_originatingCentre); // 6-7
-		dst.u2(m_originatingSubCentre); // 8-9
-		dst.u1(m_masterTablesVersion); // 10
-		dst.u1(m_localTablesVersion); // 11
-		dst.u1(m_significanceOfRefTime); // 12
-		dst.ts(m_refTime); // 13-19
-		dst.u1(m_productionStatus); // 20
-		dst.u1(m_typeOfData); // 21
 	}
 
 	@Override

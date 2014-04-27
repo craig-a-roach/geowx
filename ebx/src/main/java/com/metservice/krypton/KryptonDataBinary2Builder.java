@@ -11,16 +11,16 @@ package com.metservice.krypton;
 public class KryptonDataBinary2Builder extends Section2Builder {
 
 	@Override
-	public int estimatedOctetCount() {
-		final int bmc = m_oEmitter == null ? 0 : m_oEmitter.dataByteCount();
-		return 5 + bmc;
-	}
-
-	@Override
-	public void save(Section2Buffer dst) {
+	void save(Section2Buffer dst) {
 		if (m_oEmitter != null) {
 			m_oEmitter.saveData(dst);
 		}
+	}
+
+	@Override
+	public int estimatedOctetCount() {
+		final int bmc = m_oEmitter == null ? 0 : m_oEmitter.dataByteCount();
+		return 5 + bmc;
 	}
 
 	@Override

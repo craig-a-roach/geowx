@@ -60,7 +60,7 @@ public class KryptonGrid2Builder extends Section2Builder {
 		abstract int numberOfDataPoints();
 
 		void save(Section2Buffer dst) {
-			dst.int2(m_templateNo); // 13-14
+			dst.u2(m_templateNo); // 13-14
 			dst.u1(m_shapeOfEarth); // 15
 			dst.u1(m_scaleFactorSpherical); // 16
 			dst.int4(m_scaleValueSpherical); // 17-20

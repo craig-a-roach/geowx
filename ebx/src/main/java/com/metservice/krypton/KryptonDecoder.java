@@ -145,7 +145,6 @@ public class KryptonDecoder {
 			final String m = "Interpolation of list " + b12 + " not supported";
 			throw new KryptonCodeException(CSection.GD2("12"), problemG2(m, "3.11"));
 		}
-		System.out.println("DataPoints=" + r.b0710_numberOfDataPoints());
 		final int templateNo = r.b1314_template();
 		switch (templateNo) {
 			case 0:

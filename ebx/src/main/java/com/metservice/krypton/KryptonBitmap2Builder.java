@@ -11,17 +11,17 @@ package com.metservice.krypton;
 public class KryptonBitmap2Builder extends Section2Builder {
 
 	@Override
-	public int estimatedOctetCount() {
-		final int bmc = m_oEmitter == null ? 0 : m_oEmitter.bitmapByteCount();
-		return 6 + bmc;
-	}
-
-	@Override
-	public void save(Section2Buffer dst) {
+	void save(Section2Buffer dst) {
 		dst.u1(m_indicator);
 		if (m_oEmitter != null) {
 			m_oEmitter.saveBitmap(dst);
 		}
+	}
+
+	@Override
+	public int estimatedOctetCount() {
+		final int bmc = m_oEmitter == null ? 0 : m_oEmitter.bitmapByteCount();
+		return 6 + bmc;
 	}
 
 	@Override
