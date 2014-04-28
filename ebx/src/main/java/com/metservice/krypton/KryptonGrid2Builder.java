@@ -8,7 +8,7 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonGrid2Builder extends Section2Builder {
+public class KryptonGrid2Builder extends KryptonSection2Builder {
 
 	public static final int SourceOfGridDefinition_Table3_0 = 0;
 	public static final int QuasiRegularOctets = 0;

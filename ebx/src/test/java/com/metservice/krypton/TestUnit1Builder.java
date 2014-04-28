@@ -204,7 +204,7 @@ public class TestUnit1Builder {
 		Assert.assertEquals(255, decode(dest, 29, "u1"));
 	}
 
-	// @Test
+	@Test
 	public void testRecord() {
 		final int centre = 72;
 		final int typeOfData = KryptonIdentification2Builder.Table1_4.Forecast_Products;
@@ -217,7 +217,11 @@ public class TestUnit1Builder {
 		final KryptonProduct2Builder pds = new KryptonProduct2Builder();
 		final int parameterCategory = 16; // Forecast radar imagery
 		final int parameterNo = 4; // Reflectivity
-		pds.newTemplate4_0(parameterCategory, parameterNo);
+		final Template4_0 t4_0 = pds.newTemplate4_0(parameterCategory, parameterNo);
+		t4_0.typeOfGeneratingProcess(KryptonProduct2Builder.Table4_3.Nowcast);
+		t4_0.unitOfTimeRange(KryptonProduct2Builder.Table4_4.Hour);
+		t4_0.forecastTime(2);
+		t4_0.horizontalLayer().level1().type(KryptonProduct2Builder.Table4_5.EntireAtmosphere);
 
 		final float[] data = { 101.4f, 102.7f, Float.NaN, 101.9f, 101.0f, Float.NaN, 101.6f, 101.2f, Float.NaN, Float.NaN,
 				101.1f, 101.8f, 102.9f, Float.NaN };
@@ -229,7 +233,7 @@ public class TestUnit1Builder {
 
 		final KryptonRecord2Builder r = KryptonRecord2Builder.newMeteorological(ids, gds, pds, drs, bms, dbs);
 		final ByteArrayOutputStream ba = new ByteArrayOutputStream();
-		final long ExpectedByteCount = 168;
+		final long ExpectedByteCount = 190;
 		try {
 			final long bc = r.save(ba);
 			Assert.assertEquals(ExpectedByteCount, bc);

@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * @author roach
  */
-public class KryptonIdentification2Builder extends Section2Builder {
+public class KryptonIdentification2Builder extends KryptonSection2Builder {
 
 	public static final int NoSubCentre = 0;
 	public static final int DefaultMasterTablesVersion = 11;

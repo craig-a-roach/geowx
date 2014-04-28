@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quantities description="Forecast Radar Imagery (Meteorology)">
+	<quantity sid="REFD" fid="Reflectivity" number="4" unit="dB" description="Reflectivity" />
+	<quantity sid="REFC" fid="Composite_reflectivity" number="5" unit="dB" description="Composite Reflectivity" />
+	<quantity sid="RETOP" fid="Echo_Top" number="197" unit="m" description="Echo Top" />
+</quantities>

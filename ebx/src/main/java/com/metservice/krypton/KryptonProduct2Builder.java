@@ -8,7 +8,7 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonProduct2Builder extends Section2Builder {
+public class KryptonProduct2Builder extends KryptonSection2Builder {
 
 	public static final int CoordinateCount = 0;
 	public static final int DefaultBackgroundGeneratingProcessId = 0;

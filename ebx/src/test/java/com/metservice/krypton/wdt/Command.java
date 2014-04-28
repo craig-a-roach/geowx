@@ -8,11 +8,10 @@ package com.metservice.krypton.wdt;
 import java.io.File;
 import java.util.regex.Pattern;
 
-import com.metservice.argon.ArgonArgs;
 import com.metservice.argon.ArgonArgsException;
 import com.metservice.argon.ArgonFormatException;
 import com.metservice.argon.ArgonPermissionException;
-import com.metservice.argon.ArgonProperties;
+import com.metservice.argon.Ds;
 import com.metservice.argon.file.ArgonFileManifest;
 
 /**
@@ -20,27 +19,19 @@ import com.metservice.argon.file.ArgonFileManifest;
  */
 public class Command {
 
-	private static final String ARG_PFILE = "pfile:p";
-	private static final String PNAME_VERBOSE = "verbose:v";
-	private static final String PNAME_TIMING = "timing:t";
-	private static final String PNAME_NCPATH = "ncpath:n";
-	private static final String PNAME_NCPATTERN = "ncpattern";
-	private static final String PDEFAULT_NCPATTERN = ".+[.]nc";
-
-	private static void main(ArgonProperties ap)
+	private static void main(Props props)
 			throws ArgonArgsException, ArgonFormatException, ArgonPermissionException {
-		if (ap == null) throw new IllegalArgumentException("object is null");
-		final Pattern oAcceptPattern = ap.select(PNAME_NCPATTERN).opattern();
-		final boolean verbose = ap.select(PNAME_VERBOSE).flag();
-		final boolean timing = ap.select(PNAME_TIMING).flag();
-		final ArgonFileManifest manifest = ArgonFileManifest.newInstance(ap.select(PNAME_NCPATH).qtwValue, null,
-				oAcceptPattern, null);
+		if (props == null) throw new IllegalArgumentException("object is null");
+		final Pattern oAcceptPattern = props.oNCPattern();
+		final boolean verbose = props.verbose();
+		final boolean timing = props.timing();
+		final ArgonFileManifest manifest = ArgonFileManifest.newInstance(props.qtwNCPath(), null, oAcceptPattern, null);
 		final File[] zptFilesAscPath = manifest.zptFilesAscPath();
 		int countGood = 0;
 		int countFail = 0;
 		for (int i = 0; i < zptFilesAscPath.length; i++) {
 			final File inFile = zptFilesAscPath[i];
-			final Transcoder t = new Transcoder(ap, inFile);
+			final Transcoder t = new Transcoder(props, inFile);
 			try {
 				if (verbose || timing) {
 					System.out.print("Converting " + inFile + "...");
@@ -56,9 +47,9 @@ public class Command {
 					System.out.println("---");
 				}
 			} catch (final TranscodeException ex) {
-				System.err.println(ex.getMessage());
+				System.err.println(Ds.format(ex));
 				System.err.println("Start of trace...");
-				System.err.println(t.toString());
+				System.err.println(t.traceText());
 				System.err.println("...End of trace");
 				countFail++;
 			}
@@ -69,18 +60,8 @@ public class Command {
 
 	public static void main(String[] args) {
 		try {
-			final ArgonArgs aa = new ArgonArgs(args);
-			final ArgonProperties.BuilderFromArgs b = ArgonProperties.newBuilder(aa);
-			b.putProperty(PNAME_NCPATTERN, PDEFAULT_NCPATTERN);
-			b.putProperty(PNAME_TIMING, false);
-			b.putProperty(PNAME_VERBOSE, false);
-			b.putFiles(ARG_PFILE);
-			b.putMappedArg(PNAME_NCPATH);
-			b.putMappedFlag(PNAME_TIMING);
-			b.putMappedFlag(PNAME_VERBOSE);
-			b.putAssignments();
-			b.printlnUnsupportedMessage();
-			main(b.newProperties());
+			final Props props = Props.newInstance(args);
+			main(props);
 		} catch (final ArgonArgsException | ArgonFormatException | ArgonPermissionException ex) {
 			System.err.println(ex.getMessage());
 		}

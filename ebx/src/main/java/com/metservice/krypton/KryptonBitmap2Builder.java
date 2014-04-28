@@ -8,7 +8,7 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonBitmap2Builder extends Section2Builder {
+public class KryptonBitmap2Builder extends KryptonSection2Builder {
 
 	@Override
 	void save(Section2Buffer dst) {

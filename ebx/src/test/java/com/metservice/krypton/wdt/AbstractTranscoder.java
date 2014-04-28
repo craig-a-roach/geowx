@@ -5,7 +5,10 @@
  */
 package com.metservice.krypton.wdt;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,6 +23,8 @@ import ucar.nc2.Variable;
 import com.metservice.argon.ArgonJoiner;
 import com.metservice.argon.ArgonText;
 import com.metservice.argon.DateFormatter;
+import com.metservice.krypton.KryptonBuildException;
+import com.metservice.krypton.KryptonRecord2Builder;
 
 /**
  * @author roach
@@ -71,8 +76,33 @@ abstract class AbstractTranscoder {
 		return ztw;
 	}
 
+	protected void saveGRIB(KryptonRecord2Builder record)
+			throws TranscodeException, IOException {
+		if (record == null) throw new IllegalArgumentException("object is null");
+		final String inPath = m_inFile.getPath();
+		final File dst = new File(inPath + ".grib");
+		BufferedOutputStream obos = null;
+		try {
+			obos = new BufferedOutputStream(new FileOutputStream(dst));
+			record.save(obos);
+		} catch (final FileNotFoundException ex) {
+			throw new TranscodeException("Cannot save " + dst, ex);
+		} catch (final KryptonBuildException ex) {
+			throw new TranscodeException(ex, "saving " + dst);
+		} finally {
+			if (obos != null) {
+				try {
+					obos.close();
+				} catch (final IOException ex) {
+				}
+			}
+
+		}
+	}
+
 	protected Attribute selectAttribute(Group root, String name)
 			throws TranscodeException {
+		if (root == null) throw new IllegalArgumentException("object is null");
 		final Attribute oAtt = root.findAttribute(name);
 		if (oAtt == null) throw new TranscodeException("Missing required attribute '" + name + "'");
 		return oAtt;
@@ -96,6 +126,10 @@ abstract class AbstractTranscoder {
 
 	protected abstract void transcode(NetcdfFile ncFile)
 			throws TranscodeException, IOException;
+
+	public String fileName() {
+		return m_inFile.getName();
+	}
 
 	public long msElapsed() {
 		return System.currentTimeMillis() - m_tsStart;

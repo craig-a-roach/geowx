@@ -8,7 +8,7 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonDataRepresentation2Builder extends Section2Builder {
+public class KryptonDataRepresentation2Builder extends KryptonSection2Builder {
 
 	public static final float DefaultReferenceValue = 0.0f;
 	public static final int DefaultBinaryScale = 0;

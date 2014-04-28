@@ -5,6 +5,7 @@
  */
 package com.metservice.krypton.wdt;
 
+
 /**
  * @author roach
  */
@@ -16,5 +17,9 @@ class TranscodeException extends Exception {
 
 	public TranscodeException(String message, Throwable cause) {
 		super(message, cause);
+	}
+
+	public TranscodeException(Throwable src, String message) {
+		super(src == null ? message : (src.getMessage() + ", " + message));
 	}
 }

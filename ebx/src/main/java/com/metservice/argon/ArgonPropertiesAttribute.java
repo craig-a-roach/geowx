@@ -106,8 +106,38 @@ public class ArgonPropertiesAttribute {
 		return c;
 	}
 
+	public double doubleValue()
+			throws ArgonFormatException {
+		try {
+			return Double.parseDouble(qtwValue);
+		} catch (final NumberFormatException ex) {
+			final String m = "Malformed '" + pname + "' value ''" + qtwValue + "'; expecting a floating-point value";
+			throw new ArgonFormatException(m);
+		}
+	}
+
 	public boolean flag() {
 		return Boolean.parseBoolean(qtwValue);
+	}
+
+	public float floatValue()
+			throws ArgonFormatException {
+		try {
+			return Float.parseFloat(qtwValue);
+		} catch (final NumberFormatException ex) {
+			final String m = "Malformed '" + pname + "' value ''" + qtwValue + "'; expecting a floating-point value";
+			throw new ArgonFormatException(m);
+		}
+	}
+
+	public int intValue()
+			throws ArgonFormatException {
+		try {
+			return Integer.parseInt(qtwValue);
+		} catch (final NumberFormatException ex) {
+			final String m = "Malformed '" + pname + "' value ''" + qtwValue + "'; expecting an integral value";
+			throw new ArgonFormatException(m);
+		}
 	}
 
 	public String invalid(Throwable ex) {
@@ -213,9 +243,9 @@ public class ArgonPropertiesAttribute {
 	public long ts()
 			throws ArgonFormatException {
 		try {
-			return DateFactory.newTsFromT8(qtwValue);
+			return DateFactory.newTsFromTX(qtwValue);
 		} catch (final ArgonFormatException ex) {
-			final String m = "Malformed '" + pname + "' value ''" + qtwValue + "'; expecting a T8 timestamp ("
+			final String m = "Malformed '" + pname + "' value ''" + qtwValue + "'; expecting a TX timestamp ("
 					+ ex.getMessage() + ")";
 			throw new ArgonFormatException(m);
 		}

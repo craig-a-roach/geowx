@@ -29,7 +29,7 @@ public class KryptonRecord2Builder {
 		return out;
 	}
 
-	public static KryptonRecord2Builder newMeteorological(Section2Builder... builders) {
+	public static KryptonRecord2Builder newMeteorological(KryptonSection2Builder... builders) {
 		final KryptonRecord2Builder neo = new KryptonRecord2Builder(METEOROLOGICAL);
 		neo.put(builders);
 		return neo;
@@ -62,10 +62,10 @@ public class KryptonRecord2Builder {
 		return new KryptonRecord2Builder(discipline);
 	}
 
-	public void put(Section2Builder... builders) {
+	public void put(KryptonSection2Builder... builders) {
 		if (builders == null) throw new IllegalArgumentException("object is null");
 		for (int i = 0; i < builders.length; i++) {
-			final Section2Builder vBuilder = builders[i];
+			final KryptonSection2Builder vBuilder = builders[i];
 			if (vBuilder == null) {
 				continue;
 			}
@@ -83,7 +83,7 @@ public class KryptonRecord2Builder {
 			if (sectionNo == 2) {
 				continue;
 			}
-			final Section2Builder vBuilder = m_sectionBuilderMap[sectionNo];
+			final KryptonSection2Builder vBuilder = m_sectionBuilderMap[sectionNo];
 			if (vBuilder == null) throw new KryptonBuildException("Missing section number " + sectionNo);
 			try {
 				final Section2Buffer buffer = vBuilder.newBuffer();
@@ -102,5 +102,5 @@ public class KryptonRecord2Builder {
 		m_discipline = discipline;
 	}
 	private final int m_discipline;
-	private final Section2Builder[] m_sectionBuilderMap = new Section2Builder[8];
+	private final KryptonSection2Builder[] m_sectionBuilderMap = new KryptonSection2Builder[8];
 }

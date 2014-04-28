@@ -8,7 +8,7 @@ package com.metservice.krypton;
 /**
  * @author roach
  */
-public class KryptonDataBinary2Builder extends Section2Builder {
+public class KryptonDataBinary2Builder extends KryptonSection2Builder {
 
 	@Override
 	void save(Section2Buffer dst) {
